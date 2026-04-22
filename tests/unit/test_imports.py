@@ -13,6 +13,13 @@ def test_import_autocourse_autolecture() -> None:
     assert educlaw.autolecture.generate_lecture
 
 
+def test_import_tts() -> None:
+    import educlaw.tts  # noqa: PLC0415
+
+    assert educlaw.tts.build_backend
+    assert educlaw.tts.known_backends
+
+
 def test_strict_local():
     from educlaw.config.strict_local import assert_strict_local
 
