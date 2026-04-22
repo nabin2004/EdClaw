@@ -39,6 +39,7 @@ educlaw serve
 ## Documentation
 
 - [docs/EduClaw_Concepts_Explained.md](docs/EduClaw_Concepts_Explained.md) — subsystem mapping (IR, Dagestan, ADK, Ollama)
+- [docs/TTS.md](docs/TTS.md) — pluggable TTS registry, Kitten (offline), WebSocket `type=tts`, CLI
 - [docs/DEVELOPERS.md](docs/DEVELOPERS.md) — environment setup, run, CLI, tests, troubleshooting
 - [docs/ROADMAP.md](docs/ROADMAP.md) — future work and planned directions
 - [AGENTS.md](AGENTS.md) — contributor / AI agent conventions

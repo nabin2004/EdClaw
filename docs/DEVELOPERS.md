@@ -85,6 +85,7 @@ educlaw serve
 2. Then send user turns:
    - `{"type": "message", "text": "Hello", "idempotency_key": "optional-id"}`
    - Autocourse (orchestrated course + end-to-end lectures via Ollama, not the ADK tutor): add `"mode": "autocourse"` on the same frame. Responses are `{"type": "autocourse_event", "payload": {"kind": "plan" | "lecture_start" | "lecture_done" | "done" | "error", ...}}` streamed in order.
+   - TTS: send `{"type": "tts", "text": "…", "voice": "optional", "speed": 1.0}` when `tts_enabled` is true in the profile. Responses are `tts_event` frames (`kind`: `audio` with base64 WAV, then `done` or `error`). See [docs/TTS.md](TTS.md).
 
 You can use any WebSocket client; `wscat` or a small Python script is enough for development.
 
@@ -98,6 +99,8 @@ You can use any WebSocket client; `wscat` or a small Python script is enough for
 | `educlaw ir lint` | Lint IR graph under configured `ir_root` |
 | `educlaw ir index` | Build / refresh IR vector index (needs Ollama for embeddings) |
 | `educlaw pull-models` | Shell out to `ollama pull` for default model set |
+| `educlaw tts list` | List TTS backends (and voices when `tts_enabled`) |
+| `educlaw tts say "…" -o out.wav` | Synthesize speech to WAV (needs `tts_enabled` + backend) |
 
 ## Configuration
 

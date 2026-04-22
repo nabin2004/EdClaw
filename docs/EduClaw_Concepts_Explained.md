@@ -26,6 +26,7 @@
 | 10 | ShieldGemma | `before_model` / `after_model` | `src/educlaw/safety/shield.py`, `agent/callbacks/shield_*.py` |
 | 11 | IR | Pydantic + frontmatter + SQL index | `src/educlaw/ir/`, `content/ir/` |
 | 12 | Dagestan | Facts + embedded logs + ADK memory | `src/educlaw/memory/dagestan.py`, `adk_memory_service.py` |
+| 13 | TTS | Pluggable speech backends (entry points + WS `type=tts`) | `src/educlaw/tts/`, `docs/TTS.md` |
 
 ## 1. Gateway
 

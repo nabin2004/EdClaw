@@ -9,7 +9,7 @@ For human-oriented setup (venv, Ollama, `educlaw serve`, troubleshooting), see [
 - **litellm** (via ADK `LiteLlm`) + **ollama** Python client for embeddings / Shield
 - **fastapi** + **uvicorn** — single ASGI app, **one worker** for gateway
 - **sqlalchemy[asyncio]** + **aiosqlite** — ORM for IR index + Dagestan tables
-- **No pluggy** — optional plugins use `importlib.metadata` entry points (`educlaw.channels`)
+- **No pluggy** — optional plugins use `importlib.metadata` entry points (`educlaw.channels`, `educlaw.tts`)
 
 ## Conventions
 
