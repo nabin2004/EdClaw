@@ -1,0 +1,14 @@
+[
+  {"id": "MB-001", "title": "Colliding Blocks Compute Pi", "full_prompt": "[SYNC_FROM_HUB] ManiBench pilot MB-001: animate colliding blocks / pi from 3Blue1Brown style reference."},
+  {"id": "MB-002", "title": "Gradient Descent", "full_prompt": "[SYNC_FROM_HUB] ManiBench pilot MB-002: gradient descent visualization."},
+  {"id": "MB-003", "title": "Convolution", "full_prompt": "[SYNC_FROM_HUB] ManiBench pilot MB-003: convolution visualization."},
+  {"id": "MB-004", "title": "Eigenvectors", "full_prompt": "[SYNC_FROM_HUB] ManiBench pilot MB-004: eigenvectors visualization."},
+  {"id": "MB-005", "title": "Determinant", "full_prompt": "[SYNC_FROM_HUB] ManiBench pilot MB-005: determinant visualization."},
+  {"id": "MB-006", "title": "Central Limit Theorem", "full_prompt": "[SYNC_FROM_HUB] ManiBench pilot MB-006: CLT visualization."},
+  {"id": "MB-007", "title": "Medical Test Bayes", "full_prompt": "[SYNC_FROM_HUB] ManiBench pilot MB-007: Bayes / medical test visualization."},
+  {"id": "MB-008", "title": "Chain Rule", "full_prompt": "[SYNC_FROM_HUB] ManiBench pilot MB-008: chain rule visualization."},
+  {"id": "MB-009", "title": "Integration FTC", "full_prompt": "[SYNC_FROM_HUB] ManiBench pilot MB-009: FTC / integration visualization."},
+  {"id": "MB-010", "title": "Taylor Series", "full_prompt": "[SYNC_FROM_HUB] ManiBench pilot MB-010: Taylor series visualization."},
+  {"id": "MB-011", "title": "Hairy Ball Theorem", "full_prompt": "[SYNC_FROM_HUB] ManiBench pilot MB-011: hairy ball theorem visualization."},
+  {"id": "MB-012", "title": "Windmill Problem", "full_prompt": "[SYNC_FROM_HUB] ManiBench pilot MB-012: windmill problem visualization."}
+]
