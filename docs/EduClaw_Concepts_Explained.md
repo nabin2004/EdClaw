@@ -25,7 +25,7 @@
 | 9 | FunctionGemma | Tools + optional training pkg | `src/educlaw/agent/tools/`, `packages/educlaw-training/` |
 | 10 | ShieldGemma | `before_model` / `after_model` | `src/educlaw/safety/shield.py`, `agent/callbacks/shield_*.py` |
 | 11 | IR | Pydantic + frontmatter + SQL index | `src/educlaw/ir/`, `content/ir/` |
-| 12 | Dagestan | Facts + embedded logs + ADK memory | `src/educlaw/memory/dagestan.py`, `adk_memory_service.py` |
+| 12 | Dagestan | PyPI temporal graph + async adapter + ADK memory | `src/educlaw/memory/dagestan.py`, `adk_memory_service.py`; package + notes: [DAGESTAN.md](DAGESTAN.md) |
 | 13 | TTS | Pluggable speech backends (entry points + WS `type=tts`) | `src/educlaw/tts/`, [TTS.md](TTS.md) |
 | 14 | Autocourse / Autolecture | Multi-lecture generation via Ollama (not ADK); WS `mode=autocourse` | `src/educlaw/autocourse/`, `src/educlaw/autolecture/`, [AUTOCOURSE.md](AUTOCOURSE.md) |
 
@@ -75,9 +75,11 @@ Author Markdown + YAML under `content/ir` (repo default) or `~/.educlaw/ir`. CLI
 
 ## 12. Dagestan
 
-- SQL tables: `memory/models.py` (`Fact`, `EmbeddedLog`, `IrNodeRow`)
-- Engine: `memory/dagestan.py`
+- **PyPI** dependency: `dagestan` (declared in root `pyproject.toml`). JSON graph file (default under `data_dir`); configure `dagestan_db_path`, `dagestan_provider` (`stub` / `ollama` / `openai` / `anthropic`) in profile or env.
+- Adapter: `memory/dagestan.py` (`BeliefFact`, async `ingest_log` / `recall` / `assert_fact` / `snapshot`).
 - ADK integration: `DagestanMemoryService` implements `BaseMemoryService`; `after_agent_callback` calls `callback_context.add_session_to_memory()`.
+- Legacy SQL tables `Fact` / `EmbeddedLog` in `memory/models.py` are kept for schema compatibility but are not populated by the adapter; IR rows remain active (`IrNodeRow`).
+- Details and upstream links: [DAGESTAN.md](DAGESTAN.md).
 
 ## 13. Text-to-speech (TTS)
 
@@ -89,4 +91,4 @@ Course outline (`CoursePlan` JSON) then sequential **autolecture** calls per `Le
 
 ## Appendix — dependencies
 
-See root `pyproject.toml` for pinned stacks (`google-adk`, `litellm`, `fastapi`, `sqlalchemy[asyncio]`, `aiosqlite`, …). Optional extras: `sqlite-vec`, `channels`, `cloud`, `structured`, `training`, `tts-kitten` (Kitten TTS wheel + `soundfile` / `numpy`).
+See root `pyproject.toml` for pinned stacks (`google-adk`, `litellm`, `fastapi`, `sqlalchemy[asyncio]`, `aiosqlite`, `dagestan`, …). Optional extras: `sqlite-vec`, `channels`, `cloud`, `structured`, `training`, `tts-kitten` (Kitten TTS wheel + `soundfile` / `numpy`).

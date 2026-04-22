@@ -6,9 +6,9 @@ For human-oriented setup (venv, Ollama, `educlaw serve`, troubleshooting), see [
 
 - **Python 3.11+** (CI uses 3.12)
 - **google-adk**: `LlmAgent`, `Runner`, `InMemorySessionService`, `BaseMemoryService`, callbacks
-- **litellm** (via ADK `LiteLlm`) + **ollama** Python client for embeddings / Shield
+- **litellm** (via ADK `LiteLlm`) + **ollama** Python client for embeddings (IR index CLI) / Shield
 - **fastapi** + **uvicorn** — single ASGI app, **one worker** for gateway
-- **sqlalchemy[asyncio]** + **aiosqlite** — ORM for IR index + Dagestan tables
+- **sqlalchemy[asyncio]** + **aiosqlite** — ORM for IR index (`IrNodeRow`); learner graph memory via **PyPI `dagestan`** (JSON), wrapped by `educlaw.memory.dagestan`
 - **No pluggy** — optional plugins use `importlib.metadata` entry points (`educlaw.channels`, `educlaw.tts`)
 
 ## Conventions

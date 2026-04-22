@@ -9,7 +9,7 @@
 
 # EduClaw
 
-**Local-first educational agent gateway:** **Google ADK** for the agent loop, **Ollama** for Gemma / EmbeddingGemma / ShieldGemma, **FastAPI** for HTTP + WebSocket, **SQLAlchemy** + **sqlite-vec** (optional) for IR + Dagestan memory.
+**Local-first educational agent gateway:** **Google ADK** for the agent loop, **Ollama** for Gemma / EmbeddingGemma / ShieldGemma, **FastAPI** for HTTP + WebSocket, **SQLAlchemy** + **sqlite-vec** (optional) for IR indexing, and **PyPI `dagestan`** for temporal-graph learner memory.
 
 Wordmark source: [assets/ascii-logo.txt](assets/ascii-logo.txt) (font *slant*; regenerate with `pyfiglet -f slant EduClaw`).
 
@@ -39,6 +39,7 @@ educlaw serve
 ## Documentation
 
 - [docs/EduClaw_Concepts_Explained.md](docs/EduClaw_Concepts_Explained.md) — subsystem mapping (IR, Dagestan, ADK, Ollama, TTS, autocourse)
+- [docs/DAGESTAN.md](docs/DAGESTAN.md) — PyPI `dagestan` package and how EduClaw wraps it
 - [docs/AUTOCOURSE.md](docs/AUTOCOURSE.md) — Autocourse / Autolecture WebSocket `mode=autocourse` and event payloads
 - [docs/TTS.md](docs/TTS.md) — pluggable TTS registry, Kitten (offline), WebSocket `type=tts`, CLI
 - [docs/DEVELOPERS.md](docs/DEVELOPERS.md) — environment setup, run, CLI, tests, troubleshooting
