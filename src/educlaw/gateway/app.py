@@ -24,6 +24,7 @@ from educlaw.memory.embeddings import EmbeddingClient
 from educlaw.memory.models import Base as OrmBase
 from educlaw.memory.vec_store import VecStore
 from educlaw.safety.shield import Shield
+from educlaw.tts.registry import build_backend
 
 
 @asynccontextmanager
@@ -35,6 +36,8 @@ async def lifespan(app: FastAPI):
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     ir_root = settings.ir_root or (settings.data_dir / "ir")
     ir_root.mkdir(parents=True, exist_ok=True)
+    tts_cache = settings.tts_cache_dir or (settings.data_dir / "tts")
+    tts_cache.mkdir(parents=True, exist_ok=True)
 
     sqlite_url = f"sqlite+aiosqlite:///{settings.sqlite_path}"
     engine = create_async_engine(sqlite_url, echo=False)
@@ -65,12 +68,15 @@ async def lifespan(app: FastAPI):
 
     sandbox: Any = NullSandbox()
 
+    tts = build_backend(settings)
+
     deps = AgentDeps(
         settings=settings,
         ir=ir,
         dagestan=dagestan,
         shield=shield,
         sandbox=sandbox,
+        tts=tts,
     )
     agent = build_root_agent(deps)
     session_service = InMemorySessionService()
@@ -88,6 +94,8 @@ async def lifespan(app: FastAPI):
     app.state.engine = engine
     app.state.deps = deps
     yield
+    if deps.tts is not None:
+        await deps.tts.close()
     await engine.dispose()
 
 

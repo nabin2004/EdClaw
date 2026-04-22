@@ -44,6 +44,15 @@ class Settings(BaseSettings):
     sandbox_backend: Literal["docker", "ssh", "local_jail"] = "docker"
     sandbox_mode: Literal["off", "non_main", "all"] = "all"
 
+    # Text-to-speech (optional; see docs/TTS.md)
+    tts_enabled: bool = False
+    tts_backend: str = "kitten"
+    tts_model_id: str | None = None
+    tts_voice: str | None = None
+    tts_speed: float = 1.0
+    tts_sample_rate: int = 24000
+    tts_cache_dir: Path | None = None
+
     def model_post_init(self, __context: object) -> None:
         if self.ir_root is None:
             repo_ir = Path(__file__).resolve().parents[3] / "content" / "ir"
@@ -56,6 +65,8 @@ class Settings(BaseSettings):
             object.__setattr__(self, "sqlite_path", self.data_dir / "educlaw.sqlite")
         if self.vec_sqlite_path is None:
             object.__setattr__(self, "vec_sqlite_path", self.data_dir / "vectors.sqlite")
+        if self.tts_cache_dir is None:
+            object.__setattr__(self, "tts_cache_dir", self.data_dir / "tts")
 
 
 def _merge_toml_into_environ(profile: dict) -> None:
@@ -88,6 +99,8 @@ def load_settings() -> Settings:
             merged["sqlite_path"] = Path(os.path.expanduser(str(merged["sqlite_path"])))
         if "vec_sqlite_path" in merged:
             merged["vec_sqlite_path"] = Path(os.path.expanduser(str(merged["vec_sqlite_path"])))
+        if "tts_cache_dir" in merged:
+            merged["tts_cache_dir"] = Path(os.path.expanduser(str(merged["tts_cache_dir"])))
         s = Settings(**{**s.model_dump(), **merged})
     # Ensure OLLAMA_API_BASE for LiteLLM (ADK docs)
     os.environ.setdefault("OLLAMA_API_BASE", s.ollama_url.rstrip("/"))
