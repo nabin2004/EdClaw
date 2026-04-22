@@ -1,6 +1,17 @@
+```text
+
+    ______    __      ________              
+   / ____/___/ /_  __/ ____/ /___ __      __
+  / __/ / __  / / / / /   / / __ `/ | /| / /
+ / /___/ /_/ / /_/ / /___/ / /_/ /| |/ |/ / 
+/_____/\__,_/\__,_/\____/_/\__,_/ |__/|__/  
+```
+
 # EduClaw
 
-Local-first educational agent gateway: **Google ADK** for the agent loop, **Ollama** for Gemma / EmbeddingGemma / ShieldGemma, **FastAPI** for HTTP + WebSocket, **SQLAlchemy** + **sqlite-vec** (optional) for IR + Dagestan memory.
+**Local-first educational agent gateway:** **Google ADK** for the agent loop, **Ollama** for Gemma / EmbeddingGemma / ShieldGemma, **FastAPI** for HTTP + WebSocket, **SQLAlchemy** + **sqlite-vec** (optional) for IR + Dagestan memory.
+
+Wordmark source: [assets/ascii-logo.txt](assets/ascii-logo.txt) (font *slant*; regenerate with `pyfiglet -f slant EduClaw`).
 
 ## Quickstart
 
@@ -14,7 +25,7 @@ educlaw serve
 ```
 
 - Gateway: `http://127.0.0.1:18789` (HTTP + `ws://127.0.0.1:18789/ws`)
-- WebSocket handshake: first frame `{"type":"connect","token":"local_user:my-session"}` then `{"type":"message","text":"Hello"}`
+- WebSocket handshake: first frame `{"type":"connect","token":"local_user:my-session"}` then `{"type":"message","text":"Hello"}`. To run the **autocourse** generator (multi-lecture outline + full lectures) instead of the ADK tutor, send `{"type":"message","mode":"autocourse","text":"…topic…"}`; the server streams `{"type":"autocourse_event","payload":{…}}` frames until a `payload.kind` of `done` or `error`.
 
 ## Layout
 

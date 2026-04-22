@@ -84,6 +84,7 @@ educlaw serve
    - Token is interpreted loosely: if it contains `:`, the parts are `user_id` and `session_id`.
 2. Then send user turns:
    - `{"type": "message", "text": "Hello", "idempotency_key": "optional-id"}`
+   - Autocourse (orchestrated course + end-to-end lectures via Ollama, not the ADK tutor): add `"mode": "autocourse"` on the same frame. Responses are `{"type": "autocourse_event", "payload": {"kind": "plan" | "lecture_start" | "lecture_done" | "done" | "error", ...}}` streamed in order.
 
 You can use any WebSocket client; `wscat` or a small Python script is enough for development.
 
