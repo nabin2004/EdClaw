@@ -4,17 +4,19 @@ Step-by-step commands for **datasets**, **evaluation**, **fine-tuning** (Stages 
 
 ### Related documentation
 
-| Doc | Purpose |
-|-----|---------|
-| [DEVELOPERS.md](DEVELOPERS.md) | Dev environment, `uv`/venv, `ollama`, Docker images (`educlaw/manim:latest`), gateway |
-| [training/manibench/README.md](../training/manibench/README.md) | ManiBench package overview, stages, prerequisites |
-| [training/manibench/SUBMIT_HF_JOBS.md](../training/manibench/SUBMIT_HF_JOBS.md) | Hugging Face Jobs (`hf jobs`), MCP `hf_jobs()`, secrets, Trackio |
-| [AGENTS.md](../AGENTS.md) | Repo stack conventions (Python 3.11+, optional `training` extras) |
+
+| Doc                                                                             | Purpose                                                                               |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [DEVELOPERS.md](DEVELOPERS.md)                                                  | Dev environment, `uv`/venv, `ollama`, Docker images (`educlaw/manim:latest`), gateway |
+| [training/manibench/README.md](../training/manibench/README.md)                 | ManiBench package overview, stages, prerequisites                                     |
+| [training/manibench/SUBMIT_HF_JOBS.md](../training/manibench/SUBMIT_HF_JOBS.md) | Hugging Face Jobs (`hf jobs`), MCP `hf_jobs()`, secrets, Trackio                      |
+| [AGENTS.md](../AGENTS.md)                                                       | Repo stack conventions (Python 3.11+, optional `training` extras)                     |
+
 
 ### External resources
 
-- Dataset: [`nabin2004/ManiBench`](https://huggingface.co/datasets/nabin2004/ManiBench) — sync **`full_prompt`** fields into pilot JSON before hashing (below).
-- Benchmark / code: [`github.com/nabin2004/ManiBench`](https://github.com/nabin2004/ManiBench) — use the same evaluator semantics as your paper where applicable.
+- Dataset: `[nabin2004/ManiBench](https://huggingface.co/datasets/nabin2004/ManiBench)` — sync `**full_prompt`** fields into pilot JSON before hashing (below).
+- Benchmark / code: `[github.com/nabin2004/ManiBench](https://github.com/nabin2004/ManiBench)` — use the same evaluator semantics as your paper where applicable.
 
 ---
 
@@ -36,7 +38,7 @@ cd training/manibench
 export PYTHONPATH="$(pwd)"
 ```
 
-Optional: **`datasets` only** if you skip the full training extra:
+Optional: `**datasets` only** if you skip the full training extra:
 
 ```bash
 pip install datasets
@@ -48,7 +50,7 @@ For **full executability** scores (subprocess render), install **Manim CE** and 
 
 ## 2. Pilot prompts and leakage hashes
 
-Training must **not** duplicate the twelve pilot **`full_prompt`** strings. Repository defaults live in [`training/manibench/manibench/data/pilot_prompts.json`](../training/manibench/manibench/data/pilot_prompts.json). Replace placeholders with text from Hub, then regenerate hashes:
+Training must **not** duplicate the twelve pilot `**full_prompt`** strings. Repository defaults live in `[training/manibench/manibench/data/pilot_prompts.json](../training/manibench/manibench/data/pilot_prompts.json)`. Replace placeholders with text from Hub, then regenerate hashes:
 
 ```bash
 cd training/manibench
@@ -56,7 +58,7 @@ export PYTHONPATH="$(pwd)"
 python scripts/refresh_eval_hashes.py
 ```
 
-This updates [`manibench/data/manibench_eval_hashes.json`](../training/manibench/manibench/data/manibench_eval_hashes.json).
+This updates `[manibench/data/manibench_eval_hashes.json](../training/manibench/manibench/data/manibench_eval_hashes.json)`.
 
 Dataset builders call the leakage guard automatically unless you pass `--skip-leak-check`.
 
@@ -64,21 +66,23 @@ Dataset builders call the leakage guard automatically unless you pass `--skip-le
 
 ## 3. Building datasets (local)
 
-Working directory: **`training/manibench`**, with `PYTHONPATH` set as above.
+Working directory: `**training/manibench**`, with `PYTHONPATH` set as above.
 
-| What | Command | Output |
-|------|---------|--------|
-| SFT core (≥145 GL→CE-style + gallery) | `python scripts/build_sft_core_dataset.py --out ./out/manibench-sft-core` | `./out/manibench-sft-core.jsonl` (+ optional `datasets` folder) |
-| DPO preference (~2k chosen/rejected) | `python scripts/build_preference_dataset.py --out ./out/manibench-preference.jsonl` | `./out/manibench-preference.jsonl` |
-| Synthetic SFT (~5k rows, category mix, stub assistants) | `python scripts/synthetic_expand.py --out ./out/manibench-synthetic-sft.jsonl` | `./out/manibench-synthetic-sft.jsonl` |
-| Teacher SFT (LiteLLM: Gemini / OpenAI / Anthropic / Ollama, …) | `python scripts/generate_sft_teacher.py --model gemini/gemini-2.5-pro --count 3000 --out ./out/manibench-sft-teacher.jsonl` | `./out/manibench-sft-teacher.jsonl` (+ optional `--rejected-out`, cache under `./out/_teacher_cache`) |
-| Merge SFT sources | `python scripts/merge_sft_jsonl.py --inputs out/manibench-sft-core.jsonl out/manibench-synthetic-sft.jsonl --out ./out/manibench-sft-merged.jsonl` | `./out/manibench-sft-merged.jsonl` |
+
+| What                                                           | Command                                                                                                                                            | Output                                                                                                |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| SFT core (≥145 GL→CE-style + gallery)                          | `python scripts/build_sft_core_dataset.py --out ./out/manibench-sft-core`                                                                          | `./out/manibench-sft-core.jsonl` (+ optional `datasets` folder)                                       |
+| DPO preference (~2k chosen/rejected)                           | `python scripts/build_preference_dataset.py --out ./out/manibench-preference.jsonl`                                                                | `./out/manibench-preference.jsonl`                                                                    |
+| Synthetic SFT (~5k rows, category mix, stub assistants)        | `python scripts/synthetic_expand.py --out ./out/manibench-synthetic-sft.jsonl`                                                                     | `./out/manibench-synthetic-sft.jsonl`                                                                 |
+| Teacher SFT (LiteLLM: Gemini / OpenAI / Anthropic / Ollama, …) | `python scripts/generate_sft_teacher.py --model gemini/gemini-2.5-pro --count 3000 --out ./out/manibench-sft-teacher.jsonl`                        | `./out/manibench-sft-teacher.jsonl` (+ optional `--rejected-out`, cache under `./out/_teacher_cache`) |
+| Merge SFT sources                                              | `python scripts/merge_sft_jsonl.py --inputs out/manibench-sft-core.jsonl out/manibench-synthetic-sft.jsonl --out ./out/manibench-sft-merged.jsonl` | `./out/manibench-sft-merged.jsonl`                                                                    |
+
 
 ### 3.1 Teacher-model SFT distillation (strong LLM → JSONL)
 
-Use a **teacher** model via **LiteLLM** so assistant turns are real generations instead of [`synthetic_expand.py`](../training/manibench/scripts/synthetic_expand.py) stubs. Prompts are sampled from the same five ManiBench categories as the stub builder ([`manibench/prompt_seeds.py`](../training/manibench/manibench/prompt_seeds.py)).
+Use a **teacher** model via **LiteLLM** so assistant turns are real generations instead of `[synthetic_expand.py](../training/manibench/scripts/synthetic_expand.py)` stubs. Prompts are sampled from the same five ManiBench categories as the stub builder (`[manibench/prompt_seeds.py](../training/manibench/manibench/prompt_seeds.py)`).
 
-**Auth (examples):** set the API key your provider expects, e.g. `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENROUTER_API_KEY` (see [`.env.example`](../.env.example)).
+**Auth (examples):** set the API key your provider expects, e.g. `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENROUTER_API_KEY` (see `[.env.example](../.env.example)`).
 
 From `training/manibench` with `PYTHONPATH` set:
 
@@ -110,8 +114,8 @@ export ANTHROPIC_API_KEY=...
 python scripts/generate_sft_teacher.py --model claude-sonnet-4-20250514 --count 500 --out ./out/manibench-sft-teacher-claude.jsonl
 ```
 
-- **Default eval mode** is fast (no `manim` subprocess): static executability + VCER. Add **`--render-eval`** for full subprocess executability (requires `manim` on `PATH`).
-- **`--resume`**: skips user prompts already present in `--out` (append mode; does not truncate an existing output file).
+- **Default eval mode** is fast (no `manim` subprocess): static executability + VCER. Add `**--render-eval`** for full subprocess executability (requires `manim` on `PATH`).
+- `**--resume**`: skips user prompts already present in `--out` (append mode; does not truncate an existing output file).
 - **Optional `--prompts-jsonl`**: each line is a JSON object with either `messages` (first user turn used), or `user` / `prompt` plus optional `task_type`.
 
 Merge teacher data with core (and optional stub synthetic) before Stage A:
@@ -133,7 +137,7 @@ python scripts/synthetic_expand.py --count 500 --out ./out/manibench-synthetic-s
 
 ## 4. Pushing datasets to Hugging Face Hub
 
-Requires **`HF_TOKEN`** with write access.
+Requires `**HF_TOKEN**` with write access.
 
 ```bash
 cd training/manibench
@@ -190,7 +194,7 @@ pytest tests/test_manibench_eval.py -q
 
 ## 6. Training — Stage A (static SFT)
 
-Uses **`uv`** to resolve PEP 723 dependencies inside each script (install [uv](https://docs.astral.sh/uv/) if needed).
+Uses `**uv**` to resolve PEP 723 dependencies inside each script (install [uv](https://docs.astral.sh/uv/) if needed).
 
 From `training/manibench`:
 
@@ -202,9 +206,32 @@ uv run scripts/train_stage_a_sft.py \
   --epochs 3
 ```
 
+### 6.1 Local GPU (e.g. RTX 4090)
+
+**You do not need Hugging Face Jobs** if you have a local NVIDIA GPU: the same `uv run scripts/train_*.py` commands use PyTorch on your machine. HF Jobs is optional when you want a rented GPU or no local setup.
+
+1. **Driver and GPU:** `nvidia-smi` should show your card (e.g. RTX 4090). Install a **CUDA-enabled** `torch` build that matches your driver (see [PyTorch Get Started](https://pytorch.org/get-started/locally/)).
+2. **Project deps:** from repo root, `pip install -e ".[training]"` (or rely on PEP 723 + `uv run` as above). From `training/manibench`, `export PYTHONPATH="$(pwd)"`.
+3. **Pin one GPU (optional):** `export CUDA_VISIBLE_DEVICES=0`.
+4. **Train without pushing to Hub:** saves adapters under `--output-dir` only (no `HF_TOKEN` required):
+
+```bash
+uv run scripts/train_stage_a_sft.py \
+  --train-jsonl ./out/manibench-sft-merged.jsonl \
+  --eval-hashes-json manibench/data/manibench_eval_hashes.json \
+  --output-dir ./out/stage-a-local \
+  --no-push \
+  --epochs 3
+```
+
+1. **VRAM (~24GB on a 4090):** start with defaults. If you hit **CUDA OOM**, lower `--per-device-train-batch-size` (e.g. `1`) and/or `--max-length` (e.g. `2048`). You can raise `gradient_accumulation_steps` inside the script later if you need a larger effective batch.
+2. **Upload later:** when satisfied, push the folder under `--output-dir` with the Hub UI, `huggingface-cli`, or rerun with `--hub-model-id` and `HF_TOKEN` set (omit `--no-push`).
+
+Stages B/C/DPO/GRPO use the same flags on their scripts: `--no-push`, `--per-device-train-batch-size`, `--max-length` (for GRPO, `--max-length` maps to `max_completion_length` in TRL).
+
 Or load from Hub after pushing a dataset (adjust `train_stage_a_sft.py` / use `--dataset` if you extend the script).
 
-**Cloud GPUs:** upload the script and run via HF Jobs — see [SUBMIT_HF_JOBS.md](../training/manibench/SUBMIT_HF_JOBS.md) (`a10g-large`, `timeout`, `secrets`).
+**Cloud GPUs (optional):** upload the script and run via HF Jobs — see [SUBMIT_HF_JOBS.md](../training/manibench/SUBMIT_HF_JOBS.md) (`a10g-large`, `timeout`, `secrets`). For local training first, see **§6.1** above.
 
 ---
 
@@ -238,6 +265,8 @@ uv run scripts/train_incremental_sft.py \
   --eval-hashes-json manibench/data/manibench_eval_hashes.json
 ```
 
+Local-only (no Hub push): add `--no-push --output-dir ./out/incremental-local` (see **§6.1**).
+
 ### 7.3 DPO pass (every 5 iterations in the paper plan)
 
 ```bash
@@ -246,9 +275,11 @@ uv run scripts/train_dpo_pass.py \
   --hub-model-id YOUR_ORG/manibench-gemma4-dpo-roundK
 ```
 
+Add `--no-push --output-dir ./out/dpo-local` to keep weights on disk only (**§6.1**).
+
 ### 7.4 Shell orchestration example
 
-[`training/manibench/scripts/orchestrate_stage_b.sh`](../training/manibench/scripts/orchestrate_stage_b.sh) loops iterations and triggers DPO every fifth step (adjust paths and Hub IDs).
+`[training/manibench/scripts/orchestrate_stage_b.sh](../training/manibench/scripts/orchestrate_stage_b.sh)` loops iterations and triggers DPO every fifth step (adjust paths and Hub IDs).
 
 ---
 
@@ -268,7 +299,7 @@ uv run scripts/train_grpo_pass.py \
   --hub-model-id YOUR_ORG/manibench-gemma4-grpo
 ```
 
-Use a merged or adapter Hub id for `--model` per your TRL/PEFT workflow. Larger GPU flavors (e.g. `a100-large`) are typical for GRPO — see [SUBMIT_HF_JOBS.md](../training/manibench/SUBMIT_HF_JOBS.md).
+Use a merged or adapter Hub id for `--model` per your TRL/PEFT workflow. On a **local 4090**, try `--no-push --output-dir ./out/grpo-local` and reduce `--max-length` (completion cap) or batch size if you OOM (**§6.1**). Larger cloud flavors (e.g. `a100-large`) are typical for GRPO on HF Jobs — see [SUBMIT_HF_JOBS.md](../training/manibench/SUBMIT_HF_JOBS.md).
 
 ---
 
@@ -288,34 +319,38 @@ python scripts/final_eval_report.py \
 
 ## 10. Quick reference — scripts
 
-| Script | Role |
-|--------|------|
-| `scripts/refresh_eval_hashes.py` | Regenerate pilot SHA256 file |
-| `scripts/build_sft_core_dataset.py` | SFT core JSONL (+ optional `datasets` save) |
-| `scripts/build_preference_dataset.py` | DPO JSONL |
-| `scripts/synthetic_expand.py` | Synthetic SFT JSONL (stub assistants; shared prompts with teacher path) |
-| `scripts/generate_sft_teacher.py` | Teacher LLM SFT JSONL (LiteLLM, cache, eval gates, `--resume`) |
-| `scripts/merge_sft_jsonl.py` | Concatenate JSONL with leak check |
-| `scripts/push_hub.py` | Push JSONL as Hub dataset |
-| `scripts/eval_uv_standalone.py` | Batch scoring (HF Jobs) |
-| `scripts/train_stage_a_sft.py` | Stage A SFT (PEP 723) |
-| `scripts/train_incremental_sft.py` | Stage B incremental SFT (PEP 723) |
-| `scripts/train_dpo_pass.py` | DPO (PEP 723) |
-| `scripts/train_grpo_pass.py` | GRPO (PEP 723) |
-| `scripts/iterative_sft_loop.py` | Rollout + filter buffer |
-| `scripts/final_eval_report.py` | Markdown ablation table |
-| `scripts/orchestrate_stage_b.sh` | Example multi-iter shell loop |
+
+| Script                                | Role                                                                    |
+| ------------------------------------- | ----------------------------------------------------------------------- |
+| `scripts/refresh_eval_hashes.py`      | Regenerate pilot SHA256 file                                            |
+| `scripts/build_sft_core_dataset.py`   | SFT core JSONL (+ optional `datasets` save)                             |
+| `scripts/build_preference_dataset.py` | DPO JSONL                                                               |
+| `scripts/synthetic_expand.py`         | Synthetic SFT JSONL (stub assistants; shared prompts with teacher path) |
+| `scripts/generate_sft_teacher.py`     | Teacher LLM SFT JSONL (LiteLLM, cache, eval gates, `--resume`)          |
+| `scripts/merge_sft_jsonl.py`          | Concatenate JSONL with leak check                                       |
+| `scripts/push_hub.py`                 | Push JSONL as Hub dataset                                               |
+| `scripts/eval_uv_standalone.py`       | Batch scoring (HF Jobs)                                                 |
+| `scripts/train_stage_a_sft.py`        | Stage A SFT (PEP 723); `--no-push`, batch/`--max-length` overrides      |
+| `scripts/train_incremental_sft.py`    | Stage B incremental SFT (PEP 723); same flags                           |
+| `scripts/train_dpo_pass.py`           | DPO (PEP 723); same flags                                               |
+| `scripts/train_grpo_pass.py`          | GRPO (PEP 723); `--max-length` = max completion length                  |
+| `scripts/iterative_sft_loop.py`       | Rollout + filter buffer                                                 |
+| `scripts/final_eval_report.py`        | Markdown ablation table                                                 |
+| `scripts/orchestrate_stage_b.sh`      | Example multi-iter shell loop                                           |
+
 
 ---
 
 ## 11. Troubleshooting
 
-| Issue | What to check |
-|-------|----------------|
-| `Import manibench failed` | `cd training/manibench` and `export PYTHONPATH="$(pwd)"` |
-| `ModuleNotFoundError: trl` / `datasets` | `pip install -e ".[training]"` from repo root |
+
+| Issue                                         | What to check                                                                                                       |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `Import manibench failed`                     | `cd training/manibench` and `export PYTHONPATH="$(pwd)"`                                                            |
+| `ModuleNotFoundError: trl` / `datasets`       | `pip install -e ".[training]"` from repo root                                                                       |
 | Executability always 0 with `run_render=True` | `manim` not installed, scene class not named `class X(Scene)`, or timeout (increase in harness / standalone script) |
-| Hub push 401/403 | `HF_TOKEN`, repo permissions, `huggingface-cli login` |
-| Leakage assert trips | Pilot `full_prompt` in training data — fix sources and refresh hashes |
+| Hub push 401/403                              | `HF_TOKEN`, repo permissions, `huggingface-cli login`                                                               |
+| Leakage assert trips                          | Pilot `full_prompt` in training data — fix sources and refresh hashes                                               |
+
 
 For gateway, IR, Docker runner, and Ollama: [DEVELOPERS.md](DEVELOPERS.md).

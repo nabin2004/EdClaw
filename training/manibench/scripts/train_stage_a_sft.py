@@ -9,9 +9,9 @@
 # ]
 # ///
 """
-Stage-A SFT on Gemma-4-E2B-it + LoRA. Intended for HF Jobs `uv run`.
+Stage-A SFT on Gemma-4-E2B-it + LoRA. Run locally (`uv run` + CUDA) or on HF Jobs.
 
-Env: HF_TOKEN (required for push), optional TRACKIO_*.
+Env: `HF_TOKEN` when pushing to Hub (omit with `--no-push`). Optional `TRACKIO_*`.
 
 Dataset: default `nabin2004/manibench-sft-core` on Hub, or local JSONL via --train-jsonl.
 
@@ -61,6 +61,23 @@ def main() -> None:
     ap.add_argument("--epochs", type=int, default=3)
     ap.add_argument("--lr", type=float, default=2e-4)
     ap.add_argument("--output-dir", default="stage-a-out")
+    ap.add_argument(
+        "--no-push",
+        action="store_true",
+        help="Save LoRA to --output-dir only; do not push to the Hub (no HF_TOKEN needed).",
+    )
+    ap.add_argument(
+        "--per-device-train-batch-size",
+        type=int,
+        default=None,
+        help="Override per-device train batch size (default 2). Lower if CUDA OOM on 24GB GPUs.",
+    )
+    ap.add_argument(
+        "--max-length",
+        type=int,
+        default=None,
+        help="Override SFT max token length (default 4096). Lower to reduce VRAM.",
+    )
     args = ap.parse_args()
 
     if args.train_jsonl and args.eval_hashes_json:
@@ -81,6 +98,10 @@ def main() -> None:
         raw = load_dataset(args.dataset, split="train")
         ds = raw.train_test_split(test_size=0.05, seed=42)
 
+    push = not args.no_push
+    batch = args.per_device_train_batch_size if args.per_device_train_batch_size is not None else 2
+    max_len = args.max_length if args.max_length is not None else 4096
+
     trainer = SFTTrainer(
         model=args.model,
         train_dataset=ds["train"],
@@ -88,15 +109,15 @@ def main() -> None:
         peft_config=LoraConfig(r=32, lora_alpha=64, target_modules="all-linear"),
         args=SFTConfig(
             output_dir=args.output_dir,
-            push_to_hub=True,
-            hub_model_id=args.hub_model_id,
+            push_to_hub=push,
+            hub_model_id=args.hub_model_id if push else None,
             num_train_epochs=args.epochs,
-            per_device_train_batch_size=2,
+            per_device_train_batch_size=batch,
             gradient_accumulation_steps=16,
             learning_rate=args.lr,
             bf16=True,
             gradient_checkpointing=True,
-            max_length=4096,
+            max_length=max_len,
             eval_strategy="steps",
             eval_steps=100,
             save_steps=200,
@@ -105,7 +126,8 @@ def main() -> None:
         ),
     )
     trainer.train()
-    trainer.push_to_hub()
+    if push:
+        trainer.push_to_hub()
     print("Done.", file=sys.stderr)
 
 

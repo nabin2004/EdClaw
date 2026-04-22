@@ -46,6 +46,23 @@ def main() -> None:
     ap.add_argument("--epochs", type=int, default=1)
     ap.add_argument("--lr", type=float, default=1e-4)
     ap.add_argument("--output-dir", default="incremental-out")
+    ap.add_argument(
+        "--no-push",
+        action="store_true",
+        help="Save LoRA to --output-dir only; do not push to the Hub.",
+    )
+    ap.add_argument(
+        "--per-device-train-batch-size",
+        type=int,
+        default=None,
+        help="Override per-device train batch size (default 2). Lower if CUDA OOM.",
+    )
+    ap.add_argument(
+        "--max-length",
+        type=int,
+        default=None,
+        help="Override SFT max token length (default 4096). Lower to reduce VRAM.",
+    )
     args = ap.parse_args()
 
     if args.eval_hashes_json:
@@ -70,6 +87,10 @@ def main() -> None:
 
     ds = Dataset.from_list(rows).train_test_split(test_size=0.05, seed=42)
 
+    push = not args.no_push
+    batch = args.per_device_train_batch_size if args.per_device_train_batch_size is not None else 2
+    max_len = args.max_length if args.max_length is not None else 4096
+
     trainer = SFTTrainer(
         model=args.base_model,
         train_dataset=ds["train"],
@@ -77,15 +98,15 @@ def main() -> None:
         peft_config=LoraConfig(r=32, lora_alpha=64, target_modules="all-linear"),
         args=SFTConfig(
             output_dir=args.output_dir,
-            push_to_hub=True,
-            hub_model_id=args.hub_model_id,
+            push_to_hub=push,
+            hub_model_id=args.hub_model_id if push else None,
             num_train_epochs=args.epochs,
-            per_device_train_batch_size=2,
+            per_device_train_batch_size=batch,
             gradient_accumulation_steps=16,
             learning_rate=args.lr,
             bf16=True,
             gradient_checkpointing=True,
-            max_length=4096,
+            max_length=max_len,
             eval_strategy="steps",
             eval_steps=50,
             report_to=os.environ.get("REPORT_TO", "none"),
@@ -93,7 +114,8 @@ def main() -> None:
         ),
     )
     trainer.train()
-    trainer.push_to_hub()
+    if push:
+        trainer.push_to_hub()
     print("Incremental SFT done.", file=sys.stderr)
 
 

@@ -4,6 +4,8 @@ Implements the attached plan: **Stage A** static SFT, **Stage B** iterative reje
 
 **Full command-by-command guide (datasets, eval, train, report):** [docs/MANIBENCH_RUNBOOK.md](../../docs/MANIBENCH_RUNBOOK.md).
 
+**Local GPU (e.g. RTX 4090):** training does not require Hugging Face Jobs — use `uv run` on your machine and optional `--no-push`; see the runbook **§6.1**.
+
 ## Layout
 
 | Path | Purpose |
@@ -67,7 +69,7 @@ uv run scripts/eval_uv_standalone.py --in rollouts.jsonl --out scored.jsonl
 
 ## Stage A — SFT
 
-Use PEP 723 script (see [`SUBMIT_HF_JOBS.md`](SUBMIT_HF_JOBS.md)) or locally:
+Use PEP 723 script (see [`SUBMIT_HF_JOBS.md`](SUBMIT_HF_JOBS.md) for cloud only) or locally:
 
 ```bash
 uv run scripts/train_stage_a_sft.py \
@@ -75,6 +77,8 @@ uv run scripts/train_stage_a_sft.py \
   --hub-model-id YOURNAME/manibench-gemma4-sft-stageA \
   --eval-hashes-json manibench/data/manibench_eval_hashes.json
 ```
+
+Local disk only: add `--no-push --output-dir ./out/stage-a-local` (no `HF_TOKEN` needed to train).
 
 ## Stage B — Iterative loop + DPO every 5 loops
 

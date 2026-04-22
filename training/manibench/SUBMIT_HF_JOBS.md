@@ -1,6 +1,8 @@
 # Submitting ManiBench jobs to Hugging Face Jobs
 
-Training runs on ephemeral GPUs — **always** pass `secrets={"HF_TOKEN":"$HF_TOKEN"}` and enable `push_to_hub`.
+**Local GPU first:** the same `train_*.py` scripts run on your own NVIDIA GPU (`uv run`, optional `--no-push`); see [docs/MANIBENCH_RUNBOOK.md](../../docs/MANIBENCH_RUNBOOK.md) §6.1. HF Jobs is optional when you need a cloud GPU.
+
+Training on Jobs runs on ephemeral GPUs — **always** pass `secrets={"HF_TOKEN":"$HF_TOKEN"}` and enable `push_to_hub`.
 
 ## Prerequisites
 

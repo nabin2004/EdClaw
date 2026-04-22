@@ -53,6 +53,23 @@ def main() -> None:
     ap.add_argument("--hub-model-id", default="nabin2004/manibench-gemma4-dpo")
     ap.add_argument("--output-dir", default="dpo-out")
     ap.add_argument("--beta", type=float, default=0.1)
+    ap.add_argument(
+        "--no-push",
+        action="store_true",
+        help="Save to --output-dir only; do not push merged model to the Hub.",
+    )
+    ap.add_argument(
+        "--per-device-train-batch-size",
+        type=int,
+        default=None,
+        help="Override per-device train batch size (default 1). Lower if CUDA OOM.",
+    )
+    ap.add_argument(
+        "--max-length",
+        type=int,
+        default=None,
+        help="Override DPO max_length (default 4096). Lower to reduce VRAM.",
+    )
     args = ap.parse_args()
 
     from datasets import Dataset  # noqa: WPS433
@@ -71,19 +88,23 @@ def main() -> None:
     if args.adapter_model:
         model = PeftModel.from_pretrained(model, args.adapter_model)
 
+    push = not args.no_push
+    batch = args.per_device_train_batch_size if args.per_device_train_batch_size is not None else 1
+    max_len = args.max_length if args.max_length is not None else 4096
+
     trainer = DPOTrainer(
         model=model,
         ref_model=ref,
         args=DPOConfig(
             output_dir=args.output_dir,
-            per_device_train_batch_size=1,
+            per_device_train_batch_size=batch,
             gradient_accumulation_steps=8,
             learning_rate=5e-6,
             beta=args.beta,
-            push_to_hub=True,
-            hub_model_id=args.hub_model_id,
+            push_to_hub=push,
+            hub_model_id=args.hub_model_id if push else None,
             bf16=True,
-            max_length=4096,
+            max_length=max_len,
             max_prompt_length=2048,
             report_to=os.environ.get("REPORT_TO", "none"),
         ),
@@ -92,7 +113,8 @@ def main() -> None:
         tokenizer=tokenizer,
     )
     trainer.train()
-    trainer.push_to_hub()
+    if push:
+        trainer.push_to_hub()
     print("DPO done.", file=sys.stderr)
 
 
