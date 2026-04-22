@@ -31,6 +31,8 @@ python scripts/refresh_eval_hashes.py
 
 ## Build datasets
 
+For **teacher distillation** (Gemini / GPT / Claude / Ollama via LiteLLM) instead of stub-only synthetic rows, use `scripts/generate_sft_teacher.py` and merge the result with core SFT — see [docs/MANIBENCH_RUNBOOK.md](../../docs/MANIBENCH_RUNBOOK.md) §3.1.
+
 ```bash
 python scripts/build_sft_core_dataset.py --out ./out/manibench-sft-core
 python scripts/build_preference_dataset.py --out ./out/manibench-preference.jsonl

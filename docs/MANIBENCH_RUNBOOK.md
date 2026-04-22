@@ -70,8 +70,57 @@ Working directory: **`training/manibench`**, with `PYTHONPATH` set as above.
 |------|---------|--------|
 | SFT core (≥145 GL→CE-style + gallery) | `python scripts/build_sft_core_dataset.py --out ./out/manibench-sft-core` | `./out/manibench-sft-core.jsonl` (+ optional `datasets` folder) |
 | DPO preference (~2k chosen/rejected) | `python scripts/build_preference_dataset.py --out ./out/manibench-preference.jsonl` | `./out/manibench-preference.jsonl` |
-| Synthetic SFT (~5k rows, category mix) | `python scripts/synthetic_expand.py --out ./out/manibench-synthetic-sft.jsonl` | `./out/manibench-synthetic-sft.jsonl` |
+| Synthetic SFT (~5k rows, category mix, stub assistants) | `python scripts/synthetic_expand.py --out ./out/manibench-synthetic-sft.jsonl` | `./out/manibench-synthetic-sft.jsonl` |
+| Teacher SFT (LiteLLM: Gemini / OpenAI / Anthropic / Ollama, …) | `python scripts/generate_sft_teacher.py --model gemini/gemini-2.5-pro --count 3000 --out ./out/manibench-sft-teacher.jsonl` | `./out/manibench-sft-teacher.jsonl` (+ optional `--rejected-out`, cache under `./out/_teacher_cache`) |
 | Merge SFT sources | `python scripts/merge_sft_jsonl.py --inputs out/manibench-sft-core.jsonl out/manibench-synthetic-sft.jsonl --out ./out/manibench-sft-merged.jsonl` | `./out/manibench-sft-merged.jsonl` |
+
+### 3.1 Teacher-model SFT distillation (strong LLM → JSONL)
+
+Use a **teacher** model via **LiteLLM** so assistant turns are real generations instead of [`synthetic_expand.py`](../training/manibench/scripts/synthetic_expand.py) stubs. Prompts are sampled from the same five ManiBench categories as the stub builder ([`manibench/prompt_seeds.py`](../training/manibench/manibench/prompt_seeds.py)).
+
+**Auth (examples):** set the API key your provider expects, e.g. `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENROUTER_API_KEY` (see [`.env.example`](../.env.example)).
+
+From `training/manibench` with `PYTHONPATH` set:
+
+```bash
+# Dry-run (no API keys): stub completions, validates leakage + JSONL shape
+python scripts/generate_sft_teacher.py --dry-run --count 20 --out ./out/manibench-sft-teacher-smoke.jsonl
+
+# Gemini (example model id — pick the current Pro id supported by LiteLLM)
+export GEMINI_API_KEY=...
+python scripts/generate_sft_teacher.py \
+  --model gemini/gemini-2.5-pro \
+  --count 3000 \
+  --concurrency 4 \
+  --temperature 0.7 \
+  --max-tokens 2048 \
+  --timeout 120 \
+  --cache-dir ./out/_teacher_cache \
+  --resume \
+  --require-exec \
+  --min-composite 0.5 \
+  --out ./out/manibench-sft-teacher.jsonl \
+  --rejected-out ./out/manibench-sft-teacher-rejected.jsonl
+
+# OpenAI / Anthropic (same script; change --model and env key)
+export OPENAI_API_KEY=...
+python scripts/generate_sft_teacher.py --model gpt-4o --count 500 --out ./out/manibench-sft-teacher-oai.jsonl
+
+export ANTHROPIC_API_KEY=...
+python scripts/generate_sft_teacher.py --model claude-sonnet-4-20250514 --count 500 --out ./out/manibench-sft-teacher-claude.jsonl
+```
+
+- **Default eval mode** is fast (no `manim` subprocess): static executability + VCER. Add **`--render-eval`** for full subprocess executability (requires `manim` on `PATH`).
+- **`--resume`**: skips user prompts already present in `--out` (append mode; does not truncate an existing output file).
+- **Optional `--prompts-jsonl`**: each line is a JSON object with either `messages` (first user turn used), or `user` / `prompt` plus optional `task_type`.
+
+Merge teacher data with core (and optional stub synthetic) before Stage A:
+
+```bash
+python scripts/merge_sft_jsonl.py \
+  --inputs out/manibench-sft-core.jsonl out/manibench-sft-teacher.jsonl \
+  --out ./out/manibench-sft-merged.jsonl
+```
 
 Smaller smoke runs:
 
@@ -244,7 +293,8 @@ python scripts/final_eval_report.py \
 | `scripts/refresh_eval_hashes.py` | Regenerate pilot SHA256 file |
 | `scripts/build_sft_core_dataset.py` | SFT core JSONL (+ optional `datasets` save) |
 | `scripts/build_preference_dataset.py` | DPO JSONL |
-| `scripts/synthetic_expand.py` | Synthetic SFT JSONL |
+| `scripts/synthetic_expand.py` | Synthetic SFT JSONL (stub assistants; shared prompts with teacher path) |
+| `scripts/generate_sft_teacher.py` | Teacher LLM SFT JSONL (LiteLLM, cache, eval gates, `--resume`) |
 | `scripts/merge_sft_jsonl.py` | Concatenate JSONL with leak check |
 | `scripts/push_hub.py` | Push JSONL as Hub dataset |
 | `scripts/eval_uv_standalone.py` | Batch scoring (HF Jobs) |
