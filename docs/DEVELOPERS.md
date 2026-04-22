@@ -2,6 +2,8 @@
 
 How to set up a dev environment, run the gateway, run checks, and use profiles. For architecture and subsystem mapping, see [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md). For learner graph memory (PyPI `dagestan`), see [DAGESTAN.md](DAGESTAN.md). For multi-lecture generation over WebSocket, see [AUTOCOURSE.md](AUTOCOURSE.md). For optional speech synthesis, see [TTS.md](TTS.md). For future work, see [ROADMAP.md](ROADMAP.md).
 
+For **ManiBench / Manim CE** fine-tuning datasets, HF Jobs UV scripts, and automated eval, see [training/manibench/README.md](../training/manibench/README.md).
+
 ## Prerequisites
 
 - **Python 3.11+** (CI uses 3.12; local 3.14+ works with `uv` if available).
