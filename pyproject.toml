@@ -1,0 +1,90 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "educlaw"
+version = "0.1.0"
+description = "EduClaw — local-first educational agent gateway (ADK + Gemma via Ollama)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "EduClaw contributors" }]
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "websockets>=13",
+  "pydantic>=2.9",
+  "pydantic-settings>=2.5",
+  "httpx>=0.28",
+  "anyio>=4.6",
+  "sqlalchemy[asyncio]>=2.0",
+  "aiosqlite>=0.20",
+  "networkx>=3.3",
+  "docker>=7.1",
+  "asyncssh>=2.18",
+  "python-frontmatter>=1.1",
+  "ruamel.yaml>=0.18",
+  "typer>=0.13",
+  "rich>=13.9",
+  "structlog>=24.4",
+  "cachetools>=5.5",
+  "google-adk>=0.1.0",
+  "litellm>=1.65.5",
+  "google-genai>=1.0.0",
+  "ollama>=0.4",
+]
+
+[project.optional-dependencies]
+sqlite-vec = ["sqlite-vec>=0.1.6"]
+training = [
+  "transformers>=4.46",
+  "peft>=0.13",
+  "trl>=0.12",
+  "datasets>=3.1",
+  "accelerate>=1.1",
+]
+channels = [
+  "python-telegram-bot>=21.6",
+  "discord.py>=2.4",
+  "matrix-nio>=0.25",
+]
+cloud = [
+  "google-cloud-aiplatform>=1.70",
+]
+structured = [
+  "instructor>=1.7",
+  "outlines>=0.1",
+]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.24",
+  "ruff>=0.8",
+  "mypy>=1.13",
+  "types-docker>=7.1",
+  "types-cachetools>=5.5",
+]
+
+[project.scripts]
+educlaw = "educlaw.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["educlaw"]
+strict = false
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

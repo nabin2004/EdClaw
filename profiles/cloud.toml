@@ -1,0 +1,7 @@
+# Stub: Vertex AI / Gemini / vLLM on Cloud Run — opt-in only.
+# Wire ``GOOGLE_GENAI_USE_VERTEXAI``, project, location, and remote model ids here.
+
+[educlaw]
+strict_local = false
+# model_id = "gemini-flash-latest"
+# ollama_url = "https://your-vllm-endpoint.run.app/v1"

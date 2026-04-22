@@ -1,0 +1,8 @@
+# Build: ollama create gemma3-tool -f docker/modelfiles/gemma3-tool.Modelfile
+# Use a base tag that supports tool templates on your machine.
+FROM gemma3:latest
+TEMPLATE """{{- if or .System .Tools }}<start_of_turn>user
+{{- if .System }}{{ .System }}{{ end }}
+{{- if .Tools }}Tools available. Follow tool-call syntax required by the runtime.{{ end }}<end_of_turn>
+{{- end }}"""
+SYSTEM """You are EduClaw. When you need tools, emit valid tool calls as instructed by the host runtime."""

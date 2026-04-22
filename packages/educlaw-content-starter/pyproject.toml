@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "educlaw-content-starter"
+version = "0.1.0"
+requires-python = ">=3.11"
+description = "Example IR course pack for EduClaw"
+
+[tool.setuptools.packages.find]
+where = ["src"]

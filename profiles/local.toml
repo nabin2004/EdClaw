@@ -1,0 +1,15 @@
+# Default local-first profile (Ollama + loopback gateway)
+
+[env]
+OLLAMA_API_BASE = "http://127.0.0.1:11434"
+
+[educlaw]
+gateway_host = "127.0.0.1"
+gateway_port = 18789
+ollama_url = "http://127.0.0.1:11434"
+model_id = "gemma3:latest"
+embedding_model = "embeddinggemma"
+shield_model = "shieldgemma:2b"
+strict_local = true
+sandbox_backend = "docker"
+data_dir = "~/.educlaw"
