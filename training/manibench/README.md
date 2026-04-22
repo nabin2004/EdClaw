@@ -2,6 +2,8 @@
 
 Implements the attached plan: **Stage A** static SFT, **Stage B** iterative rejection-sampling SFT + periodic DPO, **Stage C** GRPO with ManiBench composite reward.
 
+**Full command-by-command guide (datasets, eval, train, report):** [docs/MANIBENCH_RUNBOOK.md](../../docs/MANIBENCH_RUNBOOK.md).
+
 ## Layout
 
 | Path | Purpose |

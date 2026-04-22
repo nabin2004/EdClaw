@@ -2,7 +2,7 @@
 
 How to set up a dev environment, run the gateway, run checks, and use profiles. For architecture and subsystem mapping, see [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md). For learner graph memory (PyPI `dagestan`), see [DAGESTAN.md](DAGESTAN.md). For multi-lecture generation over WebSocket, see [AUTOCOURSE.md](AUTOCOURSE.md). For optional speech synthesis, see [TTS.md](TTS.md). For future work, see [ROADMAP.md](ROADMAP.md).
 
-For **ManiBench / Manim CE** fine-tuning datasets, HF Jobs UV scripts, and automated eval, see [training/manibench/README.md](../training/manibench/README.md).
+For **ManiBench / Manim CE** fine-tuning: step-by-step runbook (every command), see [MANIBENCH_RUNBOOK.md](MANIBENCH_RUNBOOK.md). Package overview and stage summary: [training/manibench/README.md](../training/manibench/README.md). Hugging Face Jobs: [training/manibench/SUBMIT_HF_JOBS.md](../training/manibench/SUBMIT_HF_JOBS.md).
 
 ## Prerequisites
 
