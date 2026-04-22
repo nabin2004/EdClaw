@@ -56,6 +56,11 @@ structured = [
   "instructor>=1.7",
   "outlines>=0.1",
 ]
+tts-kitten = [
+  "kittentts @ https://github.com/KittenML/KittenTTS/releases/download/0.8.1/kittentts-0.8.1-py3-none-any.whl",
+  "soundfile>=0.12",
+  "numpy>=1.26",
+]
 dev = [
   "pytest>=8.3",
   "pytest-asyncio>=0.24",
@@ -67,6 +72,10 @@ dev = [
 
 [project.scripts]
 educlaw = "educlaw.cli:app"
+
+[project.entry-points."educlaw.tts"]
+null = "educlaw.tts.backends.null:factory"
+kitten = "educlaw.tts.backends.kitten:factory"
 
 [tool.setuptools.packages.find]
 where = ["src"]
