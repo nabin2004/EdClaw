@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT))
 
 from manibench.constants import DEFAULT_TASK_DISTRIBUTION, MANIM_CE_SYSTEM  # noqa: E402
 from manibench.leakage import assert_no_eval_leakage  # noqa: E402
+from manibench.prompt_seeds import generate_prompt  # noqa: E402
 
 
 def _weighted_categories(rng: random.Random, n: int) -> list[str]:
@@ -76,10 +77,7 @@ def main() -> None:
     cats = _weighted_categories(rng, args.count)
     rows = []
     for i, cat in enumerate(cats):
-        user = (
-            f"[{cat}] Generate a minimal Manim CE Scene (variant {i}) "
-            "that demonstrates the requested animation pattern."
-        )
+        user = generate_prompt(cat, i, rng)
         rows.append(
             {
                 "messages": [
@@ -88,7 +86,7 @@ def main() -> None:
                     {"role": "assistant", "content": _scene_for(cat, i).strip()},
                 ],
                 "task_type": cat,
-                "source": "synthetic_expand",
+                "source": "synthetic_stub",
             }
         )
 
