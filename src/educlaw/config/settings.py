@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     sqlite_path: Path | None = None
     vec_sqlite_path: Path | None = None
 
+    # PyPI `dagestan` temporal graph (see docs/DAGESTAN.md)
+    dagestan_db_path: Path | None = None
+    dagestan_provider: Literal["stub", "ollama", "openai", "anthropic"] = "stub"
+
     strict_local: bool = True
     sandbox_backend: Literal["docker", "ssh", "local_jail"] = "docker"
     sandbox_mode: Literal["off", "non_main", "all"] = "all"
@@ -67,6 +71,8 @@ class Settings(BaseSettings):
             object.__setattr__(self, "vec_sqlite_path", self.data_dir / "vectors.sqlite")
         if self.tts_cache_dir is None:
             object.__setattr__(self, "tts_cache_dir", self.data_dir / "tts")
+        if self.dagestan_db_path is None:
+            object.__setattr__(self, "dagestan_db_path", self.data_dir / "dagestan_memory.json")
 
 
 def _merge_toml_into_environ(profile: dict) -> None:
@@ -101,6 +107,8 @@ def load_settings() -> Settings:
             merged["vec_sqlite_path"] = Path(os.path.expanduser(str(merged["vec_sqlite_path"])))
         if "tts_cache_dir" in merged:
             merged["tts_cache_dir"] = Path(os.path.expanduser(str(merged["tts_cache_dir"])))
+        if "dagestan_db_path" in merged:
+            merged["dagestan_db_path"] = Path(os.path.expanduser(str(merged["dagestan_db_path"])))
         s = Settings(**{**s.model_dump(), **merged})
     # Ensure OLLAMA_API_BASE for LiteLLM (ADK docs)
     os.environ.setdefault("OLLAMA_API_BASE", s.ollama_url.rstrip("/"))

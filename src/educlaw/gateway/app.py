@@ -20,9 +20,7 @@ from educlaw.gateway.ws import handle_ws
 from educlaw.ir.store import IrStore
 from educlaw.memory.adk_memory_service import DagestanMemoryService
 from educlaw.memory.dagestan import Dagestan
-from educlaw.memory.embeddings import EmbeddingClient
 from educlaw.memory.models import Base as OrmBase
-from educlaw.memory.vec_store import VecStore
 from educlaw.safety.shield import Shield
 from educlaw.tts.registry import build_backend
 
@@ -48,19 +46,7 @@ async def lifespan(app: FastAPI):
     ir = IrStore(session_factory)
     await ir.reindex_disk(ir_root)
 
-    embed = EmbeddingClient(settings.ollama_url)
-    try:
-        dim = len((await embed.embed(settings.embedding_model, ["__dim_probe__"]))[0])
-    except Exception:
-        dim = settings.embedding_dim
-    vec_path = settings.vec_sqlite_path or (settings.data_dir / "vectors.sqlite")
-    vec = VecStore(vec_path, dim)
-    dagestan = Dagestan(
-        session_factory,
-        vec,
-        embed,
-        settings.embedding_model,
-    )
+    dagestan = Dagestan(settings)
 
     shield = Shield(AsyncClient(host=settings.ollama_url), model=settings.shield_model)
 

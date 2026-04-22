@@ -33,6 +33,7 @@ dependencies = [
   "litellm>=1.65.5",
   "google-genai>=1.0.0",
   "ollama>=0.4",
+  "dagestan>=0.1.0",
 ]
 
 [project.optional-dependencies]

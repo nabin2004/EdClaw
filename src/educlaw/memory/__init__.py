@@ -1,4 +1,4 @@
-from .dagestan import Dagestan
+from .dagestan import BeliefFact, Dagestan
 from .embeddings import EmbeddingClient
 
-__all__ = ["Dagestan", "EmbeddingClient"]
+__all__ = ["BeliefFact", "Dagestan", "EmbeddingClient"]
