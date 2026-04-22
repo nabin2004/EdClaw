@@ -14,6 +14,8 @@ import uvicorn
 from educlaw.config.settings import load_settings
 from educlaw.config.strict_local import assert_strict_local
 from educlaw.ir.loader import lint, load_all
+from educlaw.tts.contract import TTSRequest
+from educlaw.tts.registry import build_backend, known_backends
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
@@ -65,6 +67,79 @@ def doctor_cmd(
     except Exception as e:
         typer.secho(f"Ollama check failed: {e}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from e
+
+
+tts_typer = typer.Typer(help="Text-to-speech (offline backends; see docs/TTS.md).")
+app.add_typer(tts_typer, name="tts")
+
+
+@tts_typer.command("list")
+def tts_list() -> None:
+    """List registered TTS backends and (best-effort) available voices."""
+    s = load_settings()
+    typer.echo("Registered backends:")
+    for name in sorted(known_backends()):
+        typer.echo(f"  - {name}")
+    typer.echo("")
+    if not s.tts_enabled:
+        typer.secho(
+            "tts_enabled is false — enable TTS in your profile to build kitten and list voices.",
+            fg=typer.colors.YELLOW,
+        )
+        return
+    try:
+        backend = build_backend(s)
+    except RuntimeError as e:
+        typer.secho(str(e), fg=typer.colors.RED)
+        raise typer.Exit(code=1) from e
+    if backend is None:
+        typer.echo("No active backend (tts_enabled is false).")
+        return
+    typer.echo(f"Active backend for this profile: {backend.name}")
+    typer.echo(f"  voices: {backend.available_voices}")
+
+    async def _close() -> None:
+        await backend.close()
+
+    asyncio.run(_close())
+
+
+@tts_typer.command("say")
+def tts_say(
+    text: Annotated[str, typer.Argument(help="Text to synthesize")],
+    voice: Annotated[str | None, typer.Option(help="Voice name (backend-specific)")] = None,
+    speed: Annotated[float, typer.Option(help="Speech speed multiplier")] = 1.0,
+    out: Annotated[Path, typer.Option("--out", "-o", help="Output WAV path")] = Path("out.wav"),
+) -> None:
+    """Synthesize speech to a WAV file (requires tts_enabled and a valid backend)."""
+    s = load_settings()
+    if not s.tts_enabled:
+        typer.secho("Set tts_enabled=true in your profile.", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+    try:
+        backend = build_backend(s)
+    except RuntimeError as e:
+        typer.secho(str(e), fg=typer.colors.RED)
+        raise typer.Exit(code=1) from e
+    if backend is None:
+        typer.secho("TTS is disabled.", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+
+    async def _run() -> None:
+        req = TTSRequest(
+            text=text,
+            voice=voice or s.tts_voice,
+            speed=speed,
+            sample_rate=s.tts_sample_rate,
+        )
+        audio = await backend.synthesize(req)
+        out_p = out.expanduser()
+        out_p.parent.mkdir(parents=True, exist_ok=True)
+        out_p.write_bytes(audio.audio_bytes)
+        await backend.close()
+
+    asyncio.run(_run())
+    typer.secho(f"Wrote {out.expanduser()}", fg=typer.colors.GREEN)
 
 
 ir_typer = typer.Typer(help="IR maintenance commands.")
