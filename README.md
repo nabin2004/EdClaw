@@ -42,7 +42,7 @@ educlaw serve
 - [docs/DAGESTAN.md](docs/DAGESTAN.md) — PyPI `dagestan` package and how EduClaw wraps it
 - [docs/AUTOCOURSE.md](docs/AUTOCOURSE.md) — Autocourse / Autolecture WebSocket `mode=autocourse` and event payloads
 - [docs/TTS.md](docs/TTS.md) — pluggable TTS registry, Kitten (offline), WebSocket `type=tts`, CLI
-- [docs/DEVELOPERS.md](docs/DEVELOPERS.md) — environment setup, run, CLI, tests, troubleshooting
+- [docs/DEVELOPERS.md](docs/DEVELOPERS.md) — environment setup, run, CLI, tests, troubleshooting, profiles and memory settings
 - [docs/ROADMAP.md](docs/ROADMAP.md) — future work and planned directions
 - [AGENTS.md](AGENTS.md) — contributor / AI agent conventions
 

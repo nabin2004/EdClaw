@@ -1,6 +1,6 @@
 # Developer guide
 
-How to set up a dev environment, run the gateway, run checks, and use profiles. For architecture and subsystem mapping, see [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md). For multi-lecture generation over WebSocket, see [AUTOCOURSE.md](AUTOCOURSE.md). For optional speech synthesis, see [TTS.md](TTS.md). For future work, see [ROADMAP.md](ROADMAP.md).
+How to set up a dev environment, run the gateway, run checks, and use profiles. For architecture and subsystem mapping, see [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md). For learner graph memory (PyPI `dagestan`), see [DAGESTAN.md](DAGESTAN.md). For multi-lecture generation over WebSocket, see [AUTOCOURSE.md](AUTOCOURSE.md). For optional speech synthesis, see [TTS.md](TTS.md). For future work, see [ROADMAP.md](ROADMAP.md).
 
 ## Prerequisites
 
@@ -106,7 +106,8 @@ You can use any WebSocket client; `wscat` or a small Python script is enough for
 
 - **TOML profiles**: [profiles/local.toml](../profiles/local.toml) (default), [profiles/cloud.toml](../profiles/cloud.toml) (stub).
 - **Override profile path**: `EDUCLAW_PROFILE_PATH` or `educlaw` settings (`EDUCLAW_*` env vars from [settings](../src/educlaw/config/settings.py)).
-- **Data directory**: `~/.educlaw` by default (SQLite, vectors, audit logs, default `tts/` cache). The repo’s [content/ir/](../content/ir/) is used as `ir_root` when that path exists.
+- **Data directory**: `~/.educlaw` by default (main SQLite for IR index, `vectors.sqlite` for `educlaw ir index`, `dagestan_memory.json` for the temporal graph, default `tts/` cache, audit paths as wired). The repo’s [content/ir/](../content/ir/) is used as `ir_root` when that path exists.
+- **Learner memory (Dagestan)**: PyPI package `dagestan` with defaults `dagestan_provider = "stub"` (no external LLM for extraction) and `dagestan_db_path` under `data_dir`. For real conversation ingestion, set `dagestan_provider` to `ollama` (uses `ollama_url` + `model_id`), or `openai` / `anthropic` with the usual API keys. See [DAGESTAN.md](DAGESTAN.md).
 - **TTS (optional)**: set `tts_enabled = true` and `tts_backend` / `tts_model_id` (for Kitten) under `[educlaw]` — see [TTS.md](TTS.md). Without TTS, `type: tts` WebSocket frames return an error.
 - **Autocourse**: no extra profile flag; use the WebSocket `mode` field as described in [AUTOCOURSE.md](AUTOCOURSE.md) (uses the same `model_id` and Ollama host as the rest of the app).
 
@@ -137,6 +138,7 @@ The gateway currently defaults to `NullSandbox` for shell tools unless you wire 
 - **Empty IR**: Set `ir_root` or add Markdown under [content/ir/](../content/ir/); run `educlaw ir lint`.
 - **Autocourse errors** (`autocourse_event` with `kind: error`): invalid JSON from the planner, empty lecture list, or Ollama failures — check `OLLAMA_API_BASE` / Ollama logs; reduce topic length; ensure `model_id` supports JSON-style chat for the plan step.
 - **TTS disabled or `tts_model_id` required**: see [TTS.md](TTS.md) — for `kitten`, set a Hugging Face repo id; for tests use `tts_backend = "null"`.
+- **Dagestan `stub` and empty ingest**: the default `dagestan_provider` does not run a real LLM for extraction, so session ingestion may add no graph nodes. Switch to `ollama` or a cloud provider for populated graph memory; see [DAGESTAN.md](DAGESTAN.md).
 
 ## Contributing
 

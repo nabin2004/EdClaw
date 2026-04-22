@@ -8,7 +8,7 @@ This document describes **planned** work. Nothing here is a commitment or releas
 - **Tool-capable Gemma**: Document and CI-gate the `docker/modelfiles/gemma3-tool.Modelfile` build; optional `educlaw doctor` check that a `*-tool` tag exists when tools are enabled.
 - **Sandbox selection**: Profile or env flag to choose `NullSandbox` vs `DockerSandbox` after `educlaw/runner:latest` is built; fail fast with a clear message if Docker is unavailable.
 - **IR tools**: Add `ir_prereq_walk` / richer `slice_for_learner` (graph walks, prerequisite ordering) on top of the existing `networkx` lint path.
-- **Dagestan**: Background decay for fact confidence; optional migration to a stronger graph store (`kuzu`) when scale demands it, behind the same service interface.
+- **Dagestan**: Learner memory already uses the PyPI temporal graph (decay, curation, retrieval live upstream; see [DAGESTAN.md](DAGESTAN.md)). Open directions: optional migration to a stronger backing store (e.g. `kuzu`) when scale demands it, while keeping the same `educlaw.memory.dagestan` async surface.
 
 ## Medium term (product shape)
 

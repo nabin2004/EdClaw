@@ -20,7 +20,21 @@ It preserves EduClaw’s existing async surface for tools and ADK:
 
 SQLAlchemy models **`Fact`** and **`EmbeddedLog`** in [`memory/models.py`](../src/educlaw/memory/models.py) are **no longer written** by this adapter but remain in the schema so existing SQLite files keep working under `create_all`.
 
+## Configuration in EduClaw
+
+Set these under `[educlaw]` in your profile TOML (see [profiles/local.toml](../profiles/local.toml)) or via environment variables with the `EDUCLAW_` prefix:
+
+| Key | Role |
+|-----|------|
+| `dagestan_db_path` | JSON graph file (default: `data_dir/dagestan_memory.json`) |
+| `dagestan_provider` | `stub` (default, no LLM for extraction—good for CI), `ollama` (uses `ollama_url` and `model_id`), or `openai` / `anthropic` with provider packages and API keys |
+
+With `stub`, `ingest()` does not add extracted nodes (empty JSON from the stub client). Use `ollama` or a cloud provider when you want conversation text to populate the graph.
+
+Day-to-day setup is also covered in [DEVELOPERS.md](DEVELOPERS.md#configuration).
+
 ## See also
 
+- [DEVELOPERS.md](DEVELOPERS.md) — profiles, data directory, and memory notes
 - [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md) — subsystem table and §12
 - [`src/educlaw/memory/adk_memory_service.py`](../src/educlaw/memory/adk_memory_service.py) — ADK `BaseMemoryService` bridge

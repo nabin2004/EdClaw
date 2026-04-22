@@ -13,3 +13,7 @@ shield_model = "shieldgemma:2b"
 strict_local = true
 sandbox_backend = "docker"
 data_dir = "~/.educlaw"
+# Learner memory: PyPI dagestan (see docs/DAGESTAN.md). "stub" = no LLM for ingest extraction (CI-friendly).
+# dagestan_provider = "stub"
+# dagestan_db_path = "~/.educlaw/dagestan_memory.json"
+# For graph ingest via local Ollama: dagestan_provider = "ollama"
