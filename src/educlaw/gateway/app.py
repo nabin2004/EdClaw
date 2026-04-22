@@ -86,6 +86,7 @@ async def lifespan(app: FastAPI):
     app.state.settings = settings
     app.state.runner = runner
     app.state.engine = engine
+    app.state.deps = deps
     yield
     await engine.dispose()
 
@@ -101,8 +102,8 @@ async def healthz() -> dict[str, str]:
 @app.websocket("/ws")
 async def ws_endpoint(ws: WebSocket) -> None:
     runner: Runner = ws.app.state.runner
-    settings = ws.app.state.settings
-    await handle_ws(ws, runner, settings)
+    deps: AgentDeps = ws.app.state.deps
+    await handle_ws(ws, runner, deps)
 
 
 app.include_router(webhooks.router)
