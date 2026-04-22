@@ -15,8 +15,8 @@ Step-by-step commands for **datasets**, **evaluation**, **fine-tuning** (Stages 
 
 ### External resources
 
-- Dataset: `[nabin2004/ManiBench](https://huggingface.co/datasets/nabin2004/ManiBench)` — sync `**full_prompt`** fields into pilot JSON before hashing (below).
-- Benchmark / code: `[github.com/nabin2004/ManiBench](https://github.com/nabin2004/ManiBench)` — use the same evaluator semantics as your paper where applicable.
+- Dataset: [nabin2004/ManiBench](https://huggingface.co/datasets/nabin2004/ManiBench) — sync **`full_prompt`** fields into pilot JSON before hashing (below).
+- Benchmark / code: [github.com/nabin2004/ManiBench](https://github.com/nabin2004/ManiBench) — use the same evaluator semantics as your paper where applicable.
 
 ---
 
@@ -38,7 +38,7 @@ cd training/manibench
 export PYTHONPATH="$(pwd)"
 ```
 
-Optional: `**datasets` only** if you skip the full training extra:
+Optional: **datasets only** if you skip the full training extra:
 
 ```bash
 pip install datasets
@@ -50,7 +50,7 @@ For **full executability** scores (subprocess render), install **Manim CE** and 
 
 ## 2. Pilot prompts and leakage hashes
 
-Training must **not** duplicate the twelve pilot `**full_prompt`** strings. Repository defaults live in `[training/manibench/manibench/data/pilot_prompts.json](../training/manibench/manibench/data/pilot_prompts.json)`. Replace placeholders with text from Hub, then regenerate hashes:
+Training must **not** duplicate the twelve pilot **`full_prompt`** strings. Repository defaults live in [training/manibench/manibench/data/pilot_prompts.json](../training/manibench/manibench/data/pilot_prompts.json). Replace placeholders with text from Hub, then regenerate hashes:
 
 ```bash
 cd training/manibench
@@ -58,7 +58,7 @@ export PYTHONPATH="$(pwd)"
 python scripts/refresh_eval_hashes.py
 ```
 
-This updates `[manibench/data/manibench_eval_hashes.json](../training/manibench/manibench/data/manibench_eval_hashes.json)`.
+This updates [manibench/data/manibench_eval_hashes.json](../training/manibench/manibench/data/manibench_eval_hashes.json).
 
 Dataset builders call the leakage guard automatically unless you pass `--skip-leak-check`.
 
@@ -66,7 +66,7 @@ Dataset builders call the leakage guard automatically unless you pass `--skip-le
 
 ## 3. Building datasets (local)
 
-Working directory: `**training/manibench**`, with `PYTHONPATH` set as above.
+Working directory: **`training/manibench`**, with `PYTHONPATH` set as above.
 
 
 | What                                                           | Command                                                                                                                                            | Output                                                                                                |
@@ -80,11 +80,11 @@ Working directory: `**training/manibench**`, with `PYTHONPATH` set as above.
 
 ### 3.1 Teacher-model SFT distillation (strong LLM → JSONL)
 
-Use a **teacher** model via **LiteLLM** so assistant turns are real generations instead of `[synthetic_expand.py](../training/manibench/scripts/synthetic_expand.py)` stubs. Prompts are sampled from the same five ManiBench categories as the stub builder (`[manibench/prompt_seeds.py](../training/manibench/manibench/prompt_seeds.py)`).
+Use a **teacher** model via **LiteLLM** so assistant turns are real generations instead of [synthetic_expand.py](../training/manibench/scripts/synthetic_expand.py) stubs. Prompts are sampled from the same five ManiBench categories as the stub builder ([manibench/prompt_seeds.py](../training/manibench/manibench/prompt_seeds.py)).
 
-**Auth (examples):** set the API key your provider expects, e.g. `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENROUTER_API_KEY` (see `[.env.example](../.env.example)`).
+**Auth (examples):** set the API key your provider expects, e.g. `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENROUTER_API_KEY` (see [.env.example](../.env.example)).
 
-From `training/manibench` with `PYTHONPATH` set:
+From `training/manibench` with `PYTHONPATH` set. The script default is `--model gemini/gemini-2.0-flash`; override with any LiteLLM model id (examples below use a Pro-tier id when available).
 
 ```bash
 # Dry-run (no API keys): stub completions, validates leakage + JSONL shape
@@ -114,8 +114,8 @@ export ANTHROPIC_API_KEY=...
 python scripts/generate_sft_teacher.py --model claude-sonnet-4-20250514 --count 500 --out ./out/manibench-sft-teacher-claude.jsonl
 ```
 
-- **Default eval mode** is fast (no `manim` subprocess): static executability + VCER. Add `**--render-eval`** for full subprocess executability (requires `manim` on `PATH`).
-- `**--resume**`: skips user prompts already present in `--out` (append mode; does not truncate an existing output file).
+- **Default eval mode** is fast (no `manim` subprocess): static executability + VCER. Add **`--render-eval`** for full subprocess executability (requires `manim` on `PATH`).
+- **`--resume`**: skips user prompts already present in `--out` (append mode; does not truncate an existing output file).
 - **Optional `--prompts-jsonl`**: each line is a JSON object with either `messages` (first user turn used), or `user` / `prompt` plus optional `task_type`.
 
 Merge teacher data with core (and optional stub synthetic) before Stage A:
@@ -137,7 +137,7 @@ python scripts/synthetic_expand.py --count 500 --out ./out/manibench-synthetic-s
 
 ## 4. Pushing datasets to Hugging Face Hub
 
-Requires `**HF_TOKEN**` with write access.
+Requires **`HF_TOKEN`** with write access.
 
 ```bash
 cd training/manibench
@@ -187,14 +187,14 @@ Details and Job deployment: [SUBMIT_HF_JOBS.md](../training/manibench/SUBMIT_HF_
 From repo root:
 
 ```bash
-pytest tests/test_manibench_eval.py -q
+pytest tests/test_manibench_eval.py tests/test_manibench_teacher_gen.py -q
 ```
 
 ---
 
 ## 6. Training — Stage A (static SFT)
 
-Uses `**uv**` to resolve PEP 723 dependencies inside each script (install [uv](https://docs.astral.sh/uv/) if needed).
+Uses **`uv`** to resolve PEP 723 dependencies inside each script (install [uv](https://docs.astral.sh/uv/) if needed).
 
 From `training/manibench`:
 
@@ -224,8 +224,8 @@ uv run scripts/train_stage_a_sft.py \
   --epochs 3
 ```
 
-1. **VRAM (~24GB on a 4090):** start with defaults. If you hit **CUDA OOM**, lower `--per-device-train-batch-size` (e.g. `1`) and/or `--max-length` (e.g. `2048`). You can raise `gradient_accumulation_steps` inside the script later if you need a larger effective batch.
-2. **Upload later:** when satisfied, push the folder under `--output-dir` with the Hub UI, `huggingface-cli`, or rerun with `--hub-model-id` and `HF_TOKEN` set (omit `--no-push`).
+5. **VRAM (~24GB on a 4090):** start with defaults. If you hit **CUDA OOM**, lower `--per-device-train-batch-size` (e.g. `1`) and/or `--max-length` (e.g. `2048`). You can raise `gradient_accumulation_steps` inside the script later if you need a larger effective batch.
+6. **Upload later:** when satisfied, push the folder under `--output-dir` with the Hub UI, `huggingface-cli`, or rerun with `--hub-model-id` and `HF_TOKEN` set (omit `--no-push`).
 
 Stages B/C/DPO/GRPO use the same flags on their scripts: `--no-push`, `--per-device-train-batch-size`, `--max-length` (for GRPO, `--max-length` maps to `max_completion_length` in TRL).
 
@@ -279,7 +279,7 @@ Add `--no-push --output-dir ./out/dpo-local` to keep weights on disk only (**§6
 
 ### 7.4 Shell orchestration example
 
-`[training/manibench/scripts/orchestrate_stage_b.sh](../training/manibench/scripts/orchestrate_stage_b.sh)` loops iterations and triggers DPO every fifth step (adjust paths and Hub IDs).
+[training/manibench/scripts/orchestrate_stage_b.sh](../training/manibench/scripts/orchestrate_stage_b.sh) loops iterations and triggers DPO every fifth step (adjust paths and Hub IDs).
 
 ---
 
@@ -350,6 +350,7 @@ python scripts/final_eval_report.py \
 | `ModuleNotFoundError: trl` / `datasets`       | `pip install -e ".[training]"` from repo root                                                                       |
 | Executability always 0 with `run_render=True` | `manim` not installed, scene class not named `class X(Scene)`, or timeout (increase in harness / standalone script) |
 | Hub push 401/403                              | `HF_TOKEN`, repo permissions, `huggingface-cli login`                                                               |
+| CUDA OOM during local `train_*.py`            | Lower `--per-device-train-batch-size` and/or `--max-length`; use `--no-push` to iterate without Hub (**§6.1**)     |
 | Leakage assert trips                          | Pilot `full_prompt` in training data — fix sources and refresh hashes                                               |
 
 
