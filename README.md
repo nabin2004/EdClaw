@@ -25,11 +25,11 @@ educlaw serve
 ```
 
 - Gateway: `http://127.0.0.1:18789` (HTTP + `ws://127.0.0.1:18789/ws`)
-- WebSocket handshake: first frame `{"type":"connect","token":"local_user:my-session"}` then `{"type":"message","text":"Hello"}`. To run the **autocourse** generator (multi-lecture outline + full lectures) instead of the ADK tutor, send `{"type":"message","mode":"autocourse","text":"…topic…"}`; the server streams `{"type":"autocourse_event","payload":{…}}` frames until a `payload.kind` of `done` or `error`.
+- **WebSocket** (after `connect`): default tutoring uses `{"type":"message","text":"…"}`. For **autocourse** (multi-lecture outline + full lectures via Ollama, not the ADK agent), add `"mode":"autocourse"`. The server streams `autocourse_event` until `done` or `error` — see [docs/AUTOCOURSE.md](docs/AUTOCOURSE.md). For **TTS** (WAV, optional Kitten; profile `tts_enabled=true`), send `{"type":"tts","text":"…"}` and read `tts_event` — see [docs/TTS.md](docs/TTS.md).
 
 ## Layout
 
-- `src/educlaw/` — main package (gateway, agent, IR, memory, sandbox, safety, CLI)
+- `src/educlaw/` — main package (gateway, agent, IR, memory, sandbox, safety, TTS, autocourse / autolecture, CLI)
 - `content/ir/` — sample IR nodes (also used as default `ir_root` when present)
 - `packages/educlaw-training/` — optional SFT/DPO tooling (stubs)
 - `packages/educlaw-content-starter/` — publishable IR starter pack
@@ -38,7 +38,8 @@ educlaw serve
 
 ## Documentation
 
-- [docs/EduClaw_Concepts_Explained.md](docs/EduClaw_Concepts_Explained.md) — subsystem mapping (IR, Dagestan, ADK, Ollama)
+- [docs/EduClaw_Concepts_Explained.md](docs/EduClaw_Concepts_Explained.md) — subsystem mapping (IR, Dagestan, ADK, Ollama, TTS, autocourse)
+- [docs/AUTOCOURSE.md](docs/AUTOCOURSE.md) — Autocourse / Autolecture WebSocket `mode=autocourse` and event payloads
 - [docs/TTS.md](docs/TTS.md) — pluggable TTS registry, Kitten (offline), WebSocket `type=tts`, CLI
 - [docs/DEVELOPERS.md](docs/DEVELOPERS.md) — environment setup, run, CLI, tests, troubleshooting
 - [docs/ROADMAP.md](docs/ROADMAP.md) — future work and planned directions

@@ -2,6 +2,8 @@
 
 EduClaw includes a **pluggable TTS subsystem** under `educlaw.tts`: a small `TTSBackend` protocol, a registry (built-ins + `importlib.metadata` entry points, same pattern as [`educlaw.channels`](../src/educlaw/channels/registry.py)), and optional **Kitten TTS** integration for **offline-friendly**, CPU-only synthesis with compact ONNX models (~25–80 MB on disk).
 
+**See also:** [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md) (subsystem 13), [DEVELOPERS.md](DEVELOPERS.md) (WebSocket + CLI), [AUTOCOURSE.md](AUTOCOURSE.md) (separate `mode: autocourse` path for full lectures; you can feed lecture text to `type: tts` from the client).
+
 ## Why it exists
 
 - **Offline / air-gapped labs**: cache models once, then set `HF_HUB_OFFLINE=1` for Hugging Face Hub.

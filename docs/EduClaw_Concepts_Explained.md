@@ -26,7 +26,8 @@
 | 10 | ShieldGemma | `before_model` / `after_model` | `src/educlaw/safety/shield.py`, `agent/callbacks/shield_*.py` |
 | 11 | IR | Pydantic + frontmatter + SQL index | `src/educlaw/ir/`, `content/ir/` |
 | 12 | Dagestan | Facts + embedded logs + ADK memory | `src/educlaw/memory/dagestan.py`, `adk_memory_service.py` |
-| 13 | TTS | Pluggable speech backends (entry points + WS `type=tts`) | `src/educlaw/tts/`, `docs/TTS.md` |
+| 13 | TTS | Pluggable speech backends (entry points + WS `type=tts`) | `src/educlaw/tts/`, [TTS.md](TTS.md) |
+| 14 | Autocourse / Autolecture | Multi-lecture generation via Ollama (not ADK); WS `mode=autocourse` | `src/educlaw/autocourse/`, `src/educlaw/autolecture/`, [AUTOCOURSE.md](AUTOCOURSE.md) |
 
 ## 1. Gateway
 
@@ -40,7 +41,7 @@ Run: `uvicorn educlaw.gateway.app:app --host 127.0.0.1 --port 18789 --workers 1`
 
 ## 3. Extensibility
 
-Use `importlib.metadata` entry points group `educlaw.channels` (see `channels/registry.py`).
+Use `importlib.metadata` entry points: `educlaw.channels` (see `channels/registry.py`) and `educlaw.tts` (see `tts/registry.py`).
 
 ## 4–5. Agent + context
 
@@ -78,6 +79,14 @@ Author Markdown + YAML under `content/ir` (repo default) or `~/.educlaw/ir`. CLI
 - Engine: `memory/dagestan.py`
 - ADK integration: `DagestanMemoryService` implements `BaseMemoryService`; `after_agent_callback` calls `callback_context.add_session_to_memory()`.
 
+## 13. Text-to-speech (TTS)
+
+`TTSBackend` protocol + `build_backend(settings)`; optional **Kitten** (CPU, ONNX) via `educlaw[tts-kitten]`. WebSocket: after `connect`, send `{"type":"tts","text":"…"}`; responses are `tts_event` frames. Profile keys: `tts_enabled`, `tts_backend`, `tts_model_id` (required for `kitten`), etc. See [TTS.md](TTS.md).
+
+## 14. Autocourse / Autolecture
+
+Course outline (`CoursePlan` JSON) then sequential **autolecture** calls per `LectureOutline`. Runs on the Ollama `model_id` from settings, **outside** the ADK `Runner`. WebSocket: `{"type":"message","mode":"autocourse","text":"…"}` → streamed `autocourse_event` payloads. See [AUTOCOURSE.md](AUTOCOURSE.md).
+
 ## Appendix — dependencies
 
-See root `pyproject.toml` for pinned stacks (`google-adk`, `litellm`, `fastapi`, `sqlalchemy[asyncio]`, `aiosqlite`, …). Optional extras: `sqlite-vec`, `channels`, `cloud`, `structured`, `training`.
+See root `pyproject.toml` for pinned stacks (`google-adk`, `litellm`, `fastapi`, `sqlalchemy[asyncio]`, `aiosqlite`, …). Optional extras: `sqlite-vec`, `channels`, `cloud`, `structured`, `training`, `tts-kitten` (Kitten TTS wheel + `soundfile` / `numpy`).

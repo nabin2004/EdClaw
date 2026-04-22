@@ -12,6 +12,7 @@ This document describes **planned** work. Nothing here is a commitment or releas
 
 ## Medium term (product shape)
 
+- **Autocourse + TTS**: Optional server- or client-side path to read aloud each `lecture_done` (e.g. call `type: tts` with excerpted text, or a single `autocourse`+`tts` flag) without blocking the Ollama generation loop.
 - **Channels**: Real `python-telegram-bot` / `discord.py` / `matrix-nio` adapters behind `educlaw.channels` entry points; shared session mapping from `thread_id` to ADK `session_id`.
 - **Persistence**: Replace or supplement `InMemorySessionService` with a database-backed session store for restarts and multi-process scaling of *non-agent* workers (gateway still single-worker for one logical agent state by default).
 - **Manim pipeline**: End-to-end path from IR `manim` hints to `educlaw/manim:latest` job queue and artifact storage.
@@ -30,4 +31,4 @@ This document describes **planned** work. Nothing here is a commitment or releas
 
 ## How to suggest changes
 
-Open issues or design docs that reference concrete user stories (e.g. “learner on shared lab machine”, “offline-only school lab”). Link new features back to the twelve subsystems in [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md) so the architecture stays coherent.
+Open issues or design docs that reference concrete user stories (e.g. “learner on shared lab machine”, “offline-only school lab”). Link new features back to the **subsystem table** in [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md) so the architecture stays coherent.
