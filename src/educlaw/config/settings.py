@@ -57,6 +57,18 @@ class Settings(BaseSettings):
     tts_sample_rate: int = 24000
     tts_cache_dir: Path | None = None
 
+    # AutoManim (ADK + Manim CE; see docs/AUTOMANIM.md)
+    automanim_enabled: bool = False
+    automanim_backend: Literal["local", "docker"] = "local"
+    automanim_image: str = "educlaw/manim:latest"
+    automanim_quality: Literal["l", "m", "h", "p", "k"] = "l"
+    automanim_timeout_sec: int = 180
+    automanim_max_attempts: int = 3
+    automanim_max_scenes_per_lecture: int = 6
+    automanim_output_dir: Path | None = None
+    automanim_llm_critic: bool = False
+    automanim_max_source_bytes: int = 200_000
+
     def model_post_init(self, __context: object) -> None:
         if self.ir_root is None:
             repo_ir = Path(__file__).resolve().parents[3] / "content" / "ir"
@@ -73,6 +85,8 @@ class Settings(BaseSettings):
             object.__setattr__(self, "tts_cache_dir", self.data_dir / "tts")
         if self.dagestan_db_path is None:
             object.__setattr__(self, "dagestan_db_path", self.data_dir / "dagestan_memory.json")
+        if self.automanim_output_dir is None:
+            object.__setattr__(self, "automanim_output_dir", self.data_dir / "automanim")
 
 
 def _merge_toml_into_environ(profile: dict) -> None:
@@ -109,6 +123,10 @@ def load_settings() -> Settings:
             merged["tts_cache_dir"] = Path(os.path.expanduser(str(merged["tts_cache_dir"])))
         if "dagestan_db_path" in merged:
             merged["dagestan_db_path"] = Path(os.path.expanduser(str(merged["dagestan_db_path"])))
+        if "automanim_output_dir" in merged:
+            merged["automanim_output_dir"] = Path(
+                os.path.expanduser(str(merged["automanim_output_dir"])),
+            )
         s = Settings(**{**s.model_dump(), **merged})
     # Ensure OLLAMA_API_BASE for LiteLLM (ADK docs)
     os.environ.setdefault("OLLAMA_API_BASE", s.ollama_url.rstrip("/"))

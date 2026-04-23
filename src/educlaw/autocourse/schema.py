@@ -5,6 +5,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 from educlaw.autolecture.schema import LectureOutline, LectureResult
+from educlaw.automanim.schema import AutoManimEvent
 
 
 class CoursePlan(BaseModel):
@@ -14,7 +15,7 @@ class CoursePlan(BaseModel):
 
 
 class AutocourseEvent(BaseModel):
-    kind: Literal["plan", "lecture_start", "lecture_done", "done", "error"]
+    kind: Literal["plan", "lecture_start", "lecture_done", "done", "error", "automanim"]
     course_title: str | None = None
     audience: str | None = None
     lecture_index: int | None = None
@@ -22,4 +23,5 @@ class AutocourseEvent(BaseModel):
     lecture_count: int | None = None
     result: LectureResult | None = None
     message: str | None = None
+    automanim: AutoManimEvent | None = None
     extra: dict[str, Any] = Field(default_factory=dict)

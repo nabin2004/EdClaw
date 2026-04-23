@@ -8,7 +8,9 @@ from pydantic import ValidationError
 
 from educlaw.autocourse.schema import AutocourseEvent, CoursePlan
 from educlaw.autolecture.generator import generate_lecture
+from educlaw.automanim.orchestrator import run_automanim
 from educlaw.config.settings import Settings
+from educlaw.safety.shield import Shield
 
 _MAX_LECTURES = 8
 
@@ -28,7 +30,8 @@ Respond with a single JSON object only (no markdown fences), using this shape:
   ]
 }}
 Rules:
-- Include between 2 and {_MAX_LECTURES} lectures in "lectures".
+- Include between 2 and {_MAX_LECTURES} lectures in "lectures". If the user explicitly asks for \
+exactly N lectures and N is between 2 and {_MAX_LECTURES} (inclusive), include exactly N.
 - Order lectures so prerequisites come first.
 - Objectives and key_topics must be non-empty arrays for each lecture.
 - estimated_minutes is optional (integer or null).
@@ -82,6 +85,10 @@ async def run_autocourse(
 
     prior_titles: list[str] = []
     n = len(lectures)
+    shield: Shield | None = None
+    if settings.automanim_enabled:
+        shield = Shield(client, model=settings.shield_model)
+
     for i, outline in enumerate(lectures, start=1):
         yield AutocourseEvent(
             kind="lecture_start",
@@ -118,6 +125,34 @@ async def run_autocourse(
             lecture_count=n,
             result=result,
         )
+
+        if settings.automanim_enabled and shield is not None:
+            try:
+                async for am_ev in run_automanim(
+                    result.markdown,
+                    dict(result.ir_suggestion),
+                    settings,
+                    shield,
+                    ollama=client,
+                    output_root=settings.automanim_output_dir,
+                ):
+                    yield AutocourseEvent(
+                        kind="automanim",
+                        course_title=plan.title,
+                        lecture_index=i,
+                        lecture_title=outline.title,
+                        lecture_count=n,
+                        automanim=am_ev,
+                    )
+            except Exception as e:  # noqa: BLE001 — non-fatal; continue course
+                yield AutocourseEvent(
+                    kind="error",
+                    course_title=plan.title,
+                    lecture_index=i,
+                    lecture_title=outline.title,
+                    lecture_count=n,
+                    message=f"AutoManim failed: {e!s}",
+                )
 
     yield AutocourseEvent(
         kind="done",

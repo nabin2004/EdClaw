@@ -7,13 +7,26 @@ OLLAMA_API_BASE = "http://127.0.0.1:11434"
 gateway_host = "127.0.0.1"
 gateway_port = 18789
 ollama_url = "http://127.0.0.1:11434"
-model_id = "gemma3:latest"
+# Smallest Gemma 4 edge build on Ollama (E2B < E4B; see https://ollama.com/library/gemma4/tags)
+model_id = "gemma4:e2b"
 embedding_model = "embeddinggemma"
 shield_model = "shieldgemma:2b"
 strict_local = true
 sandbox_backend = "docker"
 data_dir = "~/.educlaw"
+# Kitten TTS (offline CPU); requires: pip install 'educlaw[tts-kitten]' — see docs/TTS.md
+tts_enabled = true
+tts_backend = "kitten"
+tts_model_id = "KittenML/kitten-tts-nano-0.8-int8"
+tts_voice = "Jasper"
+tts_speed = 1.0
 # Learner memory: PyPI dagestan (see docs/DAGESTAN.md). "stub" = no LLM for ingest extraction (CI-friendly).
 # dagestan_provider = "stub"
 # dagestan_db_path = "~/.educlaw/dagestan_memory.json"
 # For graph ingest via local Ollama: dagestan_provider = "ollama"
+# AutoManim (optional): see docs/AUTOMANIM.md
+# automanim_enabled = false
+# automanim_backend = "local"
+# automanim_image = "educlaw/manim:latest"
+# automanim_quality = "l"
+# automanim_timeout_sec = 180
