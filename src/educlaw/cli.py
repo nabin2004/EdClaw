@@ -5,15 +5,17 @@ from __future__ import annotations
 import asyncio
 import subprocess
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any, cast
 
 import httpx
 import typer
 import uvicorn
 
+from educlaw.automanim.orchestrator import run_automanim
 from educlaw.config.settings import load_settings
 from educlaw.config.strict_local import assert_strict_local
 from educlaw.ir.loader import lint, load_all
+from educlaw.safety.shield import Shield
 from educlaw.tts.contract import TTSRequest
 from educlaw.tts.registry import build_backend, known_backends
 
@@ -188,6 +190,66 @@ def ir_index(
 
     n = asyncio.run(_run())
     typer.echo(f"Indexed {n} IR nodes into {out_p}")
+
+
+@app.command("automanim")
+def automanim_cmd(
+    series_dir: Annotated[
+        Path,
+        typer.Argument(help="Directory with lecture-*.md (YAML frontmatter)"),
+    ],
+) -> None:
+    """Render Manim videos for each lecture in a series (writes videos/ + manifest)."""
+    import json
+
+    import frontmatter
+    from ollama import AsyncClient
+
+    s = load_settings()
+    series_path = series_dir.expanduser().resolve()
+    if not series_path.is_dir():
+        typer.secho(f"Not a directory: {series_path}", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+
+    videos_root = series_path / "videos"
+    videos_root.mkdir(parents=True, exist_ok=True)
+    manifest: dict[str, list[dict[str, object]]] = {}
+
+    async def _run() -> None:
+        client = AsyncClient(host=s.ollama_url.rstrip("/"))
+        shield = Shield(client, model=s.shield_model)
+        try:
+            for md_path in sorted(series_path.glob("lecture-*.md")):
+                post = frontmatter.loads(md_path.read_text(encoding="utf-8"))
+                meta = dict(post.metadata) if isinstance(post.metadata, dict) else {}
+                lecture_id = str(meta.get("id") or md_path.stem)
+                manifest.setdefault(lecture_id, [])
+                async for ev in run_automanim(
+                    str(post.content),
+                    meta,
+                    s,
+                    shield,
+                    ollama=client,
+                    output_root=videos_root,
+                ):
+                    if ev.kind == "scene_done" and ev.artifact and ev.artifact.artifact_path:
+                        manifest[lecture_id].append(
+                            {
+                                "scene_index": ev.scene_index,
+                                "scene_title": ev.scene_title,
+                                "artifact_path": ev.artifact.artifact_path,
+                                "exit_code": ev.artifact.exit_code,
+                            }
+                        )
+                    if ev.kind == "error":
+                        typer.secho(f"{lecture_id}: {ev.message}", fg=typer.colors.YELLOW)
+        finally:
+            await cast(Any, client).close()
+
+    asyncio.run(_run())
+    manifest_path = videos_root / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    typer.secho(f"Wrote manifest to {videos_root / 'manifest.json'}", fg=typer.colors.GREEN)
 
 
 @app.command("pull-models")
