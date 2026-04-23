@@ -20,6 +20,19 @@ def test_import_tts() -> None:
     assert educlaw.tts.known_backends
 
 
+def test_import_viz() -> None:
+    from educlaw.viz import scene_class_name, syntax_ok
+
+    assert scene_class_name("class A(Scene):\n  pass") == "A"
+    assert syntax_ok("class A(Scene):\n  def construct(self):\n    pass\n")
+
+
+def test_import_automanim() -> None:
+    import educlaw.automanim  # noqa: PLC0415
+
+    assert callable(educlaw.automanim.run_automanim)
+
+
 def test_strict_local():
     from educlaw.config.strict_local import assert_strict_local
 

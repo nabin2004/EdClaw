@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from educlaw.autocourse.schema import AutocourseEvent
+from educlaw.automanim.schema import AutoManimEvent
 from educlaw.gateway.app import app
 from educlaw.safety.shield import Shield, Verdict
 
@@ -43,6 +44,44 @@ def test_ws_autocourse_mode_streams_events(monkeypatch: pytest.MonkeyPatch) -> N
             second = ws.receive_json()
             assert second["type"] == "autocourse_event"
             assert second["payload"]["kind"] == "done"
+
+
+def test_ws_autocourse_streams_automanim_payload(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fake_run(user_prompt: str, settings: object, client: object):
+        yield AutocourseEvent(
+            kind="plan",
+            course_title="Intro ML",
+            lecture_count=1,
+            audience="devs",
+        )
+        yield AutocourseEvent(
+            kind="automanim",
+            course_title="Intro ML",
+            lecture_index=1,
+            lecture_count=1,
+            automanim=AutoManimEvent(kind="plan", lecture_id="lec", message="1 scene(s)"),
+        )
+        yield AutocourseEvent(
+            kind="done",
+            course_title="Intro ML",
+            lecture_count=1,
+            message="ok",
+        )
+
+    monkeypatch.setattr("educlaw.gateway.ws.run_autocourse", fake_run)
+    monkeypatch.setattr(Shield, "classify", AsyncMock(return_value=Verdict.ALLOW))
+    monkeypatch.setattr("educlaw.gateway.ws.AsyncClient", lambda *a, **k: _OllamaNoNet())
+
+    with TestClient(app) as client:
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "connect", "token": "u:pytest-session-am"})
+            assert ws.receive_json()["type"] == "connected"
+            ws.send_json({"type": "message", "mode": "autocourse", "text": "topic"})
+            assert ws.receive_json()["payload"]["kind"] == "plan"
+            mid = ws.receive_json()
+            assert mid["payload"]["kind"] == "automanim"
+            assert mid["payload"]["automanim"]["kind"] == "plan"
+            assert ws.receive_json()["payload"]["kind"] == "done"
 
 
 def test_ws_autocourse_blocked_when_shield_blocks(monkeypatch: pytest.MonkeyPatch) -> None:
