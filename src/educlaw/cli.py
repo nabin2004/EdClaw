@@ -60,7 +60,7 @@ def doctor_cmd(
         r.raise_for_status()
         names = {m.get("name", "") for m in r.json().get("models", [])}
         typer.echo(f"Ollama: OK ({len(names)} models)")
-        for want in (s.model_id, s.embedding_model, s.shield_model):
+        for want in sorted({s.model_id, s.embedding_model, s.shield_model}):
             if not any(n.startswith(want.split(":")[0]) for n in names):
                 typer.secho(
                     f"Warning: model matching {want!r} not found in ollama list",
@@ -256,7 +256,7 @@ def automanim_cmd(
 def pull_models() -> None:
     """Shell out to ``ollama pull`` for default Gemma stack."""
     s = load_settings()
-    for m in (s.model_id, s.embedding_model, s.shield_model):
+    for m in sorted({s.model_id, s.embedding_model, s.shield_model}):
         typer.echo(f"ollama pull {m}")
         subprocess.run(["ollama", "pull", m], check=False)
 

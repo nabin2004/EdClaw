@@ -1,4 +1,4 @@
-"""ShieldGemma via Ollama generate (temperature 0, short completion)."""
+"""Safety classifier via Ollama ``generate`` (temperature 0, short completion)."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ Respond with EXACTLY one token: ALLOW, REVIEW, or BLOCK."""
 
 
 class Shield:
-    def __init__(self, client: AsyncClient | None = None, model: str = "shieldgemma:2b") -> None:
+    def __init__(self, client: AsyncClient | None = None, model: str = "gemma3:latest") -> None:
         self._client = client or AsyncClient(host="http://127.0.0.1:11434")
         self._model = model
 

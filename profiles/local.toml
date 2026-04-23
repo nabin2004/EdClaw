@@ -10,7 +10,8 @@ ollama_url = "http://127.0.0.1:11434"
 # Smallest Gemma 4 edge build on Ollama (E2B < E4B; see https://ollama.com/library/gemma4/tags)
 model_id = "gemma4:e2b"
 embedding_model = "embeddinggemma"
-shield_model = "shieldgemma:2b"
+# Reuses main chat model (no separate ShieldGemma pull).
+shield_model = "gemma4:e2b"
 strict_local = true
 sandbox_backend = "docker"
 data_dir = "~/.educlaw"

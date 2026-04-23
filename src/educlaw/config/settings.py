@@ -33,7 +33,8 @@ class Settings(BaseSettings):
     model_id: str = "gemma3:latest"
     embedding_model: str = "embeddinggemma"
     embedding_dim: int = 768
-    shield_model: str = "shieldgemma:2b"
+    # Safety classifier uses the same Ollama model as chat by default (no separate ShieldGemma).
+    shield_model: str = "gemma3:latest"
 
     data_dir: Path = Field(default_factory=lambda: Path.home() / ".educlaw")
     ir_root: Path | None = None
@@ -128,6 +129,9 @@ def load_settings() -> Settings:
                 os.path.expanduser(str(merged["automanim_output_dir"])),
             )
         s = Settings(**{**s.model_dump(), **merged})
+    # Drop ShieldGemma as default classifier (extra pull / weight); reuse main chat model.
+    if s.shield_model.lower().startswith("shieldgemma"):
+        s = s.model_copy(update={"shield_model": s.model_id})
     # Ensure OLLAMA_API_BASE for LiteLLM (ADK docs)
     os.environ.setdefault("OLLAMA_API_BASE", s.ollama_url.rstrip("/"))
     return s
