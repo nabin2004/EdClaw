@@ -42,6 +42,16 @@ When `automanim_enabled` is true in settings, after each `lecture_done` the serv
 
 The planner returns JSON matching `CoursePlan`: `title`, `audience`, and a list of `LectureOutline` (title, objectives, key_topics, optional `estimated_minutes`). The orchestrator **caps** the number of lectures at 8 to avoid unbounded work.
 
+## Full local pipeline (CLI script)
+
+To generate Markdown, optional Manim videos, and optional TTS audio in one run (no gateway), use:
+
+```bash
+./scripts/run_full_course_pipeline.sh "Your course topic" --lectures 4
+```
+
+Requires Ollama; enable TTS and AutoManim in `profiles/local.toml` or pass `--no-tts` / `--no-automanim`. Output defaults to `content/ir/series/<date>-slug/`. See the script docstring in [scripts/run_full_course_pipeline.py](../scripts/run_full_course_pipeline.py).
+
 ## See also
 
 - [DEVELOPERS.md](DEVELOPERS.md) — WebSocket protocol and CLI overview.
