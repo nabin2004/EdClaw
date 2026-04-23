@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
-import ast
-import re
-import subprocess
-import tempfile
-from pathlib import Path
 from typing import Any
 
+from educlaw.viz import (
+    extract_python,
+    has_manim_scene,
+    render_executable,
+    scene_class_name,
+    syntax_ok,
+)
 from manibench.eval.vcer_patterns import scan_vcer
+
+# Backward-compatible alias for internal / external callers
+_scene_class_name = scene_class_name
 
 # Optional per-problem event keywords (lowercased) for alignment
 # Full benchmark uses dataset; this is a generic fallback
@@ -32,45 +37,6 @@ _DEFAULT_EVENT_KEYWORDS: list[str] = [
     "vgroup",
     "brace",
 ]
-
-_CODE_FENCE = re.compile(r"```(?:python)?\s*([\s\S]*?)```", re.IGNORECASE)
-
-
-def extract_python(text: str) -> str:
-    """Strip markdown fences; if none, return stripped text."""
-    m = _CODE_FENCE.search(text)
-    if m:
-        return m.group(1).strip()
-    return text.strip()
-
-
-def _scene_class_name(source: str) -> str | None:
-    m = re.search(r"class\s+(\w+)\s*\(\s*Scene\s*\)", source)
-    return m.group(1) if m else None
-
-
-def syntax_ok(source: str) -> bool:
-    try:
-        ast.parse(source)
-    except SyntaxError:
-        return False
-    return True
-
-
-def has_manim_scene(source: str) -> bool:
-    try:
-        tree = ast.parse(source)
-    except SyntaxError:
-        return False
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef):
-            for base in node.bases:
-                if isinstance(base, ast.Name) and base.id == "Scene":
-                    return True
-                if isinstance(base, ast.Attribute) and base.attr == "Scene":
-                    return True
-    return False
-
 
 def coverage_score(source: str) -> float:
     """Heuristic 4-dimension style coverage (0-1), code-only lower bound."""
@@ -101,39 +67,6 @@ def alignment_score(source: str, required_keywords: list[str] | None = None) -> 
         return 1.0
     found = sum(1 for kw in keywords if kw.lower() in source.lower())
     return round(found / len(keywords), 4)
-
-
-def render_executable(
-    source: str,
-    *,
-    timeout_sec: int = 60,
-    quality: str = "ql",
-    manim_bin: str = "manim",
-) -> tuple[bool, str]:
-    """Run manim render in a temp dir. Returns (success, stderr snippet)."""
-    scene = _scene_class_name(source)
-    if not scene:
-        return False, "no Scene subclass found"
-
-    with tempfile.TemporaryDirectory(prefix="manibench_") as td:
-        path = Path(td) / "generated_scene.py"
-        path.write_text(source, encoding="utf-8")
-        cmd = [manim_bin, "render", f"-q{quality}", str(path), scene]
-        try:
-            proc = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=timeout_sec,
-                cwd=td,
-            )
-        except subprocess.TimeoutExpired:
-            return False, "timeout"
-        ok = proc.returncode == 0
-        err = (proc.stderr or "")[-4000:]
-        if not ok and proc.stdout:
-            err += (proc.stdout or "")[-2000:]
-        return ok, err
 
 
 def evaluate_sample(
