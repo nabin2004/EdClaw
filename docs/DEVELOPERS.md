@@ -62,8 +62,9 @@ Install [Ollama](https://ollama.com) and pull the models your profile references
 ```bash
 ollama pull gemma3:latest
 ollama pull embeddinggemma
-ollama pull shieldgemma:2b
 ```
+
+Safety **Shield** calls use `shield_model` from your profile (default: same tag as `model_id`), so you do not need a separate ShieldGemma pull unless you point `shield_model` at one explicitly.
 
 For more reliable **tool calling**, build a custom tag from [docker/modelfiles/gemma3-tool.Modelfile](../docker/modelfiles/gemma3-tool.Modelfile) and point `model_id` at that tag.
 
@@ -104,6 +105,7 @@ You can use any WebSocket client; `wscat` or a small Python script is enough for
 | `educlaw tts list` | List TTS backends (and voices when `tts_enabled`) |
 | `educlaw tts say "…" -o out.wav` | Synthesize speech to WAV (needs `tts_enabled` + backend) |
 | `educlaw automanim <series-dir>` | Render Manim MP4s for `lecture-*.md` (see [AUTOMANIM.md](AUTOMANIM.md)) |
+| `scripts/run_full_course_pipeline.sh "…" --lectures N` | One-shot: autocourse + optional AutoManim + TTS to `content/ir/series/…` (see [AUTOCOURSE.md](AUTOCOURSE.md)) |
 
 ## Configuration
 

@@ -2,7 +2,7 @@
 
 **Status:** companion to the full architecture primer (TS/OpenClaw reference vs this repo’s Python implementation).
 
-**Audience:** Python engineers implementing EduClaw with **Google ADK**, **Gemma** (via Ollama), **EmbeddingGemma**, **ShieldGemma**, and idiomatic libraries.
+**Audience:** Python engineers implementing EduClaw with **Google ADK**, **Gemma** (via Ollama), **EmbeddingGemma**, **Shield** (same Ollama stack by default), and idiomatic libraries.
 
 ## Framing
 
@@ -23,7 +23,7 @@
 | 7 | Ollama + Gemma | `LiteLlm("ollama_chat/...")` | `src/educlaw/agent/model.py`, `profiles/local.toml` |
 | 8 | EmbeddingGemma | `EmbeddingClient` + `VecStore` | `src/educlaw/memory/embeddings.py`, `vec_store.py` |
 | 9 | FunctionGemma | Tools + optional training pkg | `src/educlaw/agent/tools/`, `packages/educlaw-training/` |
-| 10 | ShieldGemma | `before_model` / `after_model` | `src/educlaw/safety/shield.py`, `agent/callbacks/shield_*.py` |
+| 10 | Shield | `before_model` / `after_model` | `src/educlaw/safety/shield.py`, `agent/callbacks/shield_*.py` |
 | 11 | IR | Pydantic + frontmatter + SQL index | `src/educlaw/ir/`, `content/ir/` |
 | 12 | Dagestan | PyPI temporal graph + async adapter + ADK memory | `src/educlaw/memory/dagestan.py`, `adk_memory_service.py`; package + notes: [DAGESTAN.md](DAGESTAN.md) |
 | 13 | TTS | Pluggable speech backends (entry points + WS `type=tts`) | `src/educlaw/tts/`, [TTS.md](TTS.md) |
@@ -66,9 +66,9 @@ Set `OLLAMA_API_BASE` (see `profiles/local.toml` `[env]`). Use **ollama_chat** p
 
 Structured tool calls: ADK `FunctionTool` wrappers in `agent/tools/`. LoRA / DPO pipeline stubs live under `packages/educlaw-training/`.
 
-## 10. ShieldGemma
+## 10. Shield
 
-`Shield.classify()` calls Ollama `generate` with temperature 0. Wired as ADK callbacks; audit log stores **hashes only** (`safety/audit.py`).
+`Shield.classify()` calls Ollama `generate` with temperature 0 (model from `shield_model`, usually the same tag as `model_id`). Wired as ADK callbacks; audit log stores **hashes only** (`safety/audit.py`).
 
 ## 11. IR
 

@@ -9,7 +9,7 @@
 
 # EduClaw
 
-**Local-first educational agent gateway:** **Google ADK** for the agent loop, **Ollama** for Gemma / EmbeddingGemma / ShieldGemma, **FastAPI** for HTTP + WebSocket, **SQLAlchemy** + **sqlite-vec** (optional) for IR indexing, and **PyPI `dagestan`** for temporal-graph learner memory.
+**Local-first educational agent gateway:** **Google ADK** for the agent loop, **Ollama** for Gemma / EmbeddingGemma (Shield classification reuses your main chat model by default), **FastAPI** for HTTP + WebSocket, **SQLAlchemy** + **sqlite-vec** (optional) for IR indexing, and **PyPI `dagestan`** for temporal-graph learner memory.
 
 Wordmark source: [assets/ascii-logo.txt](assets/ascii-logo.txt) (font *slant*; regenerate with `pyfiglet -f slant EduClaw`).
 
@@ -19,7 +19,7 @@ Wordmark source: [assets/ascii-logo.txt](assets/ascii-logo.txt) (font *slant*; r
 cp .env.example .env
 ./scripts/bootstrap.sh   # or: uv venv && uv pip install -e ".[dev]"
 export OLLAMA_API_BASE=http://127.0.0.1:11434
-ollama pull gemma3:latest && ollama pull embeddinggemma && ollama pull shieldgemma:2b
+ollama pull gemma3:latest && ollama pull embeddinggemma
 educlaw doctor
 educlaw serve
 ```
