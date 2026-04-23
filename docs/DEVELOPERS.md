@@ -2,7 +2,7 @@
 
 How to set up a dev environment, run the gateway, run checks, and use profiles. For architecture and subsystem mapping, see [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md). For learner graph memory (PyPI `dagestan`), see [DAGESTAN.md](DAGESTAN.md). For multi-lecture generation over WebSocket, see [AUTOCOURSE.md](AUTOCOURSE.md). For optional speech synthesis, see [TTS.md](TTS.md). For future work, see [ROADMAP.md](ROADMAP.md).
 
-For **ManiBench / Manim CE** fine-tuning: step-by-step runbook (every command), see [MANIBENCH_RUNBOOK.md](MANIBENCH_RUNBOOK.md). Package overview and stage summary: [training/manibench/README.md](../training/manibench/README.md). Hugging Face Jobs: [training/manibench/SUBMIT_HF_JOBS.md](../training/manibench/SUBMIT_HF_JOBS.md).
+For **ManiBench / Manim CE** fine-tuning: step-by-step runbook (every command), see [MANIBENCH_RUNBOOK.md](MANIBENCH_RUNBOOK.md). Package overview and stage summary: [training/manibench/README.md](../training/manibench/README.md). Hugging Face Jobs: [training/manibench/SUBMIT_HF_JOBS.md](../training/manibench/SUBMIT_HF_JOBS.md). For the **gateway Manim tool** (not yet fully wired), see the implementation spec [MANIM_PIPELINE.md](MANIM_PIPELINE.md).
 
 ## Prerequisites
 
@@ -103,6 +103,7 @@ You can use any WebSocket client; `wscat` or a small Python script is enough for
 | `educlaw pull-models` | Shell out to `ollama pull` for default model set |
 | `educlaw tts list` | List TTS backends (and voices when `tts_enabled`) |
 | `educlaw tts say "…" -o out.wav` | Synthesize speech to WAV (needs `tts_enabled` + backend) |
+| `educlaw automanim <series-dir>` | Render Manim MP4s for `lecture-*.md` (see [AUTOMANIM.md](AUTOMANIM.md)) |
 
 ## Configuration
 
@@ -111,7 +112,7 @@ You can use any WebSocket client; `wscat` or a small Python script is enough for
 - **Data directory**: `~/.educlaw` by default (main SQLite for IR index, `vectors.sqlite` for `educlaw ir index`, `dagestan_memory.json` for the temporal graph, default `tts/` cache, audit paths as wired). The repo’s [content/ir/](../content/ir/) is used as `ir_root` when that path exists.
 - **Learner memory (Dagestan)**: PyPI package `dagestan` with defaults `dagestan_provider = "stub"` (no external LLM for extraction) and `dagestan_db_path` under `data_dir`. For real conversation ingestion, set `dagestan_provider` to `ollama` (uses `ollama_url` + `model_id`), or `openai` / `anthropic` with the usual API keys. See [DAGESTAN.md](DAGESTAN.md).
 - **TTS (optional)**: set `tts_enabled = true` and `tts_backend` / `tts_model_id` (for Kitten) under `[educlaw]` — see [TTS.md](TTS.md). Without TTS, `type: tts` WebSocket frames return an error.
-- **Autocourse**: no extra profile flag; use the WebSocket `mode` field as described in [AUTOCOURSE.md](AUTOCOURSE.md) (uses the same `model_id` and Ollama host as the rest of the app).
+- **Autocourse**: use the WebSocket `mode` field as described in [AUTOCOURSE.md](AUTOCOURSE.md) (uses the same `model_id` and Ollama host as the rest of the app). Optional **AutoManim** after each lecture: set `automanim_enabled = true` under `[educlaw]` — [AUTOMANIM.md](AUTOMANIM.md).
 
 ## Tests and quality
 

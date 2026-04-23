@@ -18,7 +18,7 @@ For human-oriented setup (venv, Ollama, `educlaw serve`, troubleshooting), see [
 - Shield: classify input in `before_model_callback`, output in `after_model_callback`; audit hashes only. The WebSocket **autocourse** and **tts** paths also run `Shield.classify` on the user string before Ollama / TTS.
 - Sandbox: default `NullSandbox` for dev; use `DockerSandbox` when `educlaw/runner:latest` exists.
 - IR: Markdown + YAML frontmatter under `content/ir` or `~/.educlaw/ir`; run `educlaw ir lint`.
-- **Autocourse** (`autocourse/`, `autolecture/`) and **TTS** (`tts/`) are Ollama- or backend-driven outside the ADK `Runner`, but share settings and the gateway.
+- **Autocourse** (`autocourse/`, `autolecture/`), **AutoManim** (`automanim/` — ADK `LlmAgent` + `educlaw.viz` render), and **TTS** (`tts/`) are Ollama- or backend-driven outside the main ADK tutor `Runner`, but share settings and the gateway.
 
 ## Commands
 
@@ -26,4 +26,5 @@ For human-oriented setup (venv, Ollama, `educlaw serve`, troubleshooting), see [
 - `educlaw doctor` / `educlaw doctor --offline` — health / CI
 - `educlaw ir lint` / `educlaw ir index`
 - `educlaw tts list` / `educlaw tts say` — TTS (when enabled in profile); see [docs/TTS.md](docs/TTS.md)
+- `educlaw automanim <series-dir>` — Manim MP4s for `lecture-*.md` series; see [docs/AUTOMANIM.md](docs/AUTOMANIM.md)
 - `ruff check src tests`, `mypy src/educlaw`, `pytest`

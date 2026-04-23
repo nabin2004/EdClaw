@@ -29,7 +29,7 @@ educlaw serve
 
 ## Layout
 
-- `src/educlaw/` — main package (gateway, agent, IR, memory, sandbox, safety, TTS, autocourse / autolecture, CLI)
+- `src/educlaw/` — main package (gateway, agent, IR, memory, sandbox, safety, TTS, autocourse / autolecture / automanim, CLI)
 - `content/ir/` — sample IR nodes (also used as default `ir_root` when present)
 - `packages/educlaw-training/` — optional SFT/DPO tooling (stubs)
 - `packages/educlaw-content-starter/` — publishable IR starter pack
@@ -38,12 +38,14 @@ educlaw serve
 
 ## Documentation
 
-- [docs/EduClaw_Concepts_Explained.md](docs/EduClaw_Concepts_Explained.md) — subsystem mapping (IR, Dagestan, ADK, Ollama, TTS, autocourse)
+- [docs/EduClaw_Concepts_Explained.md](docs/EduClaw_Concepts_Explained.md) — subsystem mapping (IR, Dagestan, ADK, Ollama, TTS, autocourse, AutoManim)
 - [docs/DAGESTAN.md](docs/DAGESTAN.md) — PyPI `dagestan` package and how EduClaw wraps it
 - [docs/AUTOCOURSE.md](docs/AUTOCOURSE.md) — Autocourse / Autolecture WebSocket `mode=autocourse` and event payloads
+- [docs/AUTOMANIM.md](docs/AUTOMANIM.md) — AutoManim: ADK planner/codegen + Manim render (CLI + optional autocourse hook)
 - [docs/TTS.md](docs/TTS.md) — pluggable TTS registry, Kitten (offline), WebSocket `type=tts`, CLI
 - [docs/DEVELOPERS.md](docs/DEVELOPERS.md) — environment setup, run, CLI, tests, troubleshooting, profiles and memory settings
 - [docs/ROADMAP.md](docs/ROADMAP.md) — future work and planned directions
+- [docs/MANIM_PIPELINE.md](docs/MANIM_PIPELINE.md) — how to implement the end-to-end Manim render path (stubs, IR hints, Docker, checklist)
 - [AGENTS.md](AGENTS.md) — contributor / AI agent conventions
 
 ## ADK + Ollama

@@ -31,7 +31,9 @@ The server streams JSON frames:
 
 - `{"type": "autocourse_event", "payload": { ... }}`
 
-`payload.kind` is one of: `plan`, `lecture_start`, `lecture_done`, `done`, `error`.
+`payload.kind` is one of: `plan`, `lecture_start`, `lecture_done`, `done`, `error`, `automanim`.
+
+When `automanim_enabled` is true in settings, after each `lecture_done` the server streams additional `kind: "automanim"` frames with a nested `automanim` object (planner/codegen/render lifecycle). See [AUTOMANIM.md](AUTOMANIM.md).
 
 - `lecture_done` includes the generated lecture (`result` with Markdown and optional `ir_suggestion` metadata for a future IR export).
 - A final `kind: "done"` indicates the course finished successfully.
@@ -44,4 +46,5 @@ The planner returns JSON matching `CoursePlan`: `title`, `audience`, and a list 
 
 - [DEVELOPERS.md](DEVELOPERS.md) — WebSocket protocol and CLI overview.
 - [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md) — subsystem table.
+- [AUTOMANIM.md](AUTOMANIM.md) — optional Manim video generation after each lecture.
 - [TTS.md](TTS.md) — separate `type: "tts"` frames; generated lecture text can be passed to TTS on the client or a future combined mode.

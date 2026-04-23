@@ -28,6 +28,7 @@
 | 12 | Dagestan | PyPI temporal graph + async adapter + ADK memory | `src/educlaw/memory/dagestan.py`, `adk_memory_service.py`; package + notes: [DAGESTAN.md](DAGESTAN.md) |
 | 13 | TTS | Pluggable speech backends (entry points + WS `type=tts`) | `src/educlaw/tts/`, [TTS.md](TTS.md) |
 | 14 | Autocourse / Autolecture | Multi-lecture generation via Ollama (not ADK); WS `mode=autocourse` | `src/educlaw/autocourse/`, `src/educlaw/autolecture/`, [AUTOCOURSE.md](AUTOCOURSE.md) |
+| 15 | AutoManim | ADK `LlmAgent` planner/codegen + Manim CE render (CLI + optional autocourse hook) | `src/educlaw/automanim/`, `src/educlaw/viz/`, [AUTOMANIM.md](AUTOMANIM.md) |
 
 ## 1. Gateway
 
@@ -88,6 +89,10 @@ Author Markdown + YAML under `content/ir` (repo default) or `~/.educlaw/ir`. CLI
 ## 14. Autocourse / Autolecture
 
 Course outline (`CoursePlan` JSON) then sequential **autolecture** calls per `LectureOutline`. Runs on the Ollama `model_id` from settings, **outside** the ADK `Runner`. WebSocket: `{"type":"message","mode":"autocourse","text":"…"}` → streamed `autocourse_event` payloads. See [AUTOCOURSE.md](AUTOCOURSE.md).
+
+## 15. AutoManim
+
+Optional **Manim Community Edition** pipeline: **Shield** → ADK **planner** `LlmAgent` (JSON scene list) → **codegen** `LlmAgent` (Python `Scene`) → static (+ optional LLM) **critic** loop → **local** or **Docker** `manim render`. Invoked via `educlaw automanim <series-dir>` or after each `lecture_done` when `automanim_enabled` is true. Shared helpers live in `educlaw.viz` (also used by ManiBench). See [AUTOMANIM.md](AUTOMANIM.md).
 
 ## Appendix — dependencies
 
