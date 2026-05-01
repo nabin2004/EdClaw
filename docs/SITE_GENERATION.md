@@ -60,7 +60,7 @@ The Copier template at `templates/course_site/` uses custom Jinja2 delimiters (`
 | `schoolname` | str | `""` | `_config.yml` `schoolname` |
 | `schoolurl` | str | `""` | `_config.yml` `schoolurl` |
 | `instructor_name` | str | `"Instructor"` | `_data/people.yml` |
-| `theme_color` | str | `"#002f6c"` | header bar color |
+| `theme_color` | str | `"#A51C30"` | Brand/header accent (Harvard Crimson; see `_sass/_user_vars.scss` for full theme) |
 
 When called programmatically (via `generate_site()`), answers are derived from `course-plan.json` automatically.
 

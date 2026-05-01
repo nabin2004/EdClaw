@@ -47,4 +47,4 @@ instructor_name:
 theme_color:
   type: str
   help: "Header bar hex color"
-  default: "#002f6c"
+  default: "#A51C30"

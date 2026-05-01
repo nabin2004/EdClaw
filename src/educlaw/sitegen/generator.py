@@ -66,7 +66,7 @@ def generate_site(
         "schoolname": "",
         "schoolurl": "",
         "instructor_name": "Instructor",
-        "theme_color": "#002f6c",
+        "theme_color": "#A51C30",
     }
 
     LOG.info("Scaffolding site for %r -> %s", title, dest)
