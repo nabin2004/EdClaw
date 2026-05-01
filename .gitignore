@@ -12,3 +12,5 @@ build/
 *.egg-info/
 .cursor/
 training/manibench/out/
+site/
+sites/

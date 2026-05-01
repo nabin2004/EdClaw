@@ -50,7 +50,25 @@ To generate Markdown, optional Manim videos, and optional TTS audio in one run (
 ./scripts/run_full_course_pipeline.sh "Your course topic" --lectures 4
 ```
 
-Requires Ollama; enable TTS and AutoManim in `profiles/local.toml` or pass `--no-tts` / `--no-automanim`. Output defaults to `content/ir/series/<date>-slug/`. See the script docstring in [scripts/run_full_course_pipeline.py](../scripts/run_full_course_pipeline.py).
+Requires Ollama; enable TTS and AutoManim in `profiles/local.toml` or pass **`--no-tts`**, **`--no-automanim`**, or **`--no-shield`** (no Ollama call for the AutoManim pre-scene classifier; uses `NoopShield`). The script runs **each lecture in order**: write Markdown, then optional chunked TTS WAV, then optional AutoManim, before starting the next lecture.
+
+Output defaults to `content/ir/series/<date>-slug/`. See [scripts/run_full_course_pipeline.py](../scripts/run_full_course_pipeline.py). For WebSocket autocourse, `shield_enabled` in the profile controls whether AutoManim uses a real `Shield` or `NoopShield` inside `run_autocourse` (the gateway still classifies the user message before streaming).
+
+## Site generation
+
+After generating a lecture series (via the CLI script or WebSocket), you can scaffold a full Jekyll course website from the output:
+
+```bash
+educlaw site generate content/ir/series/2026-04-23-intro-linear-algebra-8
+```
+
+Or pass `--generate-site` to the pipeline script to do it in one step:
+
+```bash
+python scripts/run_full_course_pipeline.py "Linear Algebra" --lectures 4 --generate-site
+```
+
+See [SITE_GENERATION.md](SITE_GENERATION.md) for template variables, customization, and the course catalog.
 
 ## See also
 
@@ -58,3 +76,4 @@ Requires Ollama; enable TTS and AutoManim in `profiles/local.toml` or pass `--no
 - [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md) — subsystem table.
 - [AUTOMANIM.md](AUTOMANIM.md) — optional Manim video generation after each lecture.
 - [TTS.md](TTS.md) — separate `type: "tts"` frames; generated lecture text can be passed to TTS on the client or a future combined mode.
+- [SITE_GENERATION.md](SITE_GENERATION.md) — Copier-based course site scaffolding and catalog.

@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """
-End-to-end: autocourse (plan + autolecture) → optional AutoManim → optional TTS.
+End-to-end course generator: plan → per lecture: Markdown → WAV (optional) → Manim (optional).
+
+Within each lecture the order is strict: write ``lecture-NN-*.md``, then ``audio/lecture-NN.wav``
+(if TTS is on), then AutoManim scenes under ``videos/`` before the next lecture starts.
 
 Reads ``profiles/local.toml`` (or ``EDUCLAW_PROFILE_PATH``). Requires Ollama.
-AutoManim and TTS use your profile flags unless overridden by CLI.
 
 Examples:
   .venv/bin/python scripts/run_full_course_pipeline.py \\
-    "Introduction to linear algebra for beginners" --lectures 4
+    "Introduction to linear algebra" --lectures 8
 
-  EDUCLAW_AUTOMANIM_ENABLED=true .venv/bin/python scripts/run_full_course_pipeline.py \\
-    "Python basics" --lectures 2 --out content/ir/series/my-run
+  .venv/bin/python scripts/run_full_course_pipeline.py \\
+    "Python basics" --lectures 2 --out content/ir/series/my-run --no-automanim
 
-  .venv/bin/python scripts/run_full_course_pipeline.py "Topic" --no-automanim --no-tts
+  .venv/bin/python scripts/run_full_course_pipeline.py "Topic" --no-tts --no-automanim --no-shield
 """
 
 from __future__ import annotations
@@ -31,9 +33,11 @@ from typing import Any
 import frontmatter
 from ollama import AsyncClient
 
-from educlaw.autocourse.orchestrator import run_autocourse
+from educlaw.autocourse.orchestrator import CoursePlanningFailed, plan_course
+from educlaw.autolecture.generator import generate_lecture
+from educlaw.automanim.orchestrator import run_automanim
 from educlaw.config.settings import load_settings
-from educlaw.safety.shield import Shield, Verdict
+from educlaw.safety.shield import NoopShield, Shield
 from educlaw.tts.contract import TTSRequest
 from educlaw.tts.registry import build_backend
 
@@ -148,7 +152,10 @@ async def _run(args: argparse.Namespace) -> int:
     out_root = out_root.expanduser().resolve()
     out_root.mkdir(parents=True, exist_ok=True)
 
-    settings_updates: dict[str, Any] = {"automanim_enabled": bool(args.automanim)}
+    settings_updates: dict[str, Any] = {
+        "automanim_enabled": bool(args.automanim),
+        "shield_enabled": bool(args.shield),
+    }
     if args.automanim:
         vdir = args.automanim_output_dir
         if vdir is None:
@@ -179,15 +186,24 @@ async def _run(args: argparse.Namespace) -> int:
     if tts is not None:
         audio_dir.mkdir(parents=True, exist_ok=True)
 
+    shield_impl: Shield | NoopShield = (
+        Shield(client, model=settings.shield_model) if args.shield else NoopShield()
+    )
+
+    manim_clips: list[dict[str, object]] = []
+    lecture_rows: list[dict[str, Any]] = []
+    exit_code = 0
+
     manifest: dict[str, object] = {
         "topic": args.topic,
         "lecture_count": n,
         "output_dir": str(out_root),
         "automanim": settings.automanim_enabled,
         "tts": tts is not None,
+        "shield_ollama": bool(args.shield),
+        "manim_artifacts": manim_clips,
+        "lectures": lecture_rows,
     }
-    manim_clips: list[dict[str, object]] = []
-    exit_code = 0
 
     async def _maybe_close_ollama() -> None:
         aclose = getattr(client, "aclose", None)
@@ -201,87 +217,131 @@ async def _run(args: argparse.Namespace) -> int:
                 await out  # type: ignore[misc]
 
     try:
-        if args.shield_dry_run:
-            v = await Shield(client, model=settings.shield_model).classify(user)
-            if v == Verdict.BLOCK:
-                print("Shield: BLOCK — aborting before generation.")
-                exit_code = 2
-            else:
-                print(f"Shield: {v} — continuing.")
+        try:
+            plan = await plan_course(client, settings, user)
+        except CoursePlanningFailed as e:
+            print(f"Error: {e}")
+            if e.raw_preview:
+                print(f"(raw preview) {e.raw_preview[:200]}…")
+            exit_code = 1
+        else:
+            lectures = plan.lectures[:n]
+            plan_payload = {
+                "title": plan.title,
+                "audience": plan.audience,
+                "lecture_count": len(lectures),
+            }
+            (out_root / "course-plan.json").write_text(
+                json.dumps(plan_payload, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            manifest["lecture_count"] = len(lectures)
+            print(f"Plan: {plan.title} ({len(lectures)} lectures)")
 
-        if exit_code == 0:
-            async for ev in run_autocourse(user, settings, client):
-                if ev.kind == "plan":
-                    plan_payload = {
-                        "title": ev.course_title,
-                        "audience": ev.audience,
-                        "lecture_count": ev.lecture_count,
-                    }
-                    (out_root / "course-plan.json").write_text(
-                        json.dumps(plan_payload, indent=2) + "\n",
-                        encoding="utf-8",
+            prior_titles: list[str] = []
+            n_lec = len(lectures)
+
+            for i, outline in enumerate(lectures, start=1):
+                print(f"  Lecture {i}/{n_lec}: {outline.title}")
+                row: dict[str, Any] = {
+                    "lecture_index": i,
+                    "lecture_title": outline.title,
+                }
+
+                try:
+                    result = await generate_lecture(
+                        client,
+                        settings.model_id,
+                        outline,
+                        course_title=plan.title,
+                        lecture_index=i,
+                        lecture_count=n_lec,
+                        prior_lecture_titles=list(prior_titles),
                     )
-                    print(f"Plan: {ev.course_title} ({ev.lecture_count} lectures)")
-
-                elif ev.kind == "lecture_start":
-                    print(
-                        f"  Lecture {ev.lecture_index}/{ev.lecture_count}: {ev.lecture_title}",
-                    )
-
-                elif ev.kind == "lecture_done" and ev.result is not None:
-                    r = ev.result
-                    meta = dict(r.ir_suggestion) if r.ir_suggestion else {}
-                    post = frontmatter.Post(r.markdown, **meta)
-                    lec_slug = _slug(ev.lecture_title or f"lec-{ev.lecture_index}", 48)
-                    md_path = out_root / f"lecture-{ev.lecture_index:02d}-{lec_slug}.md"
-                    md_path.write_text(frontmatter.dumps(post), encoding="utf-8")
-                    print(f"  Wrote {md_path.name}")
-
-                    if tts is not None and ev.lecture_index is not None:
-                        text = _tts_plain_text(r.markdown, args.tts_max_chars)
-                        try:
-                            wav_bytes = await _synthesize_lecture_wav(
-                                tts,
-                                text,
-                                chunk_chars=args.tts_chunk_chars,
-                                voice=settings.tts_voice,
-                                speed=float(settings.tts_speed),
-                                sample_rate=int(settings.tts_sample_rate),
-                            )
-                            wav = audio_dir / f"lecture-{ev.lecture_index:02d}.wav"
-                            wav.write_bytes(wav_bytes)
-                            print(f"  TTS: {wav.name} ({len(wav_bytes)} bytes)")
-                        except Exception as e:  # noqa: BLE001
-                            print(f"  TTS error: {e!s}")
-
-                elif ev.kind == "automanim" and ev.automanim is not None:
-                    am = ev.automanim
-                    if am.kind == "scene_done" and am.artifact and am.artifact.artifact_path:
-                        manim_clips.append(
-                            {
-                                "lecture_index": ev.lecture_index,
-                                "lecture_title": ev.lecture_title,
-                                "path": am.artifact.artifact_path,
-                                "scene": am.artifact.scene_name,
-                            },
-                        )
-                        print(f"  Manim: {am.artifact.artifact_path}")
-                    elif am.kind == "error" and am.message:
-                        print(f"  Manim error: {am.message}")
-
-                elif ev.kind == "error":
-                    print(f"Error: {ev.message}")
-                    if (ev.message or "").startswith("AutoManim failed"):
-                        continue
+                except Exception as e:  # noqa: BLE001
+                    print(f"  Lecture generation failed: {e!s}")
+                    row["error"] = str(e)
+                    lecture_rows.append(row)
                     if not args.continue_on_error:
                         exit_code = 1
                         break
+                    continue
 
-                elif ev.kind == "done":
-                    print("Done:", ev.message or "")
+                prior_titles.append(outline.title)
+                meta = dict(result.ir_suggestion) if result.ir_suggestion else {}
+                post = frontmatter.Post(result.markdown, **meta)
+                lec_slug = _slug(outline.title or f"lec-{i}", 48)
+                md_path = out_root / f"lecture-{i:02d}-{lec_slug}.md"
+                md_path.write_text(frontmatter.dumps(post), encoding="utf-8")
+                print(f"  Wrote {md_path.name}")
+                row["markdown"] = str(md_path.relative_to(out_root))
+
+                if tts is not None:
+                    text = _tts_plain_text(result.markdown, args.tts_max_chars)
+                    try:
+                        wav_bytes = await _synthesize_lecture_wav(
+                            tts,
+                            text,
+                            chunk_chars=args.tts_chunk_chars,
+                            voice=settings.tts_voice,
+                            speed=float(settings.tts_speed),
+                            sample_rate=int(settings.tts_sample_rate),
+                        )
+                        wav = audio_dir / f"lecture-{i:02d}.wav"
+                        wav.write_bytes(wav_bytes)
+                        print(f"  TTS: {wav.name} ({len(wav_bytes)} bytes)")
+                        row["audio"] = str(wav.relative_to(out_root))
+                    except Exception as e:  # noqa: BLE001
+                        print(f"  TTS error: {e!s}")
+                        row["audio_error"] = str(e)
+
+                scenes: list[dict[str, object]] = []
+                if settings.automanim_enabled:
+                    try:
+                        async for am_ev in run_automanim(
+                            result.markdown,
+                            dict(result.ir_suggestion),
+                            settings,
+                            shield_impl,
+                            ollama=client,
+                            output_root=settings.automanim_output_dir,
+                        ):
+                            if (
+                                am_ev.kind == "scene_done"
+                                and am_ev.artifact
+                                and am_ev.artifact.artifact_path
+                            ):
+                                ap = am_ev.artifact.artifact_path
+                                rec = {
+                                    "lecture_index": i,
+                                    "lecture_title": outline.title,
+                                    "path": ap,
+                                    "scene": am_ev.artifact.scene_name,
+                                }
+                                scenes.append(rec)
+                                manim_clips.append(rec)
+                                print(f"  Manim: {ap}")
+                            elif am_ev.kind == "error" and am_ev.message:
+                                print(f"  Manim error: {am_ev.message}")
+                    except Exception as e:  # noqa: BLE001
+                        msg = f"AutoManim failed: {e!s}"
+                        print(f"  {msg}")
+                        row["manim_error"] = str(e)
+                        if not args.continue_on_error:
+                            exit_code = 1
+                            lecture_rows.append(row)
+                            break
+                if scenes:
+                    row["manim_scenes"] = scenes
+
+                lecture_rows.append(row)
+            else:
+                if exit_code == 0:
+                    print("Done: pipeline finished.")
 
     finally:
         manifest["manim_artifacts"] = manim_clips
+        manifest["lectures"] = lecture_rows
         manifest["exit_code"] = exit_code
         (out_root / "pipeline-manifest.json").write_text(
             json.dumps(manifest, indent=2) + "\n",
@@ -291,6 +351,17 @@ async def _run(args: argparse.Namespace) -> int:
         if tts is not None:
             await tts.close()
 
+    if args.generate_site and exit_code == 0:
+        try:
+            from educlaw.sitegen.generator import generate_site
+
+            site_path = generate_site(out_root, output_dir=args.site_output_dir)
+            print(f"Site generated at: {site_path}")
+        except Exception as e:  # noqa: BLE001
+            print(f"Site generation failed: {e!s}")
+            if not args.continue_on_error:
+                exit_code = 1
+
     print(f"\nArtifacts under: {out_root}")
     return exit_code
 
@@ -298,7 +369,8 @@ async def _run(args: argparse.Namespace) -> int:
 def _build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description=(
-            "Run autocourse + autolecture, optional AutoManim and TTS (see module docstring)."
+            "Run plan + per-lecture Markdown, optional chunked TTS, optional AutoManim "
+            "(see module docstring)."
         ),
     )
     p.add_argument(
@@ -322,7 +394,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         "--automanim",
         action=argparse.BooleanOptionalAction,
         default=True,
-        help="Enable AutoManim (sets automanim_enabled; default: on).",
+        help="Enable AutoManim after each lecture (default: on).",
     )
     p.add_argument(
         "--automanim-output-dir",
@@ -345,6 +417,12 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         help="Synthesize WAV per lecture if tts_enabled in profile (default: on).",
     )
     p.add_argument(
+        "--shield",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Run Ollama Shield before AutoManim scenes (default: on). Use --no-shield to skip.",
+    )
+    p.add_argument(
         "--tts-max-chars",
         type=int,
         default=12_000,
@@ -361,12 +439,21 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--continue-on-error",
         action="store_true",
-        help="Do not exit on first autocourse/lecture error.",
+        help="Do not exit on first lecture / TTS / AutoManim failure.",
     )
     p.add_argument(
-        "--shield-dry-run",
-        action="store_true",
-        help="If Shield blocks the topic, exit before Ollama course planning.",
+        "--generate-site",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        dest="generate_site",
+        help="Generate a Jekyll course site after finishing (default: off).",
+    )
+    p.add_argument(
+        "--site-output-dir",
+        type=Path,
+        default=None,
+        dest="site_output_dir",
+        help="Parent directory for the generated site (default: sites/).",
     )
     return p
 

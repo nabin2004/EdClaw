@@ -252,6 +252,67 @@ def automanim_cmd(
     typer.secho(f"Wrote manifest to {videos_root / 'manifest.json'}", fg=typer.colors.GREEN)
 
 
+# ---------------------------------------------------------------------------
+# Site generation commands
+# ---------------------------------------------------------------------------
+
+site_typer = typer.Typer(help="Course site generation and catalog (see docs/SITE_GENERATION.md).")
+app.add_typer(site_typer, name="site")
+
+
+@site_typer.command("generate")
+def site_generate(
+    series_dir: Annotated[
+        Path,
+        typer.Argument(help="Series directory with course-plan.json + lecture-*.md"),
+    ],
+    output_dir: Annotated[
+        Path | None,
+        typer.Option("--output-dir", "-o", help="Parent dir for generated sites (default: sites/)"),
+    ] = None,
+) -> None:
+    """Generate a Jekyll course site from an autocourse series."""
+    from educlaw.sitegen.generator import generate_site
+
+    series_path = series_dir.expanduser().resolve()
+    if not series_path.is_dir():
+        typer.secho(f"Not a directory: {series_path}", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+    if not (series_path / "course-plan.json").exists():
+        typer.secho(f"No course-plan.json in {series_path}", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+
+    dest = generate_site(series_path, output_dir=output_dir)
+    typer.secho(f"Site generated at {dest}", fg=typer.colors.GREEN)
+
+
+@site_typer.command("catalog")
+def site_catalog(
+    output_dir: Annotated[
+        Path | None,
+        typer.Option("--output-dir", "-o", help="Directory for index.html (default: sites/)"),
+    ] = None,
+) -> None:
+    """Re-render the course catalog landing page from the registry."""
+    from educlaw.sitegen.catalog import render_catalog
+
+    out = render_catalog(output_dir=output_dir)
+    typer.secho(f"Catalog rendered at {out}", fg=typer.colors.GREEN)
+
+
+@site_typer.command("list")
+def site_list() -> None:
+    """List all courses registered in the catalog."""
+    from educlaw.sitegen.registry import list_courses
+
+    courses = list_courses()
+    if not courses:
+        typer.echo("No courses registered yet.")
+        return
+    for c in courses:
+        typer.echo(f"  {c.get('slug', '?'):30s}  {c.get('title', '')}")
+
+
 @app.command("pull-models")
 def pull_models() -> None:
     """Shell out to ``ollama pull`` for default Gemma stack."""
