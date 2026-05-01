@@ -1,0 +1,50 @@
+_templates_suffix: .jinja
+_envops:
+  block_start_string: "[%"
+  block_end_string: "%]"
+  variable_start_string: "[["
+  variable_end_string: "]]"
+
+course_name:
+  type: str
+  help: "Course title (e.g. Introduction to Linear Algebra)"
+
+course_slug:
+  type: str
+  help: "URL-safe slug used in baseurl"
+  default: "{{ course_name | lower | replace(' ', '-') | truncate(40, end='') }}"
+
+course_description:
+  type: str
+  help: "One-paragraph course description"
+  default: ""
+
+course_semester:
+  type: str
+  help: "Semester label (e.g. Spring 2026)"
+  default: "Spring 2026"
+
+audience:
+  type: str
+  help: "Target audience from course plan"
+  default: "General learners"
+
+schoolname:
+  type: str
+  help: "School or institution name"
+  default: ""
+
+schoolurl:
+  type: str
+  help: "School website URL"
+  default: ""
+
+instructor_name:
+  type: str
+  help: "Primary instructor name"
+  default: "Instructor"
+
+theme_color:
+  type: str
+  help: "Header bar hex color"
+  default: "#002f6c"

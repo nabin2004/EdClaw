@@ -34,6 +34,7 @@ dependencies = [
   "google-genai>=1.0.0",
   "ollama>=0.4",
   "dagestan>=0.1.0",
+  "copier>=9.1",
 ]
 
 [project.optional-dependencies]
