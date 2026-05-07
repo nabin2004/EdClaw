@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from educlaw.gateway.agents.context import build_prompt
+from educlaw.gateway.agents.execution.base import ExecutionEngine
 
 if TYPE_CHECKING:
     from educlaw.gateway.agents.session import AgentSession
@@ -12,15 +12,19 @@ if TYPE_CHECKING:
 
 
 class AgentRuntime:
-    def __init__(self, tools: ToolRegistry, bus: EventBus) -> None:
+    def __init__(
+        self,
+        tools: ToolRegistry,
+        bus: EventBus,
+        execution_engine: ExecutionEngine,
+    ) -> None:
         self._tools = tools
         self._bus = bus
+        self._engine = execution_engine
 
     async def run(self, session: AgentSession, msg: str, stream: Streamer) -> None:
+        await self._bus.emit("gateway.turn.start", {"session_id": session.session_id})
         session.add_user_message(msg)
-        _ = build_prompt(session)
-
-        reply = "Stub response (no LLM wired yet). Your message is in the session transcript."
-        for word in reply.split():
-            await stream.token(word + " ")
+        reply = await self._engine.run(session, msg, self._tools, stream)
         session.add_assistant_message(reply)
+        await self._bus.emit("gateway.turn.end", {"session_id": session.session_id})

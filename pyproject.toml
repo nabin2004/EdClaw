@@ -58,6 +58,9 @@ structured = [
   "instructor>=1.7",
   "outlines>=0.1",
 ]
+pi = [
+  "pi-agent-core>=0.1.1",
+]
 tts-kitten = [
   "kittentts @ https://github.com/KittenML/KittenTTS/releases/download/0.8.1/kittentts-0.8.1-py3-none-any.whl",
   "soundfile>=0.12",

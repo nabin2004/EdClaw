@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     app_name: str = "educlaw"
     gateway_host: str = "127.0.0.1"
     gateway_port: int = 18789
+    # Gateway agent loop: ``stub`` (default) or ``pi`` (optional ``pip install educlaw[pi]``).
+    gateway_execution_engine: Literal["stub", "pi"] = "stub"
 
     # Ollama / LiteLLM (ADK uses ollama_chat/*; set OLLAMA_API_BASE in env)
     ollama_url: str = "http://127.0.0.1:11434"
