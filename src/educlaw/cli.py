@@ -52,6 +52,16 @@ def doctor_cmd(
         except RuntimeError as e:
             typer.secho(str(e), fg=typer.colors.RED)
             raise typer.Exit(code=1) from e
+    if s.automanim_enabled and s.automanim_backend == "local":
+        from educlaw.viz import manim_available
+
+        if not manim_available():
+            typer.secho(
+                "Warning: automanim uses local render but Manim CE is not installed "
+                "(pip install 'educlaw[automanim]' or pip install manim; or set "
+                'automanim_backend = "docker").',
+                fg=typer.colors.YELLOW,
+            )
     if offline:
         typer.echo("doctor: offline mode — skipping Ollama")
         return
@@ -232,15 +242,22 @@ def automanim_cmd(
                     ollama=client,
                     output_root=videos_root,
                 ):
-                    if ev.kind == "scene_done" and ev.artifact and ev.artifact.artifact_path:
-                        manifest[lecture_id].append(
-                            {
-                                "scene_index": ev.scene_index,
-                                "scene_title": ev.scene_title,
-                                "artifact_path": ev.artifact.artifact_path,
-                                "exit_code": ev.artifact.exit_code,
-                            }
-                        )
+                    if ev.kind == "scene_done" and ev.artifact and (
+                        ev.artifact.artifact_path or ev.artifact.scene_dir
+                    ):
+                        row: dict[str, object] = {
+                            "scene_index": ev.scene_index,
+                            "scene_title": ev.scene_title,
+                            "artifact_path": ev.artifact.artifact_path,
+                            "exit_code": ev.artifact.exit_code,
+                        }
+                        if ev.artifact.scene_dir:
+                            row["scene_dir"] = ev.artifact.scene_dir
+                        if ev.artifact.source_path:
+                            row["source_path"] = ev.artifact.source_path
+                        if ev.artifact.log_path:
+                            row["log_path"] = ev.artifact.log_path
+                        manifest[lecture_id].append(row)
                     if ev.kind == "error":
                         typer.secho(f"{lecture_id}: {ev.message}", fg=typer.colors.YELLOW)
         finally:

@@ -68,7 +68,9 @@ class Settings(BaseSettings):
     # AutoManim (ADK + Manim CE; see docs/AUTOMANIM.md)
     automanim_enabled: bool = False
     automanim_backend: Literal["local", "docker"] = "local"
-    automanim_image: str = "educlaw/manim:latest"
+    automanim_image: str = "manimcommunity/manim:stable"
+    # Docker: "auto" -> --user uid:gid on POSIX; "none" to omit; or "uid:gid" literally.
+    automanim_docker_user: str = "auto"
     automanim_quality: Literal["l", "m", "h", "p", "k"] = "l"
     automanim_timeout_sec: int = 180
     automanim_max_attempts: int = 3

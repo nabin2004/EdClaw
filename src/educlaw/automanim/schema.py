@@ -26,6 +26,9 @@ class RenderArtifact(BaseModel):
     scene_name: str
     exit_code: int = 0
     stderr_tail: str = ""
+    scene_dir: str = ""
+    source_path: str = ""
+    log_path: str = ""
 
 
 AutoManimKind = Literal[

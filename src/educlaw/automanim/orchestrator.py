@@ -19,6 +19,15 @@ from educlaw.automanim.render import build_render_backend
 from educlaw.automanim.schema import AutoManimEvent, RenderArtifact
 from educlaw.config.settings import Settings
 from educlaw.safety.shield import NoopShield, Shield, Verdict
+from educlaw.viz import manim_available
+
+_AUTOMANIM_LOCAL_MANIM_HINT = (
+    "Manim Community Edition is not available (no `manim` on PATH and "
+    "`python -m manim` failed). Install with: pip install 'educlaw[automanim]' "
+    '(or pip install manim). Or set automanim_backend = "docker" and pull '
+    "`manimcommunity/manim:stable` (default; see docs/AUTOMANIM.md) or build "
+    "`educlaw/manim:latest` from docker/manim.Dockerfile."
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -70,6 +79,15 @@ async def run_automanim(
         lecture_id=lecture_id,
         message="Safety check passed.",
     )
+
+    if settings.automanim_backend == "local" and not manim_available():
+        LOG.error("automanim lecture=%s manim_missing backend=local", lecture_id)
+        yield AutoManimEvent(
+            kind="error",
+            lecture_id=lecture_id,
+            message=_AUTOMANIM_LOCAL_MANIM_HINT,
+        )
+        return
 
     planner = build_planner_agent(settings)
     user_plan = (
@@ -210,14 +228,16 @@ async def run_automanim(
                     )
                     continue
 
-            dest = lec_dir / f"{idx:02d}-{_slug(scene.title)}.mp4"
+            scene_dir = lec_dir / f"{idx:02d}-{_slug(scene.title)}"
+            scene_dir.mkdir(parents=True, exist_ok=True)
+            dest = scene_dir / "scene.mp4"
             yield AutoManimEvent(
                 kind="render",
                 lecture_id=lecture_id,
                 scene_index=idx,
                 scene_title=scene.title,
-                message=f"Rendering video → {dest.name}",
-                extra={"path": str(dest)},
+                message=f"Rendering video → {scene_dir.name}/{dest.name}",
+                extra={"path": str(dest), "scene_dir": str(scene_dir)},
             )
             try:
                 art = await backend.render_scene(source, dest)
@@ -239,6 +259,9 @@ async def run_automanim(
                     scene_name="",
                     exit_code=1,
                     stderr_tail=str(e),
+                    scene_dir=str(dest.parent),
+                    source_path=str(dest.parent / "scene.py"),
+                    log_path=str(dest.parent / "render.log"),
                 )
             else:
                 if art.exit_code != 0 or not (art.artifact_path or "").strip():

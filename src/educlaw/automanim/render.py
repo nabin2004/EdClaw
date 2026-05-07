@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import shutil
 import subprocess
-import tempfile
 from pathlib import Path
 from typing import Protocol
 
@@ -16,9 +16,33 @@ from educlaw.viz import extract_python, find_rendered_mp4s, render_to_mp4, scene
 
 LOG = logging.getLogger(__name__)
 
+_DOCKER_LOG_CAP = 500_000
+
 
 class RenderBackend(Protocol):
     async def render_scene(self, source: str, dest_mp4: Path) -> RenderArtifact: ...
+
+
+def _workspace_meta(work_dir: Path) -> dict[str, str]:
+    wd = work_dir.resolve()
+    return {
+        "scene_dir": str(wd),
+        "source_path": str(wd / "scene.py"),
+        "log_path": str(wd / "render.log"),
+    }
+
+
+def _docker_user_run_args(settings: Settings) -> list[str]:
+    spec = (settings.automanim_docker_user or "auto").strip()
+    if spec.lower() == "none":
+        return []
+    if spec.lower() == "auto":
+        getuid = getattr(os, "getuid", None)
+        getgid = getattr(os, "getgid", None)
+        if not callable(getuid) or not callable(getgid):
+            return []
+        return ["--user", f"{getuid()}:{getgid()}"]
+    return ["--user", spec]
 
 
 class LocalRenderBackend:
@@ -28,18 +52,22 @@ class LocalRenderBackend:
     async def render_scene(self, source: str, dest_mp4: Path) -> RenderArtifact:
         code = extract_python(source)
         sc = scene_class_name(code) or "Scene"
+        work_dir = dest_mp4.parent
+        meta = _workspace_meta(work_dir)
         ok, err = await asyncio.to_thread(
             render_to_mp4,
             code,
             dest_mp4,
             timeout_sec=self._settings.automanim_timeout_sec,
-            quality=f"q{self._settings.automanim_quality}",
+            quality=self._settings.automanim_quality,
+            work_dir=work_dir,
         )
         art = RenderArtifact(
             artifact_path=str(dest_mp4) if ok else "",
             scene_name=sc,
             exit_code=0 if ok else 1,
             stderr_tail=err[-8000:],
+            **meta,
         )
         LOG.info(
             "automanim_render backend=local scene=%s dest=%s ok=%s exit=%s",
@@ -57,70 +85,85 @@ def _docker_render_sync(
     dest_mp4: Path,
     scene: str,
 ) -> RenderArtifact:
-    td = Path(tempfile.mkdtemp(prefix="educlaw_automanim_docker_"))
+    work_dir = dest_mp4.parent.resolve()
+    work_dir.mkdir(parents=True, exist_ok=True)
+    scene_path = work_dir / "scene.py"
+    scene_path.write_text(code, encoding="utf-8")
+    log_path = work_dir / "render.log"
+    meta = _workspace_meta(work_dir)
+
+    cmd = [
+        "docker",
+        "run",
+        "--rm",
+        "--network=none",
+        *_docker_user_run_args(settings),
+        "-v",
+        f"{work_dir}:/work",
+        "-w",
+        "/work",
+        settings.automanim_image,
+        "manim",
+        "render",
+        f"-q{settings.automanim_quality}",
+        "/work/scene.py",
+        scene,
+    ]
+    proc: subprocess.CompletedProcess[str] | None = None
     try:
-        scene_path = td / "scene.py"
-        scene_path.write_text(code, encoding="utf-8")
-        cmd = [
-            "docker",
-            "run",
-            "--rm",
-            "--network=none",
-            "-v",
-            f"{td}:/work",
-            "-w",
-            "/work",
-            settings.automanim_image,
-            "manim",
-            "render",
-            f"-q{settings.automanim_quality}",
-            "/work/scene.py",
-            scene,
-        ]
-        try:
-            p = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=float(settings.automanim_timeout_sec),
-            )
-        except subprocess.TimeoutExpired:
-            return RenderArtifact(
-                artifact_path="",
-                scene_name=scene,
-                exit_code=124,
-                stderr_tail="docker timeout",
-            )
-        err = ((p.stderr or "") + (p.stdout or ""))[-8000:]
-        if p.returncode != 0:
-            return RenderArtifact(
-                artifact_path="",
-                scene_name=scene,
-                exit_code=p.returncode,
-                stderr_tail=err,
-            )
-        mp4s = find_rendered_mp4s(td)
-        if not mp4s:
-            return RenderArtifact(
-                artifact_path="",
-                scene_name=scene,
-                exit_code=1,
-                stderr_tail=err + "\nno mp4",
-            )
-        dest_mp4.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(mp4s[-1], dest_mp4)
-        return RenderArtifact(
-            artifact_path=str(dest_mp4),
-            scene_name=scene,
-            exit_code=0,
-            stderr_tail=err,
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=float(settings.automanim_timeout_sec),
         )
-    finally:
-        shutil.rmtree(td, ignore_errors=True)
+    except subprocess.TimeoutExpired:
+        log_path.write_text("docker timeout\n", encoding="utf-8")
+        return RenderArtifact(
+            artifact_path="",
+            scene_name=scene,
+            exit_code=124,
+            stderr_tail="docker timeout",
+            **meta,
+        )
+
+    assert proc is not None
+    full_out = (proc.stdout or "") + (proc.stderr or "")
+    tail_log = full_out[-_DOCKER_LOG_CAP:] if len(full_out) > _DOCKER_LOG_CAP else full_out
+    log_path.write_text(tail_log, encoding="utf-8")
+    err = full_out[-8000:]
+    if proc.returncode != 0:
+        return RenderArtifact(
+            artifact_path="",
+            scene_name=scene,
+            exit_code=proc.returncode,
+            stderr_tail=err,
+            **meta,
+        )
+    mp4s = find_rendered_mp4s(work_dir)
+    if not mp4s:
+        return RenderArtifact(
+            artifact_path="",
+            scene_name=scene,
+            exit_code=1,
+            stderr_tail=err + "\nno mp4",
+            **meta,
+        )
+    dest_mp4.parent.mkdir(parents=True, exist_ok=True)
+    newest = mp4s[-1]
+    if newest.resolve() != dest_mp4.resolve():
+        shutil.copy2(newest, dest_mp4)
+    return RenderArtifact(
+        artifact_path=str(dest_mp4),
+        scene_name=scene,
+        exit_code=0,
+        stderr_tail=err,
+        **meta,
+    )
 
 
 class DockerRenderBackend:
-    """One-shot ``docker run`` with a temp dir mounted at ``/work``."""
+    """One-shot ``docker run`` with the scene directory mounted at ``/work``."""
 
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
@@ -129,11 +172,13 @@ class DockerRenderBackend:
         code = extract_python(source)
         sc = scene_class_name(code)
         if not sc:
+            meta = _workspace_meta(dest_mp4.parent)
             return RenderArtifact(
                 artifact_path="",
                 scene_name="",
                 exit_code=1,
                 stderr_tail="no Scene",
+                **meta,
             )
         loop = asyncio.get_running_loop()
 
