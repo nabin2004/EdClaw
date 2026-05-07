@@ -26,7 +26,7 @@ def test_render_to_mp4_smoke(tmp_path: Path) -> None:
         _GOLDEN,
         dest,
         timeout_sec=120,
-        quality="ql",
+        quality="l",
     )
     assert ok, err
     assert dest.is_file()

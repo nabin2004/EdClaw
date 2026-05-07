@@ -33,6 +33,7 @@ async def test_run_automanim_smoke(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
 
     monkeypatch.setattr("educlaw.automanim.orchestrator.run_llm_agent_once", fake_llm)
     monkeypatch.setattr("educlaw.automanim.orchestrator.build_render_backend", lambda _s: _FB())
+    monkeypatch.setattr("educlaw.automanim.orchestrator.manim_available", lambda: True)
 
     shield = Shield(AsyncMock(), model="shield")
     shield.classify = AsyncMock(return_value=Verdict.ALLOW)
@@ -92,6 +93,7 @@ async def test_run_automanim_render_subprocess_failure_emits_error(
 
     monkeypatch.setattr("educlaw.automanim.orchestrator.run_llm_agent_once", fake_llm)
     monkeypatch.setattr("educlaw.automanim.orchestrator.build_render_backend", lambda _s: _FB())
+    monkeypatch.setattr("educlaw.automanim.orchestrator.manim_available", lambda: True)
 
     shield = Shield(AsyncMock(), model="shield")
     shield.classify = AsyncMock(return_value=Verdict.ALLOW)
@@ -113,3 +115,38 @@ async def test_run_automanim_render_subprocess_failure_emits_error(
     assert "Render failed" in (err_msgs[0] or "")
     assert "exit 1" in (err_msgs[0] or "")
     assert "manim" in (err_msgs[0] or "").lower()
+
+
+@pytest.mark.asyncio
+async def test_run_automanim_local_aborts_when_manim_missing(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    called: list[str] = []
+
+    async def boom_llm(agent: Any, *, user_text: str, user_id: str = "automanim") -> str:
+        called.append(getattr(agent, "name", ""))
+        return "{}"
+
+    monkeypatch.setattr("educlaw.automanim.orchestrator.run_llm_agent_once", boom_llm)
+    monkeypatch.setattr("educlaw.automanim.orchestrator.manim_available", lambda: False)
+
+    shield = Shield(AsyncMock(), model="shield")
+    shield.classify = AsyncMock(return_value=Verdict.ALLOW)
+
+    settings = Settings(data_dir=tmp_path, automanim_backend="local")
+    events = [
+        e
+        async for e in run_automanim(
+            "# L\n",
+            {"id": "lec.1", "title": "L1"},
+            settings,
+            shield,
+            ollama=None,
+            output_root=tmp_path / "out",
+        )
+    ]
+    assert called == []
+    errs = [e for e in events if e.kind == "error"]
+    assert len(errs) == 1
+    assert "educlaw[automanim]" in (errs[0].message or "")
