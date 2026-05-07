@@ -74,7 +74,7 @@ def evaluate_sample(
     *,
     required_keywords: list[str] | None = None,
     run_render: bool = True,
-    manim_bin: str = "manim",
+    manim_bin: str | None = None,
 ) -> dict[str, Any]:
     """Compute Exec, VCER, Alignment, Coverage for one generation."""
     code = extract_python(raw_output)

@@ -30,7 +30,7 @@ tts_speed = 1.0
 # For graph ingest via local Ollama: dagestan_provider = "ollama"
 # AutoManim — NOT used by gateway WebSocket chat (that path is text-only).
 # Use: `educlaw automanim <dir-with-lecture-*.md>` or scripts/run_full_course_pipeline.py.
-# Prerequisites: automanim_backend = "local" needs `manim` on PATH; "docker" needs image educlaw/manim:latest (see docs/AUTOMANIM.md).
+# Prerequisites: automanim_backend = "local" uses Manim CE (`manim` on PATH, or same Python as EdClaw: `python -m manim`); "docker" needs image educlaw/manim:latest (see docs/AUTOMANIM.md).
 automanim_enabled = true
 automanim_backend = "local"
 # automanim_image = "educlaw/manim:latest"

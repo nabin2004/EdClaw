@@ -6,6 +6,7 @@ import ast
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -49,12 +50,38 @@ def has_manim_scene(source: str) -> bool:
     return False
 
 
+def manim_command_prefix(manim_bin: str | None = None) -> list[str]:
+    """Argv prefix so ``prefix + ['render', ...]`` invokes Manim CE."""
+    if manim_bin:
+        return [manim_bin]
+    w = shutil.which("manim")
+    if w:
+        return [w]
+    return [sys.executable, "-m", "manim"]
+
+
+def manim_available() -> bool:
+    """True if Manim CE is invokable via ``manim`` on PATH or ``python -m manim``."""
+    if shutil.which("manim"):
+        return True
+    try:
+        r = subprocess.run(
+            [sys.executable, "-m", "manim", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        return r.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
 def render_executable(
     source: str,
     *,
     timeout_sec: int = 60,
     quality: str = "ql",
-    manim_bin: str = "manim",
+    manim_bin: str | None = None,
 ) -> tuple[bool, str]:
     """Run manim render in a temp dir. Returns (success, stderr snippet)."""
     scene = scene_class_name(source)
@@ -64,7 +91,7 @@ def render_executable(
     with tempfile.TemporaryDirectory(prefix="educlaw_manim_") as td:
         path = Path(td) / "generated_scene.py"
         path.write_text(source, encoding="utf-8")
-        cmd = [manim_bin, "render", f"-q{quality}", str(path), scene]
+        cmd = [*manim_command_prefix(manim_bin), "render", f"-q{quality}", str(path), scene]
         try:
             proc = subprocess.run(
                 cmd,
@@ -93,7 +120,7 @@ def render_to_mp4(
     *,
     timeout_sec: int = 60,
     quality: str = "ql",
-    manim_bin: str = "manim",
+    manim_bin: str | None = None,
 ) -> tuple[bool, str]:
     """Run manim in a temp dir; on success copy the newest ``*.mp4`` to *dest_mp4*."""
     scene = scene_class_name(source)
@@ -104,7 +131,7 @@ def render_to_mp4(
         td_path = Path(td)
         path = td_path / "generated_scene.py"
         path.write_text(source, encoding="utf-8")
-        cmd = [manim_bin, "render", f"-q{quality}", str(path), scene]
+        cmd = [*manim_command_prefix(manim_bin), "render", f"-q{quality}", str(path), scene]
         try:
             proc = subprocess.run(
                 cmd,

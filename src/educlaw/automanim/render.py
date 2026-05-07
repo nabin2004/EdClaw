@@ -34,7 +34,6 @@ class LocalRenderBackend:
             dest_mp4,
             timeout_sec=self._settings.automanim_timeout_sec,
             quality=f"q{self._settings.automanim_quality}",
-            manim_bin="manim",
         )
         art = RenderArtifact(
             artifact_path=str(dest_mp4) if ok else "",
