@@ -14,7 +14,7 @@ embedding_model = "embeddinggemma"
 # Reuses main chat model (no separate ShieldGemma pull).
 shield_model = "gemma4:e2b"
 # When false: NoopShield inside AutoManim/course scripts (no extra classify call).
-shield_enabled = true
+shield_enabled = false
 strict_local = true
 sandbox_backend = "docker"
 data_dir = "~/.educlaw"
@@ -30,7 +30,9 @@ tts_speed = 1.0
 # For graph ingest via local Ollama: dagestan_provider = "ollama"
 # AutoManim — NOT used by gateway WebSocket chat (that path is text-only).
 # Use: `educlaw automanim <dir-with-lecture-*.md>` or scripts/run_full_course_pipeline.py.
-# Prerequisites: automanim_backend = "local" uses Manim CE (`manim` on PATH, or same Python as EdClaw: `python -m manim`); "docker" needs image educlaw/manim:latest (see docs/AUTOMANIM.md).
+# Prerequisites: automanim_backend = "local" needs Manim CE in the same venv as EdClaw:
+#   pip install 'educlaw[automanim]'   (or pip install manim; `manim` on PATH also works)
+# "docker" needs image educlaw/manim:latest (see docs/AUTOMANIM.md).
 automanim_enabled = true
 automanim_backend = "local"
 # automanim_image = "educlaw/manim:latest"
