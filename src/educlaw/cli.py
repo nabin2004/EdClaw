@@ -60,7 +60,7 @@ def doctor_cmd(
         r.raise_for_status()
         names = {m.get("name", "") for m in r.json().get("models", [])}
         typer.echo(f"Ollama: OK ({len(names)} models)")
-        for want in sorted({s.model_id, s.embedding_model, s.shield_model}):
+        for want in sorted({s.model_id, s.shield_model}):
             if not any(n.startswith(want.split(":")[0]) for n in names):
                 typer.secho(
                     f"Warning: model matching {want!r} not found in ollama list",
