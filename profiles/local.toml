@@ -6,6 +6,7 @@ OLLAMA_API_BASE = "http://127.0.0.1:11434"
 [educlaw]
 gateway_host = "127.0.0.1"
 gateway_port = 18789
+gateway_execution_engine = "ollama"
 ollama_url = "http://127.0.0.1:11434"
 # Smallest Gemma 4 edge build on Ollama (E2B < E4B; see https://ollama.com/library/gemma4/tags)
 model_id = "gemma4:e2b"
