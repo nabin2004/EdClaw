@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delta Streaming Editor</title>
+</head>
+<body>
+
+<h2>Delta Stream Editor</h2>
+
+<textarea id="editor" rows="10" cols="60"></textarea>
+
+<script>
+const ws = new WebSocket("ws://127.0.0.1:8000/ws");
+const editor = document.getElementById("editor");
+
+let localChange = false;
+
+// -----------------------------
+// APPLY incoming delta
+// -----------------------------
+ws.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+
+    const value = editor.value;
+
+    if (msg.type === "insert") {
+        editor.value =
+            value.slice(0, msg.pos) +
+            msg.char +
+            value.slice(msg.pos);
+    }
+
+    if (msg.type === "delete") {
+        editor.value =
+            value.slice(0, msg.pos) +
+            value.slice(msg.pos + 1);
+    }
+};
+
+
+// -----------------------------
+// SEND delta (true key streaming)
+// -----------------------------
+editor.addEventListener("input", (e) => {
+    if (localChange) return;
+
+    ws.send(editor.value);
+});
+</script>
+
+</body>
+</html>
