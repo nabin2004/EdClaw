@@ -61,6 +61,9 @@ structured = [
 pi = [
   "pi-agent-core>=0.1.1",
 ]
+automanim = [
+  "manim>=0.18.0",
+]
 tts-kitten = [
   "kittentts @ https://github.com/KittenML/KittenTTS/releases/download/0.8.1/kittentts-0.8.1-py3-none-any.whl",
   "soundfile>=0.12",
