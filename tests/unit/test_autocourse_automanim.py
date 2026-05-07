@@ -52,3 +52,40 @@ async def test_autocourse_emits_automanim_events(monkeypatch: pytest.MonkeyPatch
     dumped = am_events[0].model_dump(mode="json")
     assert dumped["kind"] == "automanim"
     assert dumped["automanim"]["kind"] == "plan"
+
+
+@pytest.mark.asyncio
+async def test_autocourse_passes_noop_shield_when_shield_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    plan = {
+        "title": "Tiny",
+        "audience": "x",
+        "lectures": [
+            {
+                "title": "Only",
+                "objectives": ["a"],
+                "key_topics": ["b"],
+            },
+        ],
+    }
+    fake = _FakeOllama(plan, "# L\n\nok")
+    captured: dict[str, str] = {}
+
+    async def fake_run_am(
+        _md: str,
+        _meta: dict,
+        _settings: object,
+        shield: object,
+        **_kw: object,
+    ):
+        captured["shield_cls"] = type(shield).__name__
+        yield AutoManimEvent(kind="done", lecture_id="x", message="fin")
+
+    monkeypatch.setattr("educlaw.autocourse.orchestrator.run_automanim", fake_run_am)
+
+    settings = Settings(automanim_enabled=True, shield_enabled=False)
+    events = [e async for e in run_autocourse("topic", settings, fake)]  # type: ignore[arg-type]
+
+    assert any(e.kind == "automanim" for e in events)
+    assert captured["shield_cls"] == "NoopShield"

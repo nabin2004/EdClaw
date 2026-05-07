@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     embedding_dim: int = 768
     # Safety classifier uses the same Ollama model as chat by default (no separate ShieldGemma).
     shield_model: str = "gemma3:latest"
+    # When false, AutoManim uses NoopShield (no extra generate call for classification).
+    shield_enabled: bool = True
 
     data_dir: Path = Field(default_factory=lambda: Path.home() / ".educlaw")
     ir_root: Path | None = None

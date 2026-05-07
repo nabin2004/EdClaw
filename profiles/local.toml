@@ -12,6 +12,8 @@ model_id = "gemma4:e2b"
 embedding_model = "embeddinggemma"
 # Reuses main chat model (no separate ShieldGemma pull).
 shield_model = "gemma4:e2b"
+# false = skip Ollama classify inside AutoManim for WS autocourse (NoopShield).
+shield_enabled = true
 strict_local = true
 sandbox_backend = "docker"
 data_dir = "~/.educlaw"

@@ -1,0 +1,9 @@
+{
+  "topic": "Introduction to linear algebra: vectors, matrices, linear systems, determinants, eigenvalues and eigenvectors, diagonalization, and applications. Audience: first-year undergraduates and motivated high-school students.",
+  "lecture_count": 8,
+  "output_dir": "/home/nabin2004/Desktop/EdClaw/content/ir/series/2026-04-23-linear-algebra-e2e-tts",
+  "automanim": true,
+  "tts": true,
+  "manim_artifacts": [],
+  "exit_code": 0
+}

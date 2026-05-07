@@ -10,9 +10,18 @@ from educlaw.autocourse.schema import AutocourseEvent, CoursePlan
 from educlaw.autolecture.generator import generate_lecture
 from educlaw.automanim.orchestrator import run_automanim
 from educlaw.config.settings import Settings
-from educlaw.safety.shield import Shield
+from educlaw.safety.shield import NoopShield, Shield
 
 _MAX_LECTURES = 8
+
+
+class CoursePlanningFailed(Exception):
+    """Raised when ``plan_course`` cannot produce a valid ``CoursePlan``."""
+
+    def __init__(self, message: str, *, raw_preview: str | None = None) -> None:
+        super().__init__(message)
+        self.raw_preview = raw_preview or ""
+
 
 _PLAN_SYSTEM = f"""You are a curriculum designer. The user describes what they want to learn \
 or teach.
@@ -38,11 +47,12 @@ exactly N lectures and N is between 2 and {_MAX_LECTURES} (inclusive), include e
 """
 
 
-async def run_autocourse(
-    user_prompt: str,
-    settings: Settings,
+async def plan_course(
     client: AsyncClient,
-) -> AsyncIterator[AutocourseEvent]:
+    settings: Settings,
+    user_prompt: str,
+) -> CoursePlan:
+    """Call Ollama once and return a validated ``CoursePlan`` (raises ``CoursePlanningFailed``)."""
     raw: str | None = None
     try:
         out = await client.chat(
@@ -57,18 +67,36 @@ async def run_autocourse(
         msg = out.get("message") or {}
         raw = (msg.get("content") or "").strip()
         if not raw:
-            yield AutocourseEvent(kind="error", message="Empty plan from model.")
-            return
+            raise CoursePlanningFailed("Empty plan from model.")
         plan = CoursePlan.model_validate_json(raw)
+    except CoursePlanningFailed:
+        raise
     except (json.JSONDecodeError, ValidationError) as e:
+        raise CoursePlanningFailed(
+            f"Invalid course plan: {e}",
+            raw_preview=(raw or "")[:500],
+        ) from e
+    except Exception as e:  # noqa: BLE001
+        raise CoursePlanningFailed(f"Course planning failed: {e!s}") from e
+
+    if not plan.lectures:
+        raise CoursePlanningFailed("Course plan has no lectures.")
+    return plan
+
+
+async def run_autocourse(
+    user_prompt: str,
+    settings: Settings,
+    client: AsyncClient,
+) -> AsyncIterator[AutocourseEvent]:
+    try:
+        plan = await plan_course(client, settings, user_prompt)
+    except CoursePlanningFailed as e:
         yield AutocourseEvent(
             kind="error",
-            message=f"Invalid course plan: {e}",
-            extra={"raw_preview": (raw or "")[:500]},
+            message=str(e),
+            extra={"raw_preview": e.raw_preview},
         )
-        return
-    except Exception as e:  # noqa: BLE001 — surface planner failures to client
-        yield AutocourseEvent(kind="error", message=f"Course planning failed: {e!s}")
         return
 
     lectures = plan.lectures[:_MAX_LECTURES]
@@ -85,9 +113,11 @@ async def run_autocourse(
 
     prior_titles: list[str] = []
     n = len(lectures)
-    shield: Shield | None = None
+    shield: Shield | NoopShield | None = None
     if settings.automanim_enabled:
-        shield = Shield(client, model=settings.shield_model)
+        shield = (
+            Shield(client, model=settings.shield_model) if settings.shield_enabled else NoopShield()
+        )
 
     for i, outline in enumerate(lectures, start=1):
         yield AutocourseEvent(

@@ -1,3 +1,3 @@
-from .shield import Shield, Verdict
+from .shield import NoopShield, Shield, Verdict
 
-__all__ = ["Shield", "Verdict"]
+__all__ = ["NoopShield", "Shield", "Verdict"]

@@ -42,3 +42,10 @@ class Shield:
                 return Verdict.REVIEW
             case _:
                 return Verdict.ALLOW
+
+
+class NoopShield:
+    """Shield stand-in that always allows (no Ollama call). Use when ``shield_enabled`` is off."""
+
+    async def classify(self, text: str) -> Verdict:  # noqa: ARG002
+        return Verdict.ALLOW

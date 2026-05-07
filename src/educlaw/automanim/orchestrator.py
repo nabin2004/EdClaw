@@ -17,7 +17,7 @@ from educlaw.automanim.planner import build_planner_agent, parse_viz_plan
 from educlaw.automanim.render import build_render_backend
 from educlaw.automanim.schema import AutoManimEvent, RenderArtifact
 from educlaw.config.settings import Settings
-from educlaw.safety.shield import Shield, Verdict
+from educlaw.safety.shield import NoopShield, Shield, Verdict
 
 
 def _slug(s: str, max_len: int = 48) -> str:
@@ -29,7 +29,7 @@ async def run_automanim(
     lecture_markdown: str,
     ir_suggestion: dict[str, Any],
     settings: Settings,
-    shield: Shield,
+    shield: Shield | NoopShield,
     ollama: AsyncClient | None = None,
     *,
     output_root: Path | None = None,
