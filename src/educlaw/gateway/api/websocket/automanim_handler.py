@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,18 @@ from educlaw.gateway.agents.streaming import Streamer
 from educlaw.safety.shield import NoopShield, Shield
 
 LOG = logging.getLogger("educlaw.automanim")
+
+
+async def _maybe_close_ollama(client: AsyncClient) -> None:
+    aclose = getattr(client, "aclose", None)
+    if callable(aclose):
+        await aclose()  # type: ignore[misc]
+        return
+    close = getattr(client, "close", None)
+    if callable(close):
+        out = close()
+        if asyncio.iscoroutine(out):
+            await out  # type: ignore[misc]
 
 
 def _default_title(markdown: str) -> str:
@@ -115,6 +128,12 @@ async def handle_automanim_ws(
                 output_root=output_root,
             ):
                 payload_ev = ev.model_dump(mode="json", exclude_none=True)
+                if payload_ev.get("kind") == "scene_done":
+                    art = payload_ev.get("artifact")
+                    if isinstance(art, dict) and art.get("artifact_path"):
+                        art_url = _artifact_url_for_path(str(art["artifact_path"]), base_out)
+                        if art_url:
+                            payload_ev["artifact_url"] = art_url
                 await stream.event("automanim.progress", payload_ev)
                 msg_snip = (ev.message or "")[:160].replace("\n", " ")
                 LOG.info(
@@ -142,7 +161,7 @@ async def handle_automanim_ws(
                 {"kind": "error", "message": str(e), "lecture_id": ir_suggestion.get("id")},
             )
     finally:
-        await client.close()
+        await _maybe_close_ollama(client)
 
     LOG.info(
         "automanim_ws done session=%s success=%s artifacts=%d error=%s",

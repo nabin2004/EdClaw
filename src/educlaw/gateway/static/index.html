@@ -88,12 +88,23 @@
       border: 1px solid var(--border);
     }
     .am-videos { margin-top: 0.75rem; }
+    .am-video-item { margin-bottom: 0.65rem; }
+    .am-video-cap {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+    .am-video-hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.35rem;
+    }
     .am-videos video {
       width: 100%;
       max-height: 240px;
       border-radius: 8px;
       border: 1px solid var(--border);
-      margin-bottom: 0.5rem;
+      display: block;
     }
     form { display: flex; flex-direction: column; gap: 0.5rem; }
     .form-actions { display: flex; gap: 0.5rem; align-items: stretch; }
@@ -291,11 +302,34 @@
       div.innerHTML =
         '<div class="label">Assistant</div><div class="body"></div>' +
         '<pre class="am-progress" hidden></pre><div class="am-videos"></div>';
+      div._amVideoSrcs = new Set();
       logEl.appendChild(div);
       logEl.scrollTop = logEl.scrollHeight;
       assistantMsgRoot = div;
       assistantEl = div.querySelector(".body");
       return assistantEl;
+    }
+
+    function appendManimVideo(msgRoot, box, src, label) {
+      if (!msgRoot || !box || !src) return;
+      const seen = msgRoot._amVideoSrcs;
+      if (!seen || seen.has(src)) return;
+      seen.add(src);
+      const wrap = document.createElement("div");
+      wrap.className = "am-video-item";
+      if (label) {
+        const cap = document.createElement("div");
+        cap.className = "am-video-cap";
+        cap.textContent = label;
+        wrap.appendChild(cap);
+      }
+      const v = document.createElement("video");
+      v.setAttribute("controls", "");
+      v.setAttribute("playsinline", "");
+      v.setAttribute("preload", "metadata");
+      v.src = src;
+      wrap.appendChild(v);
+      box.appendChild(wrap);
     }
 
     function formatProgress(data) {
@@ -307,6 +341,25 @@
       }
       if (ex.path) {
         msg = (msg ? msg + " · " : "") + String(ex.path);
+      }
+      if (k === "scene_done" && data.artifact && typeof data.artifact === "object") {
+        const ar = data.artifact;
+        const path = ar.artifact_path ? String(ar.artifact_path).trim() : "";
+        const badExit = ar.exit_code != null && ar.exit_code !== 0;
+        const bad = badExit || !path;
+        if (bad) {
+          const bits = [];
+          if (badExit) bits.push("exit " + ar.exit_code);
+          if (!path) bits.push("no file on disk");
+          if (ar.stderr_tail) {
+            let tail = String(ar.stderr_tail).replace(/\s+/g, " ").trim();
+            if (tail.length > 220) tail = tail.slice(0, 220) + "…";
+            bits.push(tail);
+          }
+          msg = (msg ? msg + " · " : "") + bits.join(" · ");
+        } else if (path) {
+          msg = (msg ? msg + " · " : "") + path;
+        }
       }
       let prefix = "";
       if (data.scene_index != null) {
@@ -373,6 +426,17 @@
               const line = formatProgress(msg.data);
               pre.textContent += (pre.textContent ? "\n" : "") + line;
             }
+            if (msg.data.kind === "scene_done" && msg.data.artifact_url) {
+              const box = assistantMsgRoot.querySelector(".am-videos");
+              let cap = "";
+              if (msg.data.scene_index != null) {
+                cap += "[scene " + msg.data.scene_index + "]";
+              }
+              if (msg.data.scene_title) {
+                cap += (cap ? " " : "") + msg.data.scene_title;
+              }
+              appendManimVideo(assistantMsgRoot, box, msg.data.artifact_url, cap);
+            }
             logEl.scrollTop = logEl.scrollHeight;
             return;
           }
@@ -381,12 +445,15 @@
             const box = assistantMsgRoot.querySelector(".am-videos");
             const urls = msg.data.artifact_urls || [];
             urls.forEach(function (src) {
-              const v = document.createElement("video");
-              v.setAttribute("controls", "");
-              v.setAttribute("playsinline", "");
-              v.src = src;
-              box.appendChild(v);
+              appendManimVideo(assistantMsgRoot, box, src, "");
             });
+            if (msg.data.success === false && urls.length > 0) {
+              const hint = document.createElement("div");
+              hint.className = "am-video-hint";
+              hint.textContent =
+                "Completed with errors; showing " + urls.length + " rendered scene(s).";
+              box.appendChild(hint);
+            }
             logEl.scrollTop = logEl.scrollHeight;
             return;
           }
