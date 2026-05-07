@@ -8,7 +8,10 @@ Future improvements:
 """
 
 
+from pathlib import Path
+
 from fastapi import FastAPI, WebSocket
+from fastapi.responses import FileResponse
 
 from educlaw.config.settings import load_settings
 from educlaw.gateway.agents.execution.factory import build_execution_engine
@@ -21,6 +24,21 @@ from educlaw.gateway.storage.session_store import SessionStore
 
 _settings = load_settings()
 app = FastAPI()
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+
+@app.get("/healthz")
+async def healthz() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@app.get("/")
+async def index() -> FileResponse:
+    return FileResponse(
+        STATIC_DIR / "index.html",
+        media_type="text/html; charset=utf-8",
+    )
 
 store = SessionStore()
 tools = create_default_tools()

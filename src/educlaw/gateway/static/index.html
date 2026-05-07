@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EduClaw Gateway</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --border: #2d3a4d;
+      --text: #e6edf3;
+      --muted: #8b9cb3;
+      --accent: #3d9eff;
+      --user-bg: #1e3a5f;
+      --assistant-bg: #1a2820;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      max-width: 42rem;
+      margin-inline: auto;
+      padding: 1rem;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    h1 { font-size: 1.125rem; font-weight: 600; margin: 0; }
+    #status {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    #status.connected { color: #3fb950; border-color: #238636; }
+    #status.disconnected { color: var(--muted); }
+    #status.error { color: #f85149; border-color: #da3633; }
+    #log {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 12rem;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      margin-bottom: 1rem;
+    }
+    .msg { margin: 0 0 0.75rem; padding: 0.6rem 0.75rem; border-radius: 8px; font-size: 0.9375rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+    .msg.user { background: var(--user-bg); border-left: 3px solid var(--accent); }
+    .msg.assistant { background: var(--assistant-bg); border-left: 3px solid #2ea043; }
+    .msg .label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.35rem; }
+    form {
+      display: flex;
+      gap: 0.5rem;
+      align-items: stretch;
+    }
+    #input {
+      flex: 1;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 1rem;
+    }
+    #input:focus { outline: none; border-color: var(--accent); }
+    #input:disabled { opacity: 0.55; }
+    button {
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      font-weight: 500;
+      cursor: pointer;
+      font-size: 0.9375rem;
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    #toast {
+      font-size: 0.8125rem;
+      color: #f85149;
+      min-height: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    footer {
+      margin-top: 1rem;
+      font-size: 0.6875rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>EduClaw</h1>
+    <span id="status" class="disconnected">Disconnected</span>
+  </header>
+  <div id="toast" aria-live="polite"></div>
+  <div id="log" aria-label="Conversation"></div>
+  <form id="form">
+    <input id="input" type="text" autocomplete="off" placeholder="Message (plain text to /ws)…" autofocus disabled>
+    <button type="submit" id="send" disabled>Send</button>
+  </form>
+  <footer>Sends plain WebSocket text; streams <code style="font-size:0.95em;color:var(--muted)">assistant.delta</code> JSON.</footer>
+  <script>
+    const logEl = document.getElementById("log");
+    const statusEl = document.getElementById("status");
+    const toastEl = document.getElementById("toast");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("send");
+
+    const wsUrl =
+      (location.protocol === "https:" ? "wss:" : "ws:") +
+      "//" +
+      location.host +
+      "/ws";
+
+    let ws = null;
+    let assistantEl = null;
+
+    function setStatus(kind, label) {
+      statusEl.className = kind;
+      statusEl.textContent = label;
+    }
+
+    function toast(msg) {
+      toastEl.textContent = msg || "";
+    }
+
+    function appendUser(text) {
+      const div = document.createElement("div");
+      div.className = "msg user";
+      div.innerHTML =
+        '<div class="label">You</div><div class="body"></div>';
+      div.querySelector(".body").textContent = text;
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+      return div;
+    }
+
+    function startAssistantBubble() {
+      const div = document.createElement("div");
+      div.className = "msg assistant";
+      div.innerHTML =
+        '<div class="label">Assistant</div><div class="body"></div>';
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+      assistantEl = div.querySelector(".body");
+      return assistantEl;
+    }
+
+    function setInputsEnabled(ok) {
+      input.disabled = !ok;
+      sendBtn.disabled = !ok;
+      if (ok) input.focus();
+    }
+
+    function connect() {
+      toast("");
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = function () {
+        setStatus("connected", "Connected");
+        setInputsEnabled(true);
+      };
+
+      ws.onclose = function () {
+        setStatus("disconnected", "Disconnected");
+        setInputsEnabled(false);
+        assistantEl = null;
+        ws = null;
+      };
+
+      ws.onerror = function () {
+        setStatus("error", "Error");
+        toast("WebSocket error (check gateway is running on this host).");
+      };
+
+      ws.onmessage = function (event) {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "assistant.delta" && assistantEl !== null && typeof msg.token === "string") {
+            assistantEl.appendChild(document.createTextNode(msg.token));
+            logEl.scrollTop = logEl.scrollHeight;
+          }
+        } catch (e) {
+          toast("Bad JSON from server: " + (e.message || String(e)));
+        }
+      };
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+      toast("");
+      appendUser(text);
+      assistantEl = null;
+      startAssistantBubble();
+
+      ws.send(text);
+      input.value = "";
+    });
+
+    connect();
+  </script>
+</body>
+</html>

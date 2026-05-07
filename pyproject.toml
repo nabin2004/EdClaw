@@ -85,6 +85,9 @@ kitten = "educlaw.tts.backends.kitten:factory"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+educlaw.gateway = ["static/*.html"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
