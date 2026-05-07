@@ -26,7 +26,7 @@ async def test_local_render_invokes_render_to_mp4(monkeypatch: pytest.MonkeyPatc
     assert len(calls) == 1
     cmd_kwargs = calls[0][2]
     assert cmd_kwargs["quality"] == f"q{s.automanim_quality}"
-    assert "manim" in cmd_kwargs["manim_bin"]
+    assert cmd_kwargs.get("manim_bin") is None
 
 
 @pytest.mark.asyncio
