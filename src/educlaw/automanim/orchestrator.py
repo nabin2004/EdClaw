@@ -240,6 +240,25 @@ async def run_automanim(
                     exit_code=1,
                     stderr_tail=str(e),
                 )
+            else:
+                if art.exit_code != 0 or not (art.artifact_path or "").strip():
+                    tail = (art.stderr_tail or "").strip()
+                    if len(tail) > 1200:
+                        tail = tail[:1200] + "…"
+                    LOG.warning(
+                        "automanim lecture=%s scene=%d render_subproc_failed exit=%s stderr=%s",
+                        lecture_id,
+                        idx,
+                        art.exit_code,
+                        (tail[:400] + "…") if len(tail) > 400 else tail or "(empty)",
+                    )
+                    detail = tail or "no MP4 written (Manim exit non-zero or no output file)"
+                    yield AutoManimEvent(
+                        kind="error",
+                        lecture_id=lecture_id,
+                        scene_index=idx,
+                        message=f"Render failed (exit {art.exit_code}): {detail}",
+                    )
 
             yield AutoManimEvent(
                 kind="scene_done",
