@@ -50,6 +50,10 @@ async def test_run_automanim_smoke(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
         )
     ]
     kinds = [e.kind for e in events]
+    assert kinds[0] == "phase"
+    plan_idx = kinds.index("plan")
+    assert plan_idx >= 1
+    assert all(k == "phase" for k in kinds[:plan_idx])
     assert "plan" in kinds
     assert "scene_start" in kinds
     assert "codegen" in kinds

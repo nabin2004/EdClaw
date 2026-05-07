@@ -222,7 +222,7 @@ Add `GET /manim/artifacts/{job_id}` (or static mount of `manim_output_dir` under
 
 ### Phase G — WebSocket (optional, later)
 
-A dedicated frame `type: "manim_render"` could mirror TTS: send source + scene, stream progress events, final path — parallel to [docs/TTS.md](TTS.md) and [ws.py](../src/educlaw/gateway/ws.py) patterns. Not required for MVP if the **agent tool** path suffices.
+A dedicated frame `type: "manim_render"` could mirror TTS: send source + scene, stream progress events, final path — parallel to [docs/TTS.md](TTS.md) and future `/ws` extensions. Not required for MVP if the **agent tool** path suffices.
 
 ---
 

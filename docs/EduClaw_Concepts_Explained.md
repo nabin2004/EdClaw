@@ -26,8 +26,8 @@
 | 10 | Shield | `before_model` / `after_model` | `src/educlaw/safety/shield.py`, `agent/callbacks/shield_*.py` |
 | 11 | IR | Pydantic + frontmatter + SQL index | `src/educlaw/ir/`, `content/ir/` |
 | 12 | Dagestan | PyPI temporal graph + async adapter + ADK memory | `src/educlaw/memory/dagestan.py`, `adk_memory_service.py`; package + notes: [DAGESTAN.md](DAGESTAN.md) |
-| 13 | TTS | Pluggable speech backends (entry points + WS `type=tts`) | `src/educlaw/tts/`, [TTS.md](TTS.md) |
-| 14 | Autocourse / Autolecture | Multi-lecture generation via Ollama (not ADK); WS `mode=autocourse` | `src/educlaw/autocourse/`, `src/educlaw/autolecture/`, [AUTOCOURSE.md](AUTOCOURSE.md) |
+| 13 | TTS | Pluggable speech backends (entry points + CLI) | `educlaw/tts/`, [TTS.md](TTS.md) |
+| 14 | Autocourse / Autolecture | Multi-lecture generation via Ollama (not ADK); `run_autocourse()` / pipeline scripts | `src/educlaw/autocourse/`, `src/educlaw/autolecture/`, [AUTOCOURSE.md](AUTOCOURSE.md) |
 | 15 | AutoManim | ADK `LlmAgent` planner/codegen + Manim CE render (CLI + optional autocourse hook) | `src/educlaw/automanim/`, `src/educlaw/viz/`, [AUTOMANIM.md](AUTOMANIM.md) |
 
 ## 1. Gateway
@@ -84,11 +84,11 @@ Author Markdown + YAML under `content/ir` (repo default) or `~/.educlaw/ir`. CLI
 
 ## 13. Text-to-speech (TTS)
 
-`TTSBackend` protocol + `build_backend(settings)`; optional **Kitten** (CPU, ONNX) via `educlaw[tts-kitten]`. WebSocket: after `connect`, send `{"type":"tts","text":"…"}`; responses are `tts_event` frames. Profile keys: `tts_enabled`, `tts_backend`, `tts_model_id` (required for `kitten`), etc. See [TTS.md](TTS.md).
+`TTSBackend` protocol + `build_backend(settings)`; optional **Kitten** (CPU, ONNX) via `educlaw[tts-kitten]`. Use `educlaw tts say` / the TTS API from code; the gateway `/ws` endpoint is chat-only. Profile keys: `tts_enabled`, `tts_backend`, `tts_model_id` (required for `kitten`), etc. See [TTS.md](TTS.md).
 
 ## 14. Autocourse / Autolecture
 
-Course outline (`CoursePlan` JSON) then sequential **autolecture** calls per `LectureOutline`. Runs on the Ollama `model_id` from settings, **outside** the ADK `Runner`. WebSocket: `{"type":"message","mode":"autocourse","text":"…"}` → streamed `autocourse_event` payloads. See [AUTOCOURSE.md](AUTOCOURSE.md).
+Course outline (`CoursePlan` JSON) then sequential **autolecture** calls per `LectureOutline`. Runs on the Ollama `model_id` from settings, **outside** the ADK `Runner`. Invoke via `run_autocourse()` or `scripts/run_full_course_pipeline.py` (not the gateway `/ws` chat). See [AUTOCOURSE.md](AUTOCOURSE.md).
 
 ## 15. AutoManim
 

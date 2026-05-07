@@ -49,6 +49,16 @@
     #status.connected { color: #3fb950; border-color: #238636; }
     #status.disconnected { color: var(--muted); }
     #status.error { color: #f85149; border-color: #da3633; }
+    .mode-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+    .mode-row label { cursor: pointer; user-select: none; }
+    .mode-row input { margin-right: 0.35rem; vertical-align: middle; }
     #log {
       flex: 1;
       overflow-y: auto;
@@ -63,11 +73,31 @@
     .msg.user { background: var(--user-bg); border-left: 3px solid var(--accent); }
     .msg.assistant { background: var(--assistant-bg); border-left: 3px solid #2ea043; }
     .msg .label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.35rem; }
-    form {
-      display: flex;
-      gap: 0.5rem;
-      align-items: stretch;
+    .am-progress {
+      font-size: 0.75rem;
+      font-family: ui-monospace, monospace;
+      color: var(--muted);
+      max-height: 12rem;
+      overflow-y: auto;
+      margin: 0.5rem 0 0;
+      padding: 0.45rem 0.5rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: rgba(0,0,0,0.2);
+      border-radius: 6px;
+      border: 1px solid var(--border);
     }
+    .am-videos { margin-top: 0.75rem; }
+    .am-videos video {
+      width: 100%;
+      max-height: 240px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-bottom: 0.5rem;
+    }
+    form { display: flex; flex-direction: column; gap: 0.5rem; }
+    .form-actions { display: flex; gap: 0.5rem; align-items: stretch; }
+    #chatRow { display: flex; gap: 0.5rem; align-items: stretch; width: 100%; }
     #input {
       flex: 1;
       padding: 0.6rem 0.75rem;
@@ -77,8 +107,35 @@
       color: var(--text);
       font-size: 1rem;
     }
-    #input:focus { outline: none; border-color: var(--accent); }
-    #input:disabled { opacity: 0.55; }
+    #manimPanel textarea {
+      width: 100%;
+      min-height: 10rem;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.875rem;
+      font-family: inherit;
+      resize: vertical;
+    }
+    #manimPanel .meta {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    #manimPanel .meta input {
+      flex: 1;
+      min-width: 8rem;
+      padding: 0.45rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.875rem;
+    }
+    #input:focus, #manimPanel textarea:focus, #manimPanel .meta input:focus { outline: none; border-color: var(--accent); }
+    #input:disabled, #manimPanel textarea:disabled, #manimPanel .meta input:disabled { opacity: 0.55; }
     button {
       padding: 0.6rem 1rem;
       border-radius: 8px;
@@ -99,11 +156,20 @@
       min-height: 1.25rem;
       margin-bottom: 0.5rem;
     }
+    #agentStatus {
+      font-size: 0.8125rem;
+      color: var(--muted);
+      min-height: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    #agentStatus.working { color: var(--accent); }
+    #agentStatus.err { color: #f85149; }
     footer {
       margin-top: 1rem;
       font-size: 0.6875rem;
       color: var(--muted);
     }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
@@ -112,19 +178,53 @@
     <span id="status" class="disconnected">Disconnected</span>
   </header>
   <div id="toast" aria-live="polite"></div>
+  <div id="agentStatus" aria-live="polite"></div>
   <div id="log" aria-label="Conversation"></div>
+
   <form id="form">
-    <input id="input" type="text" autocomplete="off" placeholder="Message (plain text to /ws)…" autofocus disabled>
-    <button type="submit" id="send" disabled>Send</button>
+    <div class="mode-row" role="radiogroup" aria-label="Mode">
+      <label><input type="radio" name="mode" value="chat" checked> Chat</label>
+      <label><input type="radio" name="mode" value="manim"> AutoManim</label>
+    </div>
+
+    <div id="chatRow">
+      <input id="input" type="text" autocomplete="off" placeholder="Message (plain text to /ws)…" autofocus disabled>
+    </div>
+
+    <div id="manimPanel" hidden>
+      <div class="meta">
+        <input id="manimId" type="text" autocomplete="off" placeholder="Metadata id (optional)" disabled>
+        <input id="manimTitle" type="text" autocomplete="off" placeholder="Title (optional)" disabled>
+      </div>
+      <textarea id="manimMd" placeholder="Lecture Markdown body (with optional # heading)…" disabled></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" id="send" disabled>Send</button>
+    </div>
   </form>
-  <footer>Sends plain WebSocket text; streams <code style="font-size:0.95em;color:var(--muted)">assistant.delta</code> JSON.</footer>
+
+  <footer>
+    Chat: plain WebSocket text. AutoManim: JSON with <code style="font-size:0.95em;color:var(--muted)">type: automanim</code>.
+    Streams <code style="font-size:0.95em;color:var(--muted)">assistant.status</code>, <code style="font-size:0.95em;color:var(--muted)">assistant.delta</code>,
+    <code style="font-size:0.95em;color:var(--muted)">automanim.progress</code>, <code style="font-size:0.95em;color:var(--muted)">automanim.done</code>.
+    Videos: <code style="font-size:0.95em;color:var(--muted)">GET /artifacts/manim/…</code>
+  </footer>
+
   <script>
     const logEl = document.getElementById("log");
     const statusEl = document.getElementById("status");
     const toastEl = document.getElementById("toast");
+    const agentStatusEl = document.getElementById("agentStatus");
     const form = document.getElementById("form");
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
+    const chatRow = document.getElementById("chatRow");
+    const manimPanel = document.getElementById("manimPanel");
+    const manimMd = document.getElementById("manimMd");
+    const manimId = document.getElementById("manimId");
+    const manimTitle = document.getElementById("manimTitle");
+    const modeRadios = form.querySelectorAll('input[name="mode"]');
 
     const wsUrl =
       (location.protocol === "https:" ? "wss:" : "ws:") +
@@ -134,6 +234,31 @@
 
     let ws = null;
     let assistantEl = null;
+    let assistantMsgRoot = null;
+
+    function currentMode() {
+      const r = form.querySelector('input[name="mode"]:checked');
+      return r ? r.value : "chat";
+    }
+
+    function syncModeUi() {
+      const m = currentMode();
+      const manim = m === "manim";
+      chatRow.hidden = manim;
+      manimPanel.hidden = !manim;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        input.disabled = manim;
+        manimMd.disabled = !manim;
+        manimId.disabled = !manim;
+        manimTitle.disabled = !manim;
+        if (manim) manimMd.focus();
+        else input.focus();
+      }
+    }
+
+    modeRadios.forEach(function (r) {
+      r.addEventListener("change", syncModeUi);
+    });
 
     function setStatus(kind, label) {
       statusEl.className = kind;
@@ -142,6 +267,11 @@
 
     function toast(msg) {
       toastEl.textContent = msg || "";
+    }
+
+    function setAgentStatus(kind, msg) {
+      agentStatusEl.className = kind || "";
+      agentStatusEl.textContent = msg || "";
     }
 
     function appendUser(text) {
@@ -159,17 +289,54 @@
       const div = document.createElement("div");
       div.className = "msg assistant";
       div.innerHTML =
-        '<div class="label">Assistant</div><div class="body"></div>';
+        '<div class="label">Assistant</div><div class="body"></div>' +
+        '<pre class="am-progress" hidden></pre><div class="am-videos"></div>';
       logEl.appendChild(div);
       logEl.scrollTop = logEl.scrollHeight;
+      assistantMsgRoot = div;
       assistantEl = div.querySelector(".body");
       return assistantEl;
     }
 
+    function formatProgress(data) {
+      const k = data.kind || "?";
+      const ex = data.extra && typeof data.extra === "object" ? data.extra : {};
+      let msg = data.message || "";
+      if (ex.attempt != null) {
+        msg = (msg ? msg + " · " : "") + "attempt " + ex.attempt;
+      }
+      if (ex.path) {
+        msg = (msg ? msg + " · " : "") + String(ex.path);
+      }
+      let prefix = "";
+      if (data.scene_index != null) {
+        prefix += "[scene " + data.scene_index + "]";
+      }
+      if (data.scene_title) {
+        prefix += (prefix ? " " : "") + data.scene_title;
+      }
+      if (prefix && msg) {
+        msg = prefix + " — " + msg;
+      } else if (prefix) {
+        msg = prefix + (msg ? " — " + msg : "");
+      }
+      if (k === "phase") {
+        return msg.trim() ? msg.trim() : "phase";
+      }
+      return msg.trim() ? k + ": " + msg.trim() : k;
+    }
+
     function setInputsEnabled(ok) {
-      input.disabled = !ok;
       sendBtn.disabled = !ok;
-      if (ok) input.focus();
+      const manim = currentMode() === "manim";
+      input.disabled = !ok || manim;
+      manimMd.disabled = !ok || !manim;
+      manimId.disabled = !ok || !manim;
+      manimTitle.disabled = !ok || !manim;
+      if (ok) {
+        if (manim) manimMd.focus();
+        else input.focus();
+      }
     }
 
     function connect() {
@@ -179,12 +346,14 @@
       ws.onopen = function () {
         setStatus("connected", "Connected");
         setInputsEnabled(true);
+        syncModeUi();
       };
 
       ws.onclose = function () {
         setStatus("disconnected", "Disconnected");
         setInputsEnabled(false);
         assistantEl = null;
+        assistantMsgRoot = null;
         ws = null;
       };
 
@@ -196,7 +365,45 @@
       ws.onmessage = function (event) {
         try {
           const msg = JSON.parse(event.data);
+
+          if (msg.type === "automanim.progress" && msg.data && assistantMsgRoot) {
+            const pre = assistantMsgRoot.querySelector(".am-progress");
+            if (pre) {
+              pre.hidden = false;
+              const line = formatProgress(msg.data);
+              pre.textContent += (pre.textContent ? "\n" : "") + line;
+            }
+            logEl.scrollTop = logEl.scrollHeight;
+            return;
+          }
+
+          if (msg.type === "automanim.done" && msg.data && assistantMsgRoot) {
+            const box = assistantMsgRoot.querySelector(".am-videos");
+            const urls = msg.data.artifact_urls || [];
+            urls.forEach(function (src) {
+              const v = document.createElement("video");
+              v.setAttribute("controls", "");
+              v.setAttribute("playsinline", "");
+              v.src = src;
+              box.appendChild(v);
+            });
+            logEl.scrollTop = logEl.scrollHeight;
+            return;
+          }
+
+          if (msg.type === "assistant.status" && msg.data && typeof msg.data.phase === "string") {
+            const ph = msg.data.phase;
+            if (ph === "start") {
+              setAgentStatus("working", "Generating…");
+            } else if (ph === "error") {
+              setAgentStatus("err", msg.data.message ? "Error: " + msg.data.message : "Error.");
+            } else if (ph === "end") {
+              setAgentStatus("", "");
+            }
+            return;
+          }
           if (msg.type === "assistant.delta" && assistantEl !== null && typeof msg.token === "string") {
+            if (agentStatusEl.textContent) setAgentStatus("", "");
             assistantEl.appendChild(document.createTextNode(msg.token));
             logEl.scrollTop = logEl.scrollHeight;
           }
@@ -208,16 +415,48 @@
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      const text = input.value.trim();
-      if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
       toast("");
-      appendUser(text);
-      assistantEl = null;
-      startAssistantBubble();
+      setAgentStatus("", "");
 
-      ws.send(text);
-      input.value = "";
+      if (currentMode() === "chat") {
+        const text = input.value.trim();
+        if (!text) return;
+        appendUser(text);
+        assistantEl = null;
+        assistantMsgRoot = null;
+        startAssistantBubble();
+        ws.send(text);
+        input.value = "";
+        return;
+      }
+
+      const md = manimMd.value.trim();
+      if (!md) {
+        toast("Paste lecture Markdown for AutoManim.");
+        return;
+      }
+
+      const meta = {};
+      const idv = manimId.value.trim();
+      const titlev = manimTitle.value.trim();
+      if (idv) meta.id = idv;
+      if (titlev) meta.title = titlev;
+
+      const payload = { type: "automanim", markdown: md, metadata: meta };
+
+      appendUser("[AutoManim] " + (titlev || idv || "lecture"));
+      assistantEl = null;
+      assistantMsgRoot = null;
+      startAssistantBubble();
+      const bubblePre = assistantMsgRoot.querySelector(".am-progress");
+      if (bubblePre) {
+        bubblePre.hidden = false;
+        bubblePre.textContent = "Queued; waiting for gateway…";
+      }
+
+      ws.send(JSON.stringify(payload));
     });
 
     connect();

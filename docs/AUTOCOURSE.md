@@ -15,27 +15,15 @@ See [`orchestrator.py`](../src/educlaw/autocourse/orchestrator.py) and [`generat
 
 - Same **Ollama** host as the rest of the stack (`EDUCLAW_OLLAMA_URL` / `profiles/local.toml` `ollama_url`).
 - Chat `model_id` from settings is used for both the JSON course plan and each lecture.
-- **Shield** classifies the user’s topic string before any generation (same as normal chat: `BLOCK` stops the run with an `autocourse_event` error).
+- **Shield** classifies the user’s topic string before any generation (same as normal chat: `BLOCK` stops the run with an `AutocourseEvent` error).
 
-## WebSocket protocol
+## Gateway WebSocket vs autocourse
 
-Connect as usual, then send:
+The live gateway (`educlaw serve`) exposes **`/ws` for plain-text turns only**: send a string, receive `assistant.status` and `assistant.delta` JSON frames (see [DEVELOPERS.md](DEVELOPERS.md)). There is **no** `mode: "autocourse"` multiplex on that socket today.
 
-```json
-{"type": "message", "mode": "autocourse", "text": "Teach me linear algebra for beginners", "idempotency_key": "optional"}
-```
+To run autocourse, call **`run_autocourse()`** from Python (async iterator of `AutocourseEvent`) or use **`scripts/run_full_course_pipeline.py`** / `scripts/run_full_course_pipeline.sh`. Event kinds include `plan`, `lecture_start`, `lecture_done`, `done`, `error`, and `automanim` when `automanim_enabled` is true. See [AUTOMANIM.md](AUTOMANIM.md).
 
-Add `"mode": "autocourse"` on the **same** `type: "message"` frame used for chat. Without that field (or with any other `mode`), the gateway runs the normal ADK tutor instead.
-
-The server streams JSON frames:
-
-- `{"type": "autocourse_event", "payload": { ... }}`
-
-`payload.kind` is one of: `plan`, `lecture_start`, `lecture_done`, `done`, `error`, `automanim`.
-
-When `automanim_enabled` is true in settings, after each `lecture_done` the server streams additional `kind: "automanim"` frames with a nested `automanim` object (planner/codegen/render lifecycle). See [AUTOMANIM.md](AUTOMANIM.md).
-
-- `lecture_done` includes the generated lecture (`result` with Markdown and optional `ir_suggestion` metadata for a future IR export).
+- `lecture_done` events carry the generated lecture (`result` with Markdown and optional `ir_suggestion` metadata).
 - A final `kind: "done"` indicates the course finished successfully.
 
 ## Course plan shape
@@ -52,7 +40,7 @@ To generate Markdown, optional Manim videos, and optional TTS audio in one run (
 
 Requires Ollama; enable TTS and AutoManim in `profiles/local.toml` or pass **`--no-tts`**, **`--no-automanim`**, or **`--no-shield`** (no Ollama call for the AutoManim pre-scene classifier; uses `NoopShield`). The script runs **each lecture in order**: write Markdown, then optional chunked TTS WAV, then optional AutoManim, before starting the next lecture.
 
-Output defaults to `content/ir/series/<date>-slug/`. See [scripts/run_full_course_pipeline.py](../scripts/run_full_course_pipeline.py). For WebSocket autocourse, `shield_enabled` in the profile controls whether AutoManim uses a real `Shield` or `NoopShield` inside `run_autocourse` (the gateway still classifies the user message before streaming).
+Output defaults to `content/ir/series/<date>-slug/`. See [scripts/run_full_course_pipeline.py](../scripts/run_full_course_pipeline.py). In `run_autocourse()`, `shield_enabled` controls whether AutoManim uses a real `Shield` or `NoopShield` when classifying lecture text; set `shield_enabled = false` if you want `NoopShield` for that path without an Ollama classify call.
 
 ## Site generation
 
@@ -75,5 +63,5 @@ See [SITE_GENERATION.md](SITE_GENERATION.md) for template variables, customizati
 - [DEVELOPERS.md](DEVELOPERS.md) — WebSocket protocol and CLI overview.
 - [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md) — subsystem table.
 - [AUTOMANIM.md](AUTOMANIM.md) — optional Manim video generation after each lecture.
-- [TTS.md](TTS.md) — separate `type: "tts"` frames; generated lecture text can be passed to TTS on the client or a future combined mode.
+- [TTS.md](TTS.md) — `educlaw tts` CLI and TTS API; combine with generated lecture text outside `/ws` if you need speech.
 - [SITE_GENERATION.md](SITE_GENERATION.md) — Copier-based course site scaffolding and catalog.

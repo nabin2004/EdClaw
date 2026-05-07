@@ -2,7 +2,7 @@
 
 EduClaw includes a **pluggable TTS subsystem** under `educlaw.tts`: a small `TTSBackend` protocol, a registry (built-ins + `importlib.metadata` entry points, same pattern as [`educlaw.channels`](../src/educlaw/channels/registry.py)), and optional **Kitten TTS** integration for **offline-friendly**, CPU-only synthesis with compact ONNX models (~25–80 MB on disk).
 
-**See also:** [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md) (subsystem 13), [DEVELOPERS.md](DEVELOPERS.md) (WebSocket + CLI), [AUTOCOURSE.md](AUTOCOURSE.md) (separate `mode: autocourse` path for full lectures; you can feed lecture text to `type: tts` from the client).
+**See also:** [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md) (subsystem 13), [DEVELOPERS.md](DEVELOPERS.md) (gateway `/ws` chat vs CLI), [AUTOCOURSE.md](AUTOCOURSE.md) (full-course scripts; generate lecture text then pass it to `educlaw tts say` or the TTS API if you need audio).
 
 ## Why it exists
 
@@ -44,9 +44,11 @@ EduClaw includes a **pluggable TTS subsystem** under `educlaw.tts`: a small `TTS
    export HF_HUB_OFFLINE=1
    ```
 
-## WebSocket protocol
+## WebSocket protocol (planned)
 
-After the normal `connect` frame, send:
+The following JSON frame shape is **not** implemented on the gateway **`/ws`** endpoint today; use **`educlaw tts say`** or call `build_backend(settings)` from Python. A future muxed WebSocket could adopt:
+
+After a `connect` frame, clients would send:
 
 ```json
 {"type": "tts", "text": "Hello from EduClaw.", "voice": "Jasper", "speed": 1.0, "idempotency_key": "optional"}
@@ -57,7 +59,7 @@ Responses (in order):
 - `{"type":"tts_event","payload":{"kind":"audio","format":"wav","sample_rate":24000,"voice":"Jasper","bytes_b64":"..."}}`
 - `{"type":"tts_event","payload":{"kind":"done"}}`
 
-Errors use `payload.kind` of `error` and `payload.message`. If `tts_enabled` is false, you get `TTS disabled`. Blocked input follows the same Shield policy as chat/autocourse.
+Errors would use `payload.kind` of `error` and `payload.message`. If `tts_enabled` is false, synthesis is unavailable at the API layer. Shield / classify behavior matches other EduClaw entry points when wired.
 
 ## CLI
 
@@ -70,10 +72,10 @@ Errors use `payload.kind` of `error` and `payload.message`. If `tts_enabled` is 
 
 | Field | Meaning |
 |--------|---------|
-| `tts_enabled` | Master switch; when false, gateway exposes no synthesizer (`deps.tts` is `None`). |
+| `tts_enabled` | Master switch; when false, `build_backend` returns no synthesizer for scripts/API use. |
 | `tts_backend` | Registry key: `kitten`, `null` (silent stub for tests), or a custom entry-point name. |
 | `tts_model_id` | **Required for `kitten`**: Hugging Face repo id, e.g. `KittenML/kitten-tts-nano-0.8-int8`. |
-| `tts_voice` | Default voice if the client omits `voice` on the WS frame. |
+| `tts_voice` | Default voice when using the API programmatically. |
 | `tts_speed` | Default speed multiplier. |
 | `tts_sample_rate` | Hint for the `null` backend; Kitten emits 24 kHz PCM internally. |
 | `tts_cache_dir` | Model cache directory (default `data_dir/tts`). |

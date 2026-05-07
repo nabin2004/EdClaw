@@ -21,12 +21,13 @@ from educlaw.gateway.storage.session_store import SessionStore
 class FakeStreamer:
     def __init__(self) -> None:
         self.tokens: list[str] = []
+        self.events: list[tuple[str, object]] = []
 
     async def token(self, t: str) -> None:
         self.tokens.append(t)
 
     async def event(self, event_type: str, data: object) -> None:
-        del event_type, data
+        self.events.append((event_type, data))
 
 
 @pytest.mark.asyncio
@@ -55,6 +56,9 @@ async def test_agent_runtime_delegates_to_engine() -> None:
     assert roles == ["user", "assistant"]
     assert sess.messages[0]["content"] == "ping"
     assert "Stub response" in sess.messages[1]["content"]
+    assert [e[0] for e in stream.events] == ["assistant.status", "assistant.status"]
+    assert stream.events[0][1] == {"phase": "start"}
+    assert stream.events[-1][1] == {"phase": "end"}
 
 
 @pytest.mark.asyncio

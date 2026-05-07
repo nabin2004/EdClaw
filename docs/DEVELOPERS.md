@@ -82,15 +82,19 @@ educlaw serve
 
 ### WebSocket protocol (smoke test)
 
-1. First message must be a **connect** frame:
-   - `{"type": "connect", "token": "local_user:my-session"}`
-   - Token is interpreted loosely: if it contains `:`, the parts are `user_id` and `session_id`.
-2. Then send user turns:
-   - `{"type": "message", "text": "Hello", "idempotency_key": "optional-id"}`
-   - Autocourse (orchestrated course + end-to-end lectures via Ollama, not the ADK tutor): add `"mode": "autocourse"` on the same frame. Responses are `{"type": "autocourse_event", "payload": {"kind": "plan" | "lecture_start" | "lecture_done" | "done" | "error", ...}}` streamed in order.
-   - TTS: send `{"type": "tts", "text": "…", "voice": "optional", "speed": 1.0}` when `tts_enabled` is true in the profile. Responses are `tts_event` frames (`kind`: `audio` with base64 WAV, then `done` or `error`). See [docs/TTS.md](TTS.md).
+1. Connect to `ws://127.0.0.1:18789/ws` (or your configured host/port).
+2. Send either:
+   - **Plain text** (one user turn per message): e.g. `Hello`.
+   - **AutoManim JSON** (one lecture → Manim pipeline): e.g. `{"type":"automanim","markdown":"# Topic\\n...","metadata":{"id":"optional","title":"optional"}}` — the server streams `automanim.progress` (orchestrator events) and `automanim.done`, then `assistant.delta` with a short summary. See [AUTOMANIM.md](AUTOMANIM.md).
+3. The server streams **JSON** frames (one WebSocket message per frame):
+   - `{"type": "assistant.status", "data": {"phase": "start" | "end"}}` — lifecycle around each turn; on failure you may also see `"phase": "error", "message": "…"`.
+   - `{"type": "assistant.delta", "token": "…"}` — streamed answer tokens from the configured execution engine (usually Ollama).
+   - `{"type": "automanim.progress", "data": {…}}` — planner/codegen/render lifecycle for AutoManim WS turns (`kind`, `message`, `scene_index`, etc.).
+   - `{"type": "automanim.done", "data": {"success": bool, "output_dir", "artifact_paths", "artifact_urls", …}}` — end of an AutoManim run; `artifact_urls` are under `GET /artifacts/manim/…` (served from `automanim_output_dir`).
 
-You can use any WebSocket client; `wscat` or a small Python script is enough for development.
+**Autocourse** (multi-lecture generation as a single streamed course) and **TTS** are **not** exposed on `/ws`; use [scripts/run_full_course_pipeline.py](../scripts/run_full_course_pipeline.py) / `educlaw tts say` instead. See [AUTOCOURSE.md](AUTOCOURSE.md) and [TTS.md](TTS.md).
+
+Use the bundled [static client](../src/educlaw/gateway/static/index.html) at `GET /`, `wscat`, or any WebSocket client for development.
 
 ## CLI reference
 
@@ -116,7 +120,7 @@ You can use any WebSocket client; `wscat` or a small Python script is enough for
 - **Override profile path**: `EDUCLAW_PROFILE_PATH` or `educlaw` settings (`EDUCLAW_*` env vars from [settings](../src/educlaw/config/settings.py)).
 - **Data directory**: `~/.educlaw` by default (main SQLite for IR index, `vectors.sqlite` for `educlaw ir index`, `dagestan_memory.json` for the temporal graph, default `tts/` cache, audit paths as wired). The repo’s [content/ir/](../content/ir/) is used as `ir_root` when that path exists.
 - **Learner memory (Dagestan)**: PyPI package `dagestan` with defaults `dagestan_provider = "stub"` (no external LLM for extraction) and `dagestan_db_path` under `data_dir`. For real conversation ingestion, set `dagestan_provider` to `ollama` (uses `ollama_url` + `model_id`), or `openai` / `anthropic` with the usual API keys. See [DAGESTAN.md](DAGESTAN.md).
-- **TTS (optional)**: set `tts_enabled = true` and `tts_backend` / `tts_model_id` (for Kitten) under `[educlaw]` — see [TTS.md](TTS.md). Without TTS, `type: tts` WebSocket frames return an error.
+- **TTS (optional)**: set `tts_enabled = true` and `tts_backend` / `tts_model_id` (for Kitten) under `[educlaw]` — see [TTS.md](TTS.md). Use the `educlaw tts` CLI; `/ws` does not accept TTS frames.
 - **Autocourse**: use the WebSocket `mode` field as described in [AUTOCOURSE.md](AUTOCOURSE.md) (uses the same `model_id` and Ollama host as the rest of the app). Optional **AutoManim** after each lecture: set `automanim_enabled = true` under `[educlaw]` — [AUTOMANIM.md](AUTOMANIM.md).
 
 ## Tests and quality
@@ -144,7 +148,7 @@ The gateway currently defaults to `NullSandbox` for shell tools unless you wire 
 - **Ollama connection errors**: Ensure Ollama is running and `OLLAMA_API_BASE` matches. Run `educlaw doctor` (without `--offline`).
 - **Tool call loops or missing tools**: Use `ollama_chat/` in LiteLLM, not `ollama/`; use a tool-capable Gemma build if the base tag does not support tools.
 - **Empty IR**: Set `ir_root` or add Markdown under [content/ir/](../content/ir/); run `educlaw ir lint`.
-- **Autocourse errors** (`autocourse_event` with `kind: error`): invalid JSON from the planner, empty lecture list, or Ollama failures — check `OLLAMA_API_BASE` / Ollama logs; reduce topic length; ensure `model_id` supports JSON-style chat for the plan step.
+- **Autocourse errors** from `run_autocourse()` / pipeline scripts (`AutocourseEvent` with `kind: error`): invalid JSON from the planner, empty lecture list, or Ollama failures — check `OLLAMA_API_BASE` / Ollama logs; reduce topic length; ensure `model_id` supports JSON-style chat for the plan step.
 - **TTS disabled or `tts_model_id` required**: see [TTS.md](TTS.md) — for `kitten`, set a Hugging Face repo id; for tests use `tts_backend = "null"`.
 - **Dagestan `stub` and empty ingest**: the default `dagestan_provider` does not run a real LLM for extraction, so session ingestion may add no graph nodes. Switch to `ollama` or a cloud provider for populated graph memory; see [DAGESTAN.md](DAGESTAN.md).
 

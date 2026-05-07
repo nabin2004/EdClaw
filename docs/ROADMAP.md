@@ -5,7 +5,7 @@ This document describes **planned** work. Nothing here is a commitment or releas
 ## Near term (MVP hardening)
 
 - ~~**Course site generation**: Copier-based Jekyll site scaffolding from autocourse output (`educlaw site generate`), course registry (`courses.yml`), and catalog landing page. See [SITE_GENERATION.md](SITE_GENERATION.md).~~ *(done)*
-- **WebChat UX**: Minimal static or single-page client that speaks the `/ws` protocol (connect + message frames), so new contributors can exercise the stack without hand-rolling JSON over `wscat`.
+- **WebChat UX**: Minimal static client that speaks the `/ws` protocol (plain-text turns + JSON `assistant.status` / `assistant.delta` frames); see [DEVELOPERS.md](DEVELOPERS.md).
 - **Tool-capable Gemma**: Document and CI-gate the `docker/modelfiles/gemma3-tool.Modelfile` build; optional `educlaw doctor` check that a `*-tool` tag exists when tools are enabled.
 - **Sandbox selection**: Profile or env flag to choose `NullSandbox` vs `DockerSandbox` after `educlaw/runner:latest` is built; fail fast with a clear message if Docker is unavailable.
 - **IR tools**: Add `ir_prereq_walk` / richer `slice_for_learner` (graph walks, prerequisite ordering) on top of the existing `networkx` lint path.

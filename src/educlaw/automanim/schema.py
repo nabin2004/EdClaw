@@ -29,6 +29,7 @@ class RenderArtifact(BaseModel):
 
 
 AutoManimKind = Literal[
+    "phase",
     "plan",
     "scene_start",
     "codegen",
@@ -41,6 +42,8 @@ AutoManimKind = Literal[
 
 
 class AutoManimEvent(BaseModel):
+    """Streaming pipeline event. ``phase`` rows are human-readable breadcrumbs (UI / logs)."""
+
     kind: AutoManimKind
     message: str | None = None
     lecture_id: str | None = None

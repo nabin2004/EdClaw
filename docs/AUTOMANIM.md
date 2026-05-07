@@ -16,7 +16,7 @@ Optional **ADK** `SequentialAgent` factory: `educlaw.automanim.build_planner_cod
 
 | Key | Default | Purpose |
 |-----|---------|---------|
-| `automanim_enabled` | `false` | When `true`, `run_autocourse` emits `automanim` events after each `lecture_done`. |
+| `automanim_enabled` | `false` | When `true`, `run_autocourse()` (Python) and scripts such as `run_full_course_pipeline.py` run AutoManim after each lecture; **not** used by gateway WebSocket chat. |
 | `automanim_backend` | `local` | `local` or `docker`. |
 | `automanim_image` | `educlaw/manim:latest` | Docker image for `docker` backend. |
 | `automanim_quality` | `l` | Maps to `-ql` … `-qk`. |
@@ -42,15 +42,11 @@ Writes:
 
 Each `lecture-*.md` is parsed with **YAML frontmatter** (metadata becomes `ir_suggestion`; body is the lecture Markdown).
 
-## WebSocket / Autocourse
+## Autocourse hook (Python API / CLI scripts)
 
-When `automanim_enabled` is true, the autocourse stream includes frames:
+The gateway **`/ws` chat endpoint does not stream AutoManim** (it is plain Ollama text chat; see [DEVELOPERS.md](DEVELOPERS.md)). When `automanim_enabled` is true, **`run_autocourse()`** yields `AutocourseEvent` objects with `kind="automanim"` after each lecture (for callers that iterate the async generator—e.g. `scripts/run_full_course_pipeline.py`), not WebSocket JSON frames on `/ws`.
 
-```json
-{"type": "autocourse_event", "payload": {"kind": "automanim", "lecture_index": 1, "automanim": {"kind": "scene_done", "artifact": {"artifact_path": "...", "scene_name": "..."}, ...}}}
-```
-
-Failures are **non-fatal** for the rest of the course: the orchestrator yields an `error` `AutocourseEvent` and continues with the next lecture.
+Failures are **non-fatal** for the rest of the course: the orchestrator yields an `error` event and continues with the next lecture.
 
 ## Docker image
 

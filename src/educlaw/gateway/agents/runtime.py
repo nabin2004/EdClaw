@@ -25,6 +25,13 @@ class AgentRuntime:
     async def run(self, session: AgentSession, msg: str, stream: Streamer) -> None:
         await self._bus.emit("gateway.turn.start", {"session_id": session.session_id})
         session.add_user_message(msg)
-        reply = await self._engine.run(session, msg, self._tools, stream)
-        session.add_assistant_message(reply)
-        await self._bus.emit("gateway.turn.end", {"session_id": session.session_id})
+        await stream.event("assistant.status", {"phase": "start"})
+        try:
+            reply = await self._engine.run(session, msg, self._tools, stream)
+        except Exception as e:
+            await stream.event("assistant.status", {"phase": "error", "message": str(e)})
+        else:
+            session.add_assistant_message(reply)
+        finally:
+            await stream.event("assistant.status", {"phase": "end"})
+            await self._bus.emit("gateway.turn.end", {"session_id": session.session_id})

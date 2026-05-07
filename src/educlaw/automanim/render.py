@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import shutil
 import subprocess
 import tempfile
@@ -12,6 +13,8 @@ from typing import Protocol
 from educlaw.automanim.schema import RenderArtifact
 from educlaw.config.settings import Settings
 from educlaw.viz import extract_python, find_rendered_mp4s, render_to_mp4, scene_class_name
+
+LOG = logging.getLogger(__name__)
 
 
 class RenderBackend(Protocol):
@@ -33,12 +36,20 @@ class LocalRenderBackend:
             quality=f"q{self._settings.automanim_quality}",
             manim_bin="manim",
         )
-        return RenderArtifact(
+        art = RenderArtifact(
             artifact_path=str(dest_mp4) if ok else "",
             scene_name=sc,
             exit_code=0 if ok else 1,
             stderr_tail=err[-8000:],
         )
+        LOG.info(
+            "automanim_render backend=local scene=%s dest=%s ok=%s exit=%s",
+            sc,
+            dest_mp4,
+            ok,
+            art.exit_code,
+        )
+        return art
 
 
 def _docker_render_sync(
@@ -130,7 +141,15 @@ class DockerRenderBackend:
         def _call() -> RenderArtifact:
             return _docker_render_sync(self._settings, code, dest_mp4, sc)
 
-        return await loop.run_in_executor(None, _call)
+        art = await loop.run_in_executor(None, _call)
+        LOG.info(
+            "automanim_render backend=docker scene=%s dest=%s ok=%s exit=%s",
+            sc,
+            dest_mp4,
+            bool(art.artifact_path),
+            art.exit_code,
+        )
+        return art
 
 
 def build_render_backend(settings: Settings) -> RenderBackend:

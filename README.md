@@ -25,7 +25,7 @@ educlaw serve
 ```
 
 - Gateway: `http://127.0.0.1:18789` (HTTP + `ws://127.0.0.1:18789/ws`)
-- **WebSocket** (after `connect`): default tutoring uses `{"type":"message","text":"…"}`. For **autocourse** (multi-lecture outline + full lectures via Ollama, not the ADK agent), add `"mode":"autocourse"`. The server streams `autocourse_event` until `done` or `error` — see [docs/AUTOCOURSE.md](docs/AUTOCOURSE.md). For **TTS** (WAV, optional Kitten; profile `tts_enabled=true`), send `{"type":"tts","text":"…"}` and read `tts_event` — see [docs/TTS.md](docs/TTS.md).
+- **WebSocket `/ws`**: send **plain text** per turn; the server streams JSON `assistant.status` and `assistant.delta` frames (Ollama chat by default). **Autocourse** and **TTS** are **not** multiplexed on `/ws`—use [docs/AUTOCOURSE.md](docs/AUTOCOURSE.md) (`run_autocourse` / pipeline scripts) and `educlaw tts` / [docs/TTS.md](docs/TTS.md).
 
 ## Layout
 
@@ -40,9 +40,9 @@ educlaw serve
 
 - [docs/EduClaw_Concepts_Explained.md](docs/EduClaw_Concepts_Explained.md) — subsystem mapping (IR, Dagestan, ADK, Ollama, TTS, autocourse, AutoManim)
 - [docs/DAGESTAN.md](docs/DAGESTAN.md) — PyPI `dagestan` package and how EduClaw wraps it
-- [docs/AUTOCOURSE.md](docs/AUTOCOURSE.md) — Autocourse / Autolecture WebSocket `mode=autocourse` and event payloads
+- [docs/AUTOCOURSE.md](docs/AUTOCOURSE.md) — Autocourse / Autolecture (`run_autocourse`, pipeline scripts)
 - [docs/AUTOMANIM.md](docs/AUTOMANIM.md) — AutoManim: ADK planner/codegen + Manim render (CLI + optional autocourse hook)
-- [docs/TTS.md](docs/TTS.md) — pluggable TTS registry, Kitten (offline), WebSocket `type=tts`, CLI
+- [docs/TTS.md](docs/TTS.md) — pluggable TTS registry, Kitten (offline), CLI
 - [docs/DEVELOPERS.md](docs/DEVELOPERS.md) — environment setup, run, CLI, tests, troubleshooting, profiles and memory settings
 - [docs/ROADMAP.md](docs/ROADMAP.md) — future work and planned directions
 - [docs/MANIM_PIPELINE.md](docs/MANIM_PIPELINE.md) — how to implement the end-to-end Manim render path (stubs, IR hints, Docker, checklist)
