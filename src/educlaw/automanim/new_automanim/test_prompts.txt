@@ -1,3 +1,50 @@
-Create a simple animation of a circle transforming into a square.
-Create an animation explaining the Pythagorean theorem with a triangle.
-Create an animation of a sine wave moving across the screen.
+Animate how SGD updates weights step by step on a loss surface with arrows showing each gradient step.
+Visualize momentum in SGD as a ball rolling down a curved loss landscape with velocity accumulating.
+Show the difference between SGD, Adam, and RMSProp update steps on the same loss curve with three colored paths.
+Animate learning rate effect: too high overshoots, too low crawls, just right converges on a parabolic loss curve.
+Visualize gradient descent on a 2D loss surface with contour lines and a moving point tracing the path.
+Show vanishing gradient problem with gradients shrinking layer by layer during backprop, bar heights representing magnitude.
+Animate a single neuron computing weighted sum then applying ReLU activation with input values labeled.
+Visualize forward pass through a 3-layer MLP with numerical values flowing node to node.
+Animate backpropagation computing gradients layer by layer from output to input with delta values shown.
+Show dropout randomly zeroing neurons during training vs all neurons active during inference side by side.
+Show batch normalization shifting and scaling activations before and after with distribution curves.
+Animate how a convolutional filter slides over an image computing dot products with running sum shown.
+Visualize max pooling reducing a 4x4 feature map to 2x2 with selected values highlighted.
+Show attention scores being computed between query and key vectors with the resulting weighted sum.
+Animate softmax turning raw logits into a probability distribution with bars normalizing to sum to one.
+Visualize SGD with and without weight decay showing how L2 regularization pulls weights toward zero.
+Animate Adam optimizer maintaining first and second moment estimates updating side by side with weight update.
+Show gradient clipping in action: unclipped exploding gradient vs clipped gradient on the same step.
+Animate a loss curve over epochs showing overfitting: training loss dropping while validation loss rises.
+Visualize the effect of mini-batch size on gradient noise: batch size 1 vs 32 vs full batch paths on loss surface.
+Show how learning rate warmup works: LR increasing linearly for first N steps then decaying.
+Animate cosine annealing schedule with LR oscillating and decaying over training cycles.
+Visualize weight initialization: zero init vs random init vs Xavier init showing activation distributions per layer.
+Animate how exploding gradients cause weight updates to overshoot catastrophically on a loss surface.
+Show the chain rule applied step by step through a 3-node computational graph during backprop.
+Animate ReLU vs sigmoid vs tanh activation functions side by side with their gradient curves below.
+Visualize dead ReLU neurons: negative inputs producing zero gradient, weights never updating.
+Show how skip connections in ResNet allow gradients to flow directly backward bypassing layers.
+Animate label smoothing converting a one-hot vector into a soft target distribution.
+Visualize temperature scaling on softmax output: low temperature sharpens, high temperature flattens distribution.
+Animate how a transformer positional encoding adds sinusoidal signals to token embeddings.
+Show multi-head attention splitting queries keys and values into heads then concatenating outputs.
+Animate layer normalization computing mean and variance across features then normalizing.
+Visualize the feedforward sublayer in a transformer: linear, ReLU, linear with dimensions labeled.
+Show how causal masking in a decoder prevents attending to future tokens with a masked attention matrix.
+Animate cross-entropy loss computation from logits to probabilities to scalar loss value step by step.
+Visualize KL divergence between two distributions shrinking as the model distribution approaches target.
+Show how gradient accumulation simulates large batch training by accumulating gradients over N steps.
+Animate mixed precision training: forward pass in fp16, loss scaling, backward in fp16, update in fp32.
+Visualize LoRA: frozen base weight matrix plus low-rank A and B matrices combining to form the update.
+Animate how knowledge distillation transfers soft targets from teacher logits to student model.
+Show GELU activation function vs ReLU with the smooth nonzero negative region highlighted.
+Visualize embedding lookup: integer token index selecting a row from an embedding matrix.
+Animate how self-attention computes a weighted sum of value vectors for a single query token.
+Show the difference between pre-norm and post-norm transformer architectures with gradient flow arrows.
+Animate perplexity decreasing over training epochs as next-token prediction improves.
+Visualize gradient flow through a sigmoid bottleneck showing saturation killing gradients at extremes.
+Show how AdaGrad accumulates squared gradients causing learning rate to decay faster for frequent features.
+Animate early stopping: training continues until validation loss stops improving then checkpoint is restored.
+Visualize the full transformer training step: forward pass, loss, backward pass, optimizer step in one continuous animation.

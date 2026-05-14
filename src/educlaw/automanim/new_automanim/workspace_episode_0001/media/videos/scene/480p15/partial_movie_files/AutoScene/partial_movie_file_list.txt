@@ -1,5 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:/home/nabin2004/Desktop/EdClaw/src/educlaw/automanim/new_automanim/workspace_episode_0001/media/videos/scene/480p15/partial_movie_files/AutoScene/1584795214_3789429803_223132457.mp4'
-file 'file:/home/nabin2004/Desktop/EdClaw/src/educlaw/automanim/new_automanim/workspace_episode_0001/media/videos/scene/480p15/partial_movie_files/AutoScene/4072820271_4217992463_151624741.mp4'
-file 'file:/home/nabin2004/Desktop/EdClaw/src/educlaw/automanim/new_automanim/workspace_episode_0001/media/videos/scene/480p15/partial_movie_files/AutoScene/4072820271_3152080633_578674303.mp4'
-file 'file:/home/nabin2004/Desktop/EdClaw/src/educlaw/automanim/new_automanim/workspace_episode_0001/media/videos/scene/480p15/partial_movie_files/AutoScene/4072820271_2844360058_642656576.mp4'

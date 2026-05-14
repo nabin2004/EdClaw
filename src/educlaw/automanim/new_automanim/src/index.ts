@@ -21,7 +21,6 @@ if (!fs.existsSync(WORKSPACE_DIR)) {
 
 const model = getModel(
   "openrouter",
-  "anthropic/claude-3.5-sonnet"
 );
 
 if (!model) {
@@ -55,8 +54,7 @@ async function main() {
 
       case "tool_execution_end":
         console.log(
-          `[tool finished] ${
-            event.isError ? "ERROR" : "SUCCESS"
+          `[tool finished] ${event.isError ? "ERROR" : "SUCCESS"
           }`
         );
         break;

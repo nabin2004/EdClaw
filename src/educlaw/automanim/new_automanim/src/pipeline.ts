@@ -8,6 +8,10 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import { getModel } from "@earendil-works/pi-ai";
 import { createTools } from "./tools/index.js";
+import { retryWithBackoff } from "./utils/retry.js";
+import { withTimeout, TimeoutError } from "./utils/timeout.js";
+import { validateEpisodeOutputs } from "./utils/validation.js";
+import { CircuitBreaker, CircuitState } from "./utils/circuitBreaker.js";
 
 export interface EpisodeMetadata {
   episode_id: string;
@@ -19,7 +23,7 @@ export interface EpisodeMetadata {
   status: "success" | "failure";
   render_duration_ms: number;
   timestamp: string;
-  error?: string;
+  error: string | undefined;
   seed?: number;
 }
 
@@ -28,6 +32,22 @@ export interface PipelineOptions {
   provider: string;
   maxRetries: number;
   seed?: number;
+  timeoutMs?: number;
+  enableCircuitBreaker?: boolean;
+}
+
+// Global circuit breaker for API calls
+let globalCircuitBreaker: CircuitBreaker | null = null;
+
+export function getGlobalCircuitBreaker(): CircuitBreaker {
+  if (!globalCircuitBreaker) {
+    globalCircuitBreaker = new CircuitBreaker({
+      failureThreshold: 5,
+      resetTimeoutMs: 60000, // 1 minute
+      halfOpenMaxCalls: 3,
+    });
+  }
+  return globalCircuitBreaker;
 }
 
 export async function generateEpisode(
@@ -38,7 +58,8 @@ export async function generateEpisode(
 ): Promise<EpisodeMetadata> {
   const startTime = Date.now();
   const episodeDir = path.join(outputBaseDir, episodeId);
-  const workspaceDir = path.join(process.cwd(), `workspace_${episodeId}`);
+  const workspaceDir = path.join(process.cwd(), "workspace", `workspace_${episodeId}`);
+  const timeoutMs = options.timeoutMs || 600000; // 10 minutes default
 
   // Ensure directories exist
   if (!fs.existsSync(episodeDir)) fs.mkdirSync(episodeDir, { recursive: true });
@@ -46,7 +67,7 @@ export async function generateEpisode(
 
   const authStorage = AuthStorage.create();
   const modelRegistry = ModelRegistry.create(authStorage);
-  const model = getModel(options.provider, options.modelName);
+  const model = getModel(options.provider as any, options.modelName);
 
   if (!model) {
     throw new Error(`Model ${options.modelName} not found for provider ${options.provider}`);
@@ -66,7 +87,10 @@ export async function generateEpisode(
   const toolLogs: any[] = [];
   session.subscribe((event) => {
     if (event.type === "tool_execution_start" || event.type === "tool_execution_end") {
-      toolLogs.push(event);
+      toolLogs.push({
+        ...event,
+        timestamp: new Date().toISOString(),
+      });
     }
   });
 
@@ -99,13 +123,76 @@ Output Files Expected in workspace:
 
   let status: "success" | "failure" = "failure";
   let errorMsg = "";
+  let circuitBreakerTripped = false;
 
   try {
-    await session.prompt(instructionPrompt);
+    // Execute with retry logic and timeout
+    const executeWithRetry = async () => {
+      return await retryWithBackoff(
+        async () => {
+          if (options.enableCircuitBreaker) {
+            const cb = getGlobalCircuitBreaker();
+            console.log(`[${episodeId}] Circuit breaker state: ${cb.getState()}`);
+            return await cb.execute(async () => {
+              return await withTimeout(
+                session.prompt(instructionPrompt),
+                timeoutMs,
+                `Agent session for ${episodeId}`
+              );
+            });
+          } else {
+            return await withTimeout(
+              session.prompt(instructionPrompt),
+              timeoutMs,
+              `Agent session for ${episodeId}`
+            );
+          }
+        },
+        {
+          maxRetries: options.maxRetries,
+          baseDelayMs: 2000,
+          maxDelayMs: 30000,
+          jitter: true,
+        }
+      );
+    };
+
+    await executeWithRetry();
     status = "success";
   } catch (err: any) {
     status = "failure";
     errorMsg = err.message;
+    
+    // Check if circuit breaker was involved
+    if (options.enableCircuitBreaker) {
+      const cb = getGlobalCircuitBreaker();
+      if (cb.getState() === CircuitState.OPEN) {
+        circuitBreakerTripped = true;
+        errorMsg = `Circuit breaker is OPEN: ${errorMsg}`;
+      }
+    }
+
+    // Log detailed error information
+    console.error(`[${episodeId}] Error details:`, {
+      message: err.message,
+      name: err.name,
+      stack: err.stack,
+    });
+
+    // Save error log to episode directory
+    const errorLog = {
+      timestamp: new Date().toISOString(),
+      error: {
+        message: err.message,
+        name: err.name,
+        stack: err.stack,
+      },
+      circuitBreakerTripped,
+    };
+    fs.writeFileSync(
+      path.join(episodeDir, "error_log.json"),
+      JSON.stringify(errorLog, null, 2)
+    );
   }
 
   const endTime = Date.now();
@@ -125,6 +212,25 @@ Output Files Expected in workspace:
     fs.renameSync(path.join(episodeDir, "final.mp4"), path.join(episodeDir, "video.mp4"));
   }
 
+  // Validate outputs
+  const validationResult = validateEpisodeOutputs(episodeDir);
+  if (!validationResult.valid) {
+    console.warn(`[${episodeId}] Validation failed:`, validationResult.errors);
+    if (status === "success") {
+      status = "failure";
+      errorMsg = `Validation failed: ${validationResult.errors.join(", ")}`;
+    }
+  }
+  if (validationResult.warnings.length > 0) {
+    console.warn(`[${episodeId}] Validation warnings:`, validationResult.warnings);
+  }
+
+  // Save validation results
+  fs.writeFileSync(
+    path.join(episodeDir, "validation.json"),
+    JSON.stringify(validationResult, null, 2)
+  );
+
   // Read generated code and narration for metadata
   let generatedCode = "";
   if (fs.existsSync(path.join(episodeDir, "scene.py"))) {
@@ -135,7 +241,9 @@ Output Files Expected in workspace:
   if (fs.existsSync(path.join(episodeDir, "narration.json"))) {
     try {
       narrationSegments = JSON.parse(fs.readFileSync(path.join(episodeDir, "narration.json"), "utf-8"));
-    } catch (e) {}
+    } catch (e) {
+      console.warn(`[${episodeId}] Failed to parse narration.json:`, e);
+    }
   }
 
   const metadata: EpisodeMetadata = {
