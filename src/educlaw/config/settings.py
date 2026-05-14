@@ -141,6 +141,7 @@ def load_settings() -> Settings:
     # Drop ShieldGemma as default classifier (extra pull / weight); reuse main chat model.
     if s.shield_model.lower().startswith("shieldgemma"):
         s = s.model_copy(update={"shield_model": s.model_id})
-    # Ensure OLLAMA_API_BASE for LiteLLM (ADK docs)
-    os.environ.setdefault("OLLAMA_API_BASE", s.ollama_url.rstrip("/"))
+    # Ensure OLLAMA_API_BASE for LiteLLM (ADK docs) only for Ollama-backed models.
+    if not s.model_id.lower().startswith("openrouter/"):
+        os.environ.setdefault("OLLAMA_API_BASE", s.ollama_url.rstrip("/"))
     return s

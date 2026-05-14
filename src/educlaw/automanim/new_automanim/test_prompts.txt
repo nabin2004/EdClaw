@@ -1,0 +1,3 @@
+Create a simple animation of a circle transforming into a square.
+Create an animation explaining the Pythagorean theorem with a triangle.
+Create an animation of a sine wave moving across the screen.
