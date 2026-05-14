@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "text": "Temperature Scaling in Softmax. Controlling probability distribution sharpness.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "The softmax function converts logits into probabilities using the formula: P of i equals e to the power of z sub i over T, divided by the sum of all e to the power of z sub j over T.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "Starting with temperature equals one, representing standard softmax behavior.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "Low temperature, point three, produces a sharp peaked distribution. The model becomes highly confident in one class.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "Temperature point eight creates a somewhat sharper distribution, still favoring high logits but less extreme.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 6,
+    "text": "Temperature two point zero flattens the distribution. Probabilities spread more evenly across classes.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 7,
+    "text": "Very high temperature, five point zero, creates a nearly uniform distribution. The model becomes uncertain and outputs similar probabilities for all classes.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 8,
+    "text": "Returning to temperature equals one, the balanced setting.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 9,
+    "text": "Summary: Low temperature produces confident predictions with sharp peaks, while high temperature creates uncertain predictions with flattened distributions. Temperature scaling lets us control model confidence.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  }
+]

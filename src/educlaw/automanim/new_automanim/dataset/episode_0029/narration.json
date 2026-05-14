@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "text": "Label smoothing is a regularization technique that converts hard one-hot targets into soft probability distributions.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "Here's a one-hot vector where the true class has probability one, and all others are zero.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "The formula works by mixing the one-hot vector with a uniform distribution using a smoothing parameter epsilon, typically 0.1.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "We scale the one-hot target by 0.9 and add 0.02 to all classes from the uniform distribution.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "The result is a smoothed distribution where the true class still has the highest probability at 0.92, but other classes get small non-zero values.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": 6,
+    "text": "This reduces model overconfidence, improves generalization, and prevents the network from becoming too certain about its predictions.",
+    "voice": "alloy",
+    "speed": 1.0
+  }
+]

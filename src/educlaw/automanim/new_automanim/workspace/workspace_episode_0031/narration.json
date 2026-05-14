@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "text": "Transformer positional encoding adds position information to token embeddings.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.1
+  },
+  {
+    "id": 2,
+    "text": "Input tokens like The, cat, and sat are converted into embedding vectors.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.1
+  },
+  {
+    "id": 3,
+    "text": "The positional encoding uses sine and cosine functions with different frequencies for each dimension.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.1
+  },
+  {
+    "id": 4,
+    "text": "Each position gets a unique sinusoidal pattern.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "The positional encodings are element-wise added to the embeddings, creating position-aware representations.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.1
+  },
+  {
+    "id": 6,
+    "text": "This allows the transformer to understand word order in the sequence.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  }
+]

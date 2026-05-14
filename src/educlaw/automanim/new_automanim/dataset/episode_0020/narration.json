@@ -1,0 +1,8 @@
+[
+  {"id": 1, "text": "In this visualization, we explore how mini-batch size affects optimization on a loss surface.", "voice": "en-US-AriaNeural", "speed": "medium"},
+  {"id": 2, "text": "The surface shows a typical optimization landscape with local variations.", "voice": "en-US-AriaNeural", "speed": "medium"},
+  {"id": 3, "text": "With batch size one, the gradient estimate has high variance, causing a noisy, zigzag path toward the minimum.", "voice": "en-US-AriaNeural", "speed": "medium"},
+  {"id": 4, "text": "With batch size thirty two, the gradient is more stable, resulting in a smoother optimization path.", "voice": "en-US-AriaNeural", "speed": "medium"},
+  {"id": 5, "text": "With the full dataset, the gradient is exact, producing the smoothest descent path.", "voice": "en-US-AriaNeural", "speed": "medium"},
+  {"id": 6, "text": "Note that smaller batches add noise, but this can actually help escape local minima and saddle points.", "voice": "en-US-AriaNeural", "speed": "medium"}
+]

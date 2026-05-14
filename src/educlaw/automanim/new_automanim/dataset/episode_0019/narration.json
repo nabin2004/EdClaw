@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "text": "This animation demonstrates overfitting in neural networks.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "As training progresses, the training loss, shown in blue, continuously decreases.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "However, the validation loss, shown in red, decreases initially but then starts to rise.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "This divergence point marks where overfitting begins. The model starts memorizing the training data rather than learning generalizable patterns.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "The growing gap between training and validation loss indicates poor generalization to new, unseen data.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 6,
+    "text": "This is why we need regularization and early stopping to prevent overfitting.",
+    "voice": "default",
+    "speed": 1.0
+  }
+]

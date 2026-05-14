@@ -1,0 +1,38 @@
+[
+  {
+    "id": "intro",
+    "text": "Max pooling is a technique used in neural networks to reduce the spatial dimensions of feature maps. Let's see how it works.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": "input",
+    "text": "Here we have a four by four input feature map containing sixteen values.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": "windows",
+    "text": "We divide the map into four non-overlapping two by two windows. In each window, we select the maximum value.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": "highlight",
+    "text": "The maximum values are highlighted in different colors: six, eight, seven, and nine.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": "output",
+    "text": "These maximum values form our output feature map, reducing the spatial size from four by four to two by two.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": "summary",
+    "text": "Max pooling effectively downsamples the feature map while preserving the most salient features.",
+    "voice": "alloy",
+    "speed": 1.0
+  }
+]

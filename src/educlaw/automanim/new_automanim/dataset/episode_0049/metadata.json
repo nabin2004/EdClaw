@@ -1,0 +1,12 @@
+{
+  "episode_id": "episode_0049",
+  "prompt": "Animate early stopping: training continues until validation loss stops improving then checkpoint is restored.",
+  "model": "moonshotai/kimi-k2.5",
+  "generated_code": "",
+  "narration_segments": [],
+  "tool_logs": [],
+  "status": "failure",
+  "render_duration_ms": 137,
+  "timestamp": "2026-05-14T10:09:10.142Z",
+  "error": "Validation failed: Required file missing: dataset/episode_0049/scene.py, Required file missing: dataset/episode_0049/video.mp4"
+}

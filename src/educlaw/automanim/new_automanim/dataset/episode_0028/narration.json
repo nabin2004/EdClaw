@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "text": "ResNet Skip Connections. Let's see how gradient flow works during backpropagation.",
+    "voice": "en-US-Wavenet-D",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "First, we have a neural network with multiple layers. Data flows forward through the network.",
+    "voice": "en-US-Wavenet-D",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "Now here comes the key innovation: skip connections. These allow the input to bypass certain layers entirely.",
+    "voice": "en-US-Wavenet-D",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "During backpropagation, gradients flow backward. Through regular layers, they become weak and vanish.",
+    "voice": "en-US-Wavenet-D",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "But through skip connections, gradients maintain their strength and flow directly backward.",
+    "voice": "en-US-Wavenet-D",
+    "speed": 1.0
+  },
+  {
+    "id": 6,
+    "text": "Without skip connections, gradients vanish through many layers. With skip connections, gradients flow directly, solving the vanishing gradient problem.",
+    "voice": "en-US-Wavenet-D",
+    "speed": 1.0
+  }
+]

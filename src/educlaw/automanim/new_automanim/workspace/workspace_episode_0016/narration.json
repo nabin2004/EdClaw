@@ -1,0 +1,38 @@
+[
+  {
+    "id": "intro",
+    "text": "Let's visualize SGD with and without weight decay, to see how L2 regularization pulls weights toward zero.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": "setup",
+    "text": "We have a 2D weight space with axes w1 and w2. The blue contour lines show the loss landscape, forming an elliptical bowl. The yellow dot marks the minimum of the loss function.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": "sgd_no_decay",
+    "text": "Starting from the white dot, watch SGD without weight decay. The green path shows the optimizer converging directly toward the loss minimum.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": "sgd_with_decay",
+    "text": "Now with weight decay. The red path also moves toward lower loss, but notice how the trajectory bends toward the origin. The weight decay term adds a penalty proportional to the weight magnitude.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": "explanation",
+    "text": "The update rule with weight decay includes a lambda times w term. This creates an additional force pulling the weights toward zero, which is why the final weights are closer to the origin than without regularization.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": "conclusion",
+    "text": "L2 regularization, implemented as weight decay, effectively pulls weights toward zero, preventing overfitting by discouraging large weight values.",
+    "voice": "alloy",
+    "speed": 1.0
+  }
+]

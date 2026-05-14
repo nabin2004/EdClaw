@@ -1,0 +1,12 @@
+{
+  "valid": false,
+  "errors": [
+    "Required file missing: dataset/episode_0028/video.mp4",
+    "Missing required key \"segments\" in dataset/episode_0028/narration.json"
+  ],
+  "warnings": [
+    "Optional file missing: dataset/episode_0028/audio.wav",
+    "Optional file missing: dataset/episode_0028/subtitles.srt",
+    "Optional file missing: dataset/episode_0028/metadata.json"
+  ]
+}

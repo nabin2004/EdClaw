@@ -1,0 +1,13 @@
+{
+  "valid": false,
+  "errors": [
+    "Required file missing: dataset/episode_0048/scene.py",
+    "Required file missing: dataset/episode_0048/video.mp4"
+  ],
+  "warnings": [
+    "Optional file missing: dataset/episode_0048/narration.json",
+    "Optional file missing: dataset/episode_0048/audio.wav",
+    "Optional file missing: dataset/episode_0048/subtitles.srt",
+    "Optional file missing: dataset/episode_0048/metadata.json"
+  ]
+}

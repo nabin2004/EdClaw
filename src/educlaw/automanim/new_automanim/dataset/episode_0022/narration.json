@@ -1,0 +1,9 @@
+[
+  {"id": "intro", "text": "Cosine annealing is a learning rate schedule that smoothly decreases the learning rate following a cosine curve.", "voice": "en-US-JennyNeural", "speed": 1.0},
+  {"id": "formula", "text": "The formula combines the minimum and maximum learning rates using a cosine function based on the current training step within each cycle.", "voice": "en-US-JennyNeural", "speed": 1.0},
+  {"id": "curve", "text": "Watch the cosine curve being drawn, showing how the learning rate decays smoothly from maximum to minimum.", "voice": "en-US-JennyNeural", "speed": 1.0},
+  {"id": "cycles", "text": "The schedule is divided into cycles, with each cycle representing one full cosine period.", "voice": "en-US-JennyNeural", "speed": 1.0},
+  {"id": "oscillation", "text": "Within each cycle, the learning rate oscillates high to low, allowing the model to make both large and fine-grained updates.", "voice": "en-US-JennyNeural", "speed": 1.0},
+  {"id": "decay", "text": "The warm restarts periodically bring the learning rate back to maximum, helping escape local minima.", "voice": "en-US-JennyNeural", "speed": 1.0},
+  {"id": "summary", "text": "Key benefits include smooth decay, periodic restarts, and escaping local minima in optimization.", "voice": "en-US-JennyNeural", "speed": 1.0}
+]

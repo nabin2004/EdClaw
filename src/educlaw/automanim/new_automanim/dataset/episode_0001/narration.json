@@ -1,0 +1,44 @@
+[
+  {
+    "id": "intro",
+    "text": "Stochastic Gradient Descent visualizes how neural networks learn by updating weights to minimize loss.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": "surface",
+    "text": "This bowl-shaped surface represents the loss function. Higher points mean larger prediction errors.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": "sgd_start",
+    "text": "We start here with random weights. The gradient shows the direction of steepest increase.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": "step1",
+    "text": "Step one. We move opposite to the gradient, reducing the loss.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": "step2",
+    "text": "Step two. The learning rate controls step size. Too large and we overshoot.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": "path",
+    "text": "Each step follows the local gradient. The path zigzags toward the minimum.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": "convergence",
+    "text": "We converge to the minimum loss where gradients approach zero. The weights are now optimal.",
+    "voice": "default",
+    "speed": 1.0
+  }
+]

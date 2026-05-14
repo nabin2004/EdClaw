@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "text": "Dropout is a regularization technique used in neural networks to prevent overfitting.",
+    "voice": "en-US-AvaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "During training, dropout randomly sets a fraction of neuron outputs to zero.",
+    "voice": "en-US-AvaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "This forces the network to learn robust features that don't rely on any single neuron.",
+    "voice": "en-US-AvaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "During inference, all neurons are active, but their outputs are scaled down by the dropout rate.",
+    "voice": "en-US-AvaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "This scaling ensures that the expected output during inference matches the training distribution.",
+    "voice": "en-US-AvaNeural",
+    "speed": 1.0
+  }
+]

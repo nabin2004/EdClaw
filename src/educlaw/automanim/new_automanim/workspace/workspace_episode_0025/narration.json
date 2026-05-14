@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "text": "This animation demonstrates the chain rule in backpropagation through a three-node computational graph.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "We have input x, an intermediate function f, and output y. The forward pass computes values flowing from left to right.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "When x equals 2, f equals x squared, which is 4, and y equals f, so y is also 4.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "Now we perform backward pass using the chain rule. Gradients flow from right to left.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "Starting from the output, the gradient of y with respect to itself is 1.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 6,
+    "text": "Moving backward, we multiply by the gradient from f. Since y equals f, this gradient is 1.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 7,
+    "text": "Finally, we multiply by the gradient of f with respect to x. Since f equals x squared, this is 2x, which equals 4.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 8,
+    "text": "The chain rule formula combines these: the gradient of y with respect to x equals the gradient of y with respect to f, times the gradient of f with respect to x, which gives us 4.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 9,
+    "text": "This is how backpropagation efficiently computes gradients by applying the chain rule through the computational graph.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  }
+]

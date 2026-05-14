@@ -1,0 +1,11 @@
+[
+  {"id": 1, "text": "The Adam optimizer is one of the most popular optimization algorithms in deep learning.", "voice": "fable", "speed": 1.0},
+  {"id": 2, "text": "It maintains two moving averages called moments that help guide the weight updates.", "voice": "fable", "speed": 1.0},
+  {"id": 3, "text": "The first moment, m, tracks the exponential moving average of gradients, similar to momentum.", "voice": "fable", "speed": 1.0},
+  {"id": 4, "text": "The second moment, v, tracks the exponential moving average of squared gradients, providing adaptive learning rates.", "voice": "fable", "speed": 1.0},
+  {"id": 5, "text": "The update equations combine these moments to adjust the weights.", "voice": "fable", "speed": 1.0},
+  {"id": 6, "text": "With gradient 0.8, the moments accumulate values while the weight decreases.", "voice": "fable", "speed": 1.0},
+  {"id": 7, "text": "With gradient 0.5, the moments update smoothly, adapting to the gradient magnitude.", "voice": "fable", "speed": 1.0},
+  {"id": 8, "text": "With gradient 0.3, the weight continues converging toward the optimal value.", "voice": "fable", "speed": 1.0},
+  {"id": 9, "text": "Adam's brilliance lies in combining momentum with adaptive learning rates through these dual moment estimates.", "voice": "fable", "speed": 1.0}
+]

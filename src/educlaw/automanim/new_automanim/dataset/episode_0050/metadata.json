@@ -1,0 +1,12 @@
+{
+  "episode_id": "episode_0050",
+  "prompt": "Visualize the full transformer training step: forward pass, loss, backward pass, optimizer step in one continuous animation.",
+  "model": "moonshotai/kimi-k2.5",
+  "generated_code": "",
+  "narration_segments": [],
+  "tool_logs": [],
+  "status": "failure",
+  "render_duration_ms": 129,
+  "timestamp": "2026-05-14T10:09:10.272Z",
+  "error": "Validation failed: Required file missing: dataset/episode_0050/scene.py, Required file missing: dataset/episode_0050/video.mp4"
+}

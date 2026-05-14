@@ -1,0 +1,12 @@
+{
+  "episode_id": "episode_0023",
+  "prompt": "Visualize weight initialization: zero init vs random init vs Xavier init showing activation distributions per layer.",
+  "model": "moonshotai/kimi-k2.5",
+  "generated_code": "",
+  "narration_segments": [],
+  "tool_logs": [],
+  "status": "failure",
+  "render_duration_ms": 324739,
+  "timestamp": "2026-05-14T09:27:35.649Z",
+  "error": "Validation failed: Required file missing: dataset/episode_0023/scene.py, Required file missing: dataset/episode_0023/video.mp4"
+}

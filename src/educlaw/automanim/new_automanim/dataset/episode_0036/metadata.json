@@ -1,0 +1,12 @@
+{
+  "episode_id": "episode_0036",
+  "prompt": "Animate cross-entropy loss computation from logits to probabilities to scalar loss value step by step.",
+  "model": "moonshotai/kimi-k2.5",
+  "generated_code": "",
+  "narration_segments": [],
+  "tool_logs": [],
+  "status": "failure",
+  "render_duration_ms": 160,
+  "timestamp": "2026-05-14T10:09:08.124Z",
+  "error": "Validation failed: Required file missing: dataset/episode_0036/scene.py, Required file missing: dataset/episode_0036/video.mp4"
+}

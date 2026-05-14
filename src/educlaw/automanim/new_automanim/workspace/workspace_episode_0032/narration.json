@@ -1,0 +1,20 @@
+[
+  {
+    "id": "intro",
+    "text": "Multi-head attention enables transformers to focus on multiple representation subspaces.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": "split-heads",
+    "text": "We split Query, Key, and Value into multiple heads that process information in parallel.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": "concatenate",
+    "text": "Finally, all head outputs are concatenated into the final Result with a linear projection.",
+    "voice": "default",
+    "speed": 1.0
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "text": "This animation demonstrates how a single neuron in a neural network processes inputs.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "We have three input values: x1 equals 3.0, x2 equals 2.0, and x3 equals negative 1.0.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "Each input is connected to the neuron with a specific weight. The weights are 0.5, 1.0, and negative 0.5.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "The neuron computes a weighted sum. We multiply each input by its corresponding weight: 3 times 0.5 equals 1.5, 2 times 1 equals 2, and negative 1 times negative 0.5 equals 0.5.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "Adding these together: 1.5 plus 2 plus 0.5 gives us a weighted sum of 4.0.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 6,
+    "text": "Now we apply the Rectified Linear Unit, or ReLU activation function. ReLU returns the maximum of zero and the input value.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 7,
+    "text": "Since 4.0 is greater than 0, the ReLU output is simply 4.0. If the sum had been negative, ReLU would output zero.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 8,
+    "text": "And that's how a single neuron computes: weighted sum followed by ReLU activation, producing the final output.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  }
+]

@@ -1,0 +1,9 @@
+[
+  {"id": 1, "text": "Layer normalization normalizes data across features for each sample independently.", "voice": "en-US-AriaNeural", "speed": 1.0},
+  {"id": 2, "text": "Consider this input matrix with batch samples and feature dimensions.", "voice": "en-US-AriaNeural", "speed": 1.0},
+  {"id": 3, "text": "For each sample, we compute the mean across all its features.", "voice": "en-US-AriaNeural", "speed": 1.0},
+  {"id": 4, "text": "Next, we calculate the variance to measure how spread out the features are.", "voice": "en-US-AriaNeural", "speed": 1.0},
+  {"id": 5, "text": "Each feature is then normalized by subtracting the mean and dividing by standard deviation.", "voice": "en-US-AriaNeural", "speed": 1.0},
+  {"id": 6, "text": "We add a small epsilon value for numerical stability.", "voice": "en-US-AriaNeural", "speed": 1.0},
+  {"id": 7, "text": "This produces normalized outputs with zero mean and unit variance per sample.", "voice": "en-US-AriaNeural", "speed": 1.0}
+]

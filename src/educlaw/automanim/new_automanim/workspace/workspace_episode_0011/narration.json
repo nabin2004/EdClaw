@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "text": "Batch normalization transforms the distribution of layer activations during training.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "First, we subtract the mean. This shifts the distribution to center it around zero.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "Next, we divide by the standard deviation. This scales the distribution to unit variance.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "Finally, we apply learnable scale gamma and shift beta parameters. These allow the network to adjust the normalization for optimal learning.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "Batch normalization stabilizes training by normalizing activations, allowing higher learning rates and faster convergence.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  }
+]

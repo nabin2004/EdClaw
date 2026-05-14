@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-05-14T09:10:51.571Z",
+  "error": {
+    "message": "Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message.",
+    "name": "Error",
+    "stack": "Error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message.\n    at AgentSession.prompt (/home/nabin2004/Desktop/EdClaw/src/educlaw/automanim/new_automanim/node_modules/@earendil-works/pi-coding-agent/src/core/agent-session.ts:1013:12)\n    at async retryWithBackoff.maxRetries (/home/nabin2004/Desktop/EdClaw/src/educlaw/automanim/new_automanim/src/pipeline.ts:144:20)\n    at async retryWithBackoff (/home/nabin2004/Desktop/EdClaw/src/educlaw/automanim/new_automanim/src/utils/retry.ts:27:14)\n    at async executeWithRetry (/home/nabin2004/Desktop/EdClaw/src/educlaw/automanim/new_automanim/src/pipeline.ts:131:14)\n    at async generateEpisode (/home/nabin2004/Desktop/EdClaw/src/educlaw/automanim/new_automanim/src/pipeline.ts:160:5)\n    at async <anonymous> (/home/nabin2004/Desktop/EdClaw/src/educlaw/automanim/new_automanim/src/generate.ts:62:26)\n    at async Promise.all (index 1)\n    at async main (/home/nabin2004/Desktop/EdClaw/src/educlaw/automanim/new_automanim/src/generate.ts:77:3)"
+  },
+  "circuitBreakerTripped": false
+}

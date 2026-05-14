@@ -1,0 +1,11 @@
+[
+  {"id": 1, "text": "Let's explore three fundamental activation functions in neural networks: ReLU, Sigmoid, and Tanh.", "voice": "default", "speed": 1.0},
+  {"id": 2, "text": "First, ReLU, or Rectified Linear Unit. It's simple: output equals the input when positive, and zero otherwise.", "voice": "default", "speed": 1.0},
+  {"id": 3, "text": "Next, the Sigmoid function. It squashes any input to a value between zero and one, perfect for probabilities.", "voice": "default", "speed": 1.0},
+  {"id": 4, "text": "Tanh, the hyperbolic tangent, is similar but outputs values between negative one and one, centered at zero.", "voice": "default", "speed": 1.0},
+  {"id": 5, "text": "Now let's examine their gradients, which determine how neural networks learn.", "voice": "default", "speed": 1.0},
+  {"id": 6, "text": "ReLU's gradient is either one for positive inputs or zero. This simplicity makes it computationally efficient.", "voice": "default", "speed": 1.0},
+  {"id": 7, "text": "However, Sigmoid and Tanh suffer from the vanishing gradient problem in their tails.", "voice": "default", "speed": 1.0},
+  {"id": 8, "text": "Notice how the gradients approach zero for large positive or negative inputs, causing slow learning.", "voice": "default", "speed": 1.0},
+  {"id": 9, "text": "ReLU avoids this issue for positive inputs, maintaining a constant gradient of one, which is why it's widely used today.", "voice": "default", "speed": 1.0}
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "intro",
+    "text": "Momentum in Stochastic Gradient Descent. Let's visualize how velocity accumulates as a ball rolls down a curved loss landscape.",
+    "voice": "default",
+    "speed": 0.95
+  },
+  {
+    "id": "landscape",
+    "text": "Here we see the loss landscape. The curve represents how the loss changes with different parameter values. Our goal is to find the minimum.",
+    "voice": "default",
+    "speed": 0.95
+  },
+  {
+    "id": "gradient",
+    "text": "The gradient points in the direction of steepest ascent. We follow the negative gradient to minimize the loss.",
+    "voice": "default",
+    "speed": 0.95
+  },
+  {
+    "id": "momentum",
+    "text": "With momentum, we accumulate velocity over time. The ball picks up speed as it rolls and carries momentum through the valley.",
+    "voice": "default",
+    "speed": 0.95
+  },
+  {
+    "id": "overshoot",
+    "text": "Notice how the ball overshoots the minimum and oscillates, gradually settling due to the momentum coefficient damping.",
+    "voice": "default",
+    "speed": 0.95
+  },
+  {
+    "id": "conclusion",
+    "text": "Momentum helps accelerate convergence and can help escape local minima. The accumulated velocity carries us faster toward the optimum.",
+    "voice": "default",
+    "speed": 0.95
+  }
+]

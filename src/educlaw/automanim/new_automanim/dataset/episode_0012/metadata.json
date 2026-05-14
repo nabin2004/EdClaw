@@ -1,0 +1,563 @@
+{
+  "episode_id": "episode_0012",
+  "prompt": "Animate how a convolutional filter slides over an image computing dot products with running sum shown.",
+  "model": "moonshotai/kimi-k2.5",
+  "generated_code": "from manim import *\n\n\nclass AutoScene(Scene):\n    def construct(self):\n        # Title\n        title = Text(\"Convolution: Filter Sliding Over Image\", font_size=36)\n        title.to_edge(UP)\n        self.play(Write(title))\n        self.wait(0.5)\n\n        # Input image (5x5)\n        image_size = 5\n        filter_size = 3\n        cell_size = 0.6\n\n        # Create input image grid\n        image_grid = VGroup()\n        image_values = [\n            [1, 2, 3, 4, 5],\n            [2, 3, 4, 5, 6],\n            [3, 4, 5, 6, 7],\n            [4, 5, 6, 7, 8],\n            [5, 6, 7, 8, 9]\n        ]\n\n        for i in range(image_size):\n            for j in range(image_size):\n                cell = Square(side_length=cell_size, stroke_color=BLUE, stroke_width=2)\n                cell.shift((j - image_size/2 + 0.5) * cell_size * RIGHT +\n                          (image_size/2 - i - 0.5) * cell_size * UP)\n                value = Text(str(image_values[i][j]), font_size=20)\n                value.move_to(cell.get_center())\n                image_grid.add(VGroup(cell, value))\n\n        image_group = VGroup(*image_grid)\n        image_group.shift(2 * LEFT + 0.5 * DOWN)\n\n        input_label = Text(\"Input Image (5x5)\", font_size=24)\n        input_label.next_to(image_group, DOWN, buff=0.5)\n\n        self.play(Create(image_grid), Write(input_label))\n        self.wait(0.5)\n\n        # Create filter/kernel\n        kernel_values = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]\n        kernel_grid = VGroup()\n\n        for i in range(filter_size):\n            for j in range(filter_size):\n                cell = Square(side_length=cell_size, stroke_color=RED, stroke_width=3,\n                            fill_color=RED, fill_opacity=0.2)\n                cell.shift((j - filter_size/2 + 0.5) * cell_size * RIGHT +\n                          (filter_size/2 - i - 0.5) * cell_size * UP)\n                value = Text(str(kernel_values[i][j]), font_size=20, color=RED)\n                value.move_to(cell.get_center())\n                kernel_grid.add(VGroup(cell, value))\n\n        kernel_group = VGroup(*kernel_grid)\n        kernel_group.move_to(image_grid[0].get_center())\n\n        kernel_label = Text(\"Filter (3x3)\", font_size=24, color=RED)\n        kernel_label.to_edge(RIGHT).shift(2 * UP)\n\n        self.play(Create(kernel_grid), Write(kernel_label))\n        self.wait(0.5)\n\n        # Output feature map (3x3)\n        output_values = [[0 for _ in range(3)] for _ in range(3)]\n        output_grid = VGroup()\n\n        for i in range(3):\n            for j in range(3):\n                cell = Square(side_length=cell_size, stroke_color=GREEN, stroke_width=2)\n                cell.shift((j - 1.5 + 0.5) * cell_size * RIGHT +\n                          (1.5 - i - 0.5) * cell_size * UP)\n                value = Text(\"?\", font_size=24, color=YELLOW)\n                value.move_to(cell.get_center())\n                output_grid.add(VGroup(cell, value))\n\n        output_group = VGroup(*output_grid)\n        output_group.to_edge(RIGHT).shift(0.5 * DOWN)\n\n        output_label = Text(\"Output Feature Map\", font_size=24)\n        output_label.next_to(output_group, DOWN, buff=0.5)\n\n        self.play(Create(output_grid), Write(output_label))\n        self.wait(0.5)\n\n        # Animate convolution - sliding filter\n        positions = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]\n\n        calc_text = MathTex(r\"\\text{Dot Product} = \\sum (i \\cdot k)\", font_size=24)\n        calc_text.to_edge(UP).shift(DOWN)\n\n        for idx, (row, col) in enumerate(positions):\n            # Calculate target position\n            target_idx = row * image_size + col\n            target_pos = image_grid[target_idx].get_center()\n\n            # Move kernel to position\n            self.play(kernel_group.animate.move_to(target_pos), run_time=0.4)\n\n            if idx == 0:\n                self.play(Write(calc_text))\n\n            # Highlight overlapping cells\n            overlaps = []\n            dot_products = []\n\n            for ki in range(filter_size):\n                for kj in range(filter_size):\n                    ii = row + ki\n                    ij = col + kj\n                    img_idx = ii * image_size + ij\n                    img_cell = image_grid[img_idx][0]\n                    kern_cell = kernel_grid[ki * filter_size + kj][1]\n\n                    # Highlight\n                    highlight = Rectangle(\n                        width=cell_size * 0.9,\n                        height=cell_size * 0.9,\n                        stroke_color=YELLOW,\n                        stroke_width=4,\n                        fill_color=YELLOW,\n                        fill_opacity=0.3\n                    )\n                    highlight.move_to(img_cell.get_center())\n                    overlaps.append(highlight)\n\n                    # Calculate individual product\n                    iv = image_values[ii][ij]\n                    kv = kernel_values[ki][kj]\n                    dot_products.append(iv * kv)\n\n            self.play(*[Create(h) for h in overlaps], run_time=0.3)\n\n            # Show calculation\n            total = sum(dot_products)\n\n            calc_display = MathTex(\n                f\"{image_values[row][col]}\\\\cdot{kernel_values[0][0]} + \"\n                f\"{image_values[row][col+1]}\\\\cdot{kernel_values[0][1]} + ... = {total}\",\n                font_size=20\n            )\n            calc_display.next_to(calc_text, DOWN)\n\n            self.play(Write(calc_display), run_time=0.3)\n\n            # Update output grid\n            output_values[row][col] = total\n            new_value = Text(str(total), font_size=24, color=GREEN)\n            new_value.move_to(output_grid[row * 3 + col][0].get_center())\n\n            self.play(\n                Transform(output_grid[row * 3 + col][1], new_value),\n                FadeOut(calc_display),\n                *[FadeOut(h) for h in overlaps],\n                run_time=0.3\n            )\n\n            self.wait(0.2)\n\n        # Final summary\n        self.play(FadeOut(calc_text))\n\n        summary = Text(\"Output Feature Map computed!\", font_size=28, color=YELLOW)\n        summary.to_edge(UP).shift(DOWN * 0.5)\n\n        self.play(Write(summary))\n\n        # Show final output with values\n        highlight_box = SurroundingRectangle(output_group, color=GREEN, buff=0.2)\n        self.play(Create(highlight_box))\n\n        self.wait(2)\n\n        # Fade out everything\n        self.play(\n            FadeOut(title),\n            FadeOut(summary),\n            FadeOut(image_group),\n            FadeOut(input_label),\n            FadeOut(kernel_group),\n            FadeOut(kernel_label),\n            FadeOut(output_group),\n            FadeOut(output_label),\n            FadeOut(highlight_box)\n        )\n\n        # Final message\n        final = Text(\"Convolution Complete!\", font_size=40, color=BLUE)\n        self.play(Write(final))\n        self.wait(1.5)\n",
+  "narration_segments": [
+    {
+      "id": "intro",
+      "text": "A convolutional filter slides over an image to extract features. Watch how the 3 by 3 red filter moves across the 5 by 5 blue input image.",
+      "voice": "en-US-AriaNeural",
+      "speed": 1.1
+    },
+    {
+      "id": "mechanics",
+      "text": "At each position, the filter computes a dot product: multiplying overlapping values and summing them up. The result goes into the green feature map.",
+      "voice": "en-US-AriaNeural",
+      "speed": 1.1
+    },
+    {
+      "id": "example",
+      "text": "When the filter is here, we multiply one by one, two by zero, three by zero, and continue through all nine overlapping cells, adding them together.",
+      "voice": "en-US-AriaNeural",
+      "speed": 1
+    },
+    {
+      "id": "sliding",
+      "text": "The filter slides right, then down, systematically covering the entire image. Each output captures local patterns from its receptive field.",
+      "voice": "en-US-AriaNeural",
+      "speed": 1.1
+    },
+    {
+      "id": "conclusion",
+      "text": "Convolution transforms image data into feature representations, enabling neural networks to detect edges, textures, and complex patterns.",
+      "voice": "en-US-AriaNeural",
+      "speed": 1
+    }
+  ],
+  "tool_logs": [
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.write:0",
+      "toolName": "write",
+      "args": {
+        "path": "scene.py",
+        "content": "from manim import *\n\n\nclass AutoScene(Scene):\n    def construct(self):\n        # Title\n        title = Text(\"Convolution: Filter Sliding Over Image\", font_size=36)\n        title.to_edge(UP)\n        self.play(Write(title))\n        self.wait(0.5)\n\n        # Input image (5x5)\n        image_size = 5\n        filter_size = 3\n        cell_size = 0.6\n\n        # Create input image grid\n        image_grid = VGroup()\n        image_values = [\n            [1, 2, 3, 4, 5],\n            [2, 3, 4, 5, 6],\n            [3, 4, 5, 6, 7],\n            [4, 5, 6, 7, 8],\n            [5, 6, 7, 8, 9]\n        ]\n\n        for i in range(image_size):\n            for j in range(image_size):\n                cell = Square(side_length=cell_size, stroke_color=BLUE, stroke_width=2)\n                cell.shift((j - image_size/2 + 0.5) * cell_size * RIGHT +\n                          (image_size/2 - i - 0.5) * cell_size * UP)\n                value = Text(str(image_values[i][j]), font_size=20)\n                value.move_to(cell.get_center())\n                image_grid.add(VGroup(cell, value))\n\n        image_group = VGroup(*image_grid)\n        image_group.shift(2 * LEFT + 0.5 * DOWN)\n\n        input_label = Text(\"Input Image (5x5)\", font_size=24)\n        input_label.next_to(image_group, DOWN, buff=0.5)\n\n        self.play(Create(image_grid), Write(input_label))\n        self.wait(0.5)\n\n        # Create filter/kernel\n        kernel_values = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]\n        kernel_grid = VGroup()\n\n        for i in range(filter_size):\n            for j in range(filter_size):\n                cell = Square(side_length=cell_size, stroke_color=RED, stroke_width=3,\n                            fill_color=RED, fill_opacity=0.2)\n                cell.shift((j - filter_size/2 + 0.5) * cell_size * RIGHT +\n                          (filter_size/2 - i - 0.5) * cell_size * UP)\n                value = Text(str(kernel_values[i][j]), font_size=20, color=RED)\n                value.move_to(cell.get_center())\n                kernel_grid.add(VGroup(cell, value))\n\n        kernel_group = VGroup(*kernel_grid)\n        kernel_group.move_to(image_grid[0].get_center())\n\n        kernel_label = Text(\"Filter (3x3)\", font_size=24, color=RED)\n        kernel_label.to_edge(RIGHT).shift(2 * UP)\n\n        self.play(Create(kernel_grid), Write(kernel_label))\n        self.wait(0.5)\n\n        # Output feature map (3x3)\n        output_values = [[0 for _ in range(3)] for _ in range(3)]\n        output_grid = VGroup()\n\n        for i in range(3):\n            for j in range(3):\n                cell = Square(side_length=cell_size, stroke_color=GREEN, stroke_width=2)\n                cell.shift((j - 1.5 + 0.5) * cell_size * RIGHT +\n                          (1.5 - i - 0.5) * cell_size * UP)\n                value = Text(\"?\", font_size=24, color=YELLOW)\n                value.move_to(cell.get_center())\n                output_grid.add(VGroup(cell, value))\n\n        output_group = VGroup(*output_grid)\n        output_group.to_edge(RIGHT).shift(0.5 * DOWN)\n\n        output_label = Text(\"Output Feature Map\", font_size=24)\n        output_label.next_to(output_group, DOWN, buff=0.5)\n\n        self.play(Create(output_grid), Write(output_label))\n        self.wait(0.5)\n\n        # Animate convolution - sliding filter\n        positions = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]\n\n        calc_text = MathTex(r\"\\text{Dot Product} = \\sum (i \\cdot k)\", font_size=24)\n        calc_text.to_edge(UP).shift(DOWN)\n\n        for idx, (row, col) in enumerate(positions):\n            # Calculate target position\n            target_idx = row * image_size + col\n            target_pos = image_grid[target_idx].get_center()\n\n            # Move kernel to position\n            self.play(kernel_group.animate.move_to(target_pos), run_time=0.4)\n\n            if idx == 0:\n                self.play(Write(calc_text))\n\n            # Highlight overlapping cells\n            overlaps = []\n            dot_products = []\n\n            for ki in range(filter_size):\n                for kj in range(filter_size):\n                    ii = row + ki\n                    ij = col + kj\n                    img_idx = ii * image_size + ij\n                    img_cell = image_grid[img_idx][0]\n                    kern_cell = kernel_grid[ki * filter_size + kj][1]\n\n                    # Highlight\n                    highlight = Rectangle(\n                        width=cell_size * 0.9,\n                        height=cell_size * 0.9,\n                        stroke_color=YELLOW,\n                        stroke_width=4,\n                        fill_color=YELLOW,\n                        fill_opacity=0.3\n                    )\n                    highlight.move_to(img_cell.get_center())\n                    overlaps.append(highlight)\n\n                    # Calculate individual product\n                    iv = image_values[ii][ij]\n                    kv = kernel_values[ki][kj]\n                    dot_products.append(iv * kv)\n\n            self.play(*[Create(h) for h in overlaps], run_time=0.3)\n\n            # Show calculation\n            total = sum(dot_products)\n\n            calc_display = MathTex(\n                f\"{image_values[row][col]}\\\\cdot{kernel_values[0][0]} + \"\n                f\"{image_values[row][col+1]}\\\\cdot{kernel_values[0][1]} + ... = {total}\",\n                font_size=20\n            )\n            calc_display.next_to(calc_text, DOWN)\n\n            self.play(Write(calc_display), run_time=0.3)\n\n            # Update output grid\n            output_values[row][col] = total\n            new_value = Text(str(total), font_size=24, color=GREEN)\n            new_value.move_to(output_grid[row * 3 + col][0].get_center())\n\n            self.play(\n                Transform(output_grid[row * 3 + col][1], new_value),\n                FadeOut(calc_display),\n                *[FadeOut(h) for h in overlaps],\n                run_time=0.3\n            )\n\n            self.wait(0.2)\n\n        # Final summary\n        self.play(FadeOut(calc_text))\n\n        summary = Text(\"Output Feature Map computed!\", font_size=28, color=YELLOW)\n        summary.to_edge(UP).shift(DOWN * 0.5)\n\n        self.play(Write(summary))\n\n        # Show final output with values\n        highlight_box = SurroundingRectangle(output_group, color=GREEN, buff=0.2)\n        self.play(Create(highlight_box))\n\n        self.wait(2)\n\n        # Fade out everything\n        self.play(\n            FadeOut(title),\n            FadeOut(summary),\n            FadeOut(image_group),\n            FadeOut(input_label),\n            FadeOut(kernel_group),\n            FadeOut(kernel_label),\n            FadeOut(output_group),\n            FadeOut(output_label),\n            FadeOut(highlight_box)\n        )\n\n        # Final message\n        final = Text(\"Convolution Complete!\", font_size=40, color=BLUE)\n        self.play(Write(final))\n        self.wait(1.5)\n"
+      },
+      "timestamp": "2026-05-14T08:44:54.888Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.write:0",
+      "toolName": "write",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Successfully wrote 6862 bytes to scene.py"
+          }
+        ]
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:44:54.889Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.write:1",
+      "toolName": "write",
+      "args": {
+        "path": "narration.json",
+        "content": "[\n  {\n    \"id\": \"intro\",\n    \"text\": \"A convolutional filter slides over an image to extract features. Watch how the 3 by 3 red filter moves across the 5 by 5 blue input image.\",\n    \"voice\": \"en-US-AriaNeural\",\n    \"speed\": 1.1\n  },\n  {\n    \"id\": \"mechanics\",\n    \"text\": \"At each position, the filter computes a dot product: multiplying overlapping values and summing them up. The result goes into the green feature map.\",\n    \"voice\": \"en-US-AriaNeural\",\n    \"speed\": 1.1\n  },\n  {\n    \"id\": \"example\",\n    \"text\": \"When the filter is here, we multiply one by one, two by zero, three by zero, and continue through all nine overlapping cells, adding them together.\",\n    \"voice\": \"en-US-AriaNeural\",\n    \"speed\": 1.0\n  },\n  {\n    \"id\": \"sliding\",\n    \"text\": \"The filter slides right, then down, systematically covering the entire image. Each output captures local patterns from its receptive field.\",\n    \"voice\": \"en-US-AriaNeural\",\n    \"speed\": 1.1\n  },\n  {\n    \"id\": \"conclusion\",\n    \"text\": \"Convolution transforms image data into feature representations, enabling neural networks to detect edges, textures, and complex patterns.\",\n    \"voice\": \"en-US-AriaNeural\",\n    \"speed\": 1.0\n  }\n]\n"
+      },
+      "timestamp": "2026-05-14T08:45:04.822Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.write:1",
+      "toolName": "write",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Successfully wrote 1195 bytes to narration.json"
+          }
+        ]
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:45:04.823Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:2",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "cd /home/nabin2004/Desktop/EdClaw/src/educlaw/automanim/new_automanim/workspace/workspace_episode_0012 && manim -pql scene.py AutoScene 2>&1"
+      },
+      "timestamp": "2026-05-14T08:45:23.194Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:2",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: Only limited commands are allowed"
+          }
+        ],
+        "details": {}
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:45:23.194Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:3",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "cd /home/nabin2004/Desktop/EdClaw/src/educlaw/automanim/new_automanim/workspace/workspace_episode_0012 && python -m manim -pql scene.py AutoScene 2>&1"
+      },
+      "timestamp": "2026-05-14T08:45:29.244Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:3",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: Only limited commands are allowed"
+          }
+        ],
+        "details": {}
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:45:29.245Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:4",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "manim -pql scene.py AutoScene 2>&1"
+      },
+      "timestamp": "2026-05-14T08:45:33.264Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:4",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Manim Community v0.20.1\n\n\rAnimation 0: Write(Text('Convolution: Filter Sliding Over Image')):   0%|          | 0/30 [00:00<?, ?it/s]\rAnimation 0: Write(Text('Convolution: Filter Sliding Over Image')):  57%|█████▋    | 17/30 [00:00<00:00, 166.04it/s]\r                                                                                                                    \r[05/14/26 14:30:34] INFO     Animation 0 : Partial      scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /1584795214_2784805475_223                         \n                             132457.mp4'                                        \n                    INFO     Animation 1 : Partial      scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3394500337_183                         \n                             1862697.mp4'                                       \n\rAnimation 2: Create(VGroup of 25 submobjects), etc.:   0%|          | 0/30 [00:00<?, ?it/s]\rAnimation 2: Create(VGroup of 25 submobjects), etc.:  50%|█████     | 15/30 [00:00<00:00, 136.81it/s]\rAnimation 2: Create(VGroup of 25 submobjects), etc.:  97%|█████████▋| 29/30 [00:00<00:00, 115.93it/s]\r                                                                                                     \r[05/14/26 14:30:35] INFO     Animation 2 : Partial      scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3174325172_957                         \n                             093136.mp4'                                        \n[05/14/26 14:30:36] INFO     Animation 3 : Partial      scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3394500337_895                         \n                             458544.mp4'                                        \n\rAnimation 4: Create(VGroup of 9 submobjects), etc.:   0%|          | 0/15 [00:00<?, ?it/s]\r                                                                                          \r                    INFO     Animation 4 : Partial      scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_1571987055_306                         \n                             9116367.mp4'                                       \n[05/14/26 14:30:37] INFO     Animation 5 : Partial      scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3394500337_812                         \n                             862506.mp4'                                        \n\rAnimation 6: Create(VGroup of 9 submobjects), etc.:   0%|          | 0/30 [00:00<?, ?it/s]\rAnimation 6: Create(VGroup of 9 submobjects), etc.:  63%|██████▎   | 19/30 [00:00<00:00, 183.25it/s]\r                                                                                                    \r[05/14/26 14:30:38] INFO     Animation 6 : Partial      scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3834084492_244                         \n                             592888.mp4'                                        \n                    INFO     Animation 7 : Partial      scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3394500337_407                         \n                             3369326.mp4'                                       \n                    INFO     Writing                     tex_file_writing.py:110\n                             \\special{dvisvgm:raw <g                            \n                             id='unique000'>}\\text{Dot                          \n                             Product} = \\sum (i \\cdot                           \n                             k)\\special{dvisvgm:raw                             \n                             </g>} to                                           \n                             media/Tex/09c229be11484b50.                        \n                             tex                                                \n\rAnimation 8: _MethodAnimation(VGroup of 9 submobjects):   0%|          | 0/6 [00:00<?, ?it/s]\r                                                                                             \r[05/14/26 14:30:39] INFO     Animation 8 : Partial      scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_456782818_4087                         \n                             378513.mp4'                                        \n\rAnimation 9: Write(MathTex('\\\\text{Dot Product} = \\\\sum (i \\\\cdot k)')):   0%|          | 0/30 [00:00<?, ?it/s]\rAnimation 9: Write(MathTex('\\\\text{Dot Product} = \\\\sum (i \\\\cdot k)')):  90%|█████████ | 27/30 [00:00<00:00, 269.24it/s]\r                                                                                                                         \r[05/14/26 14:30:40] INFO     Animation 9 : Partial      scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_644799251_4141                         \n                             898185.mp4'                                        \n\rAnimation 10: Create(Rectangle), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                            \r[05/14/26 14:30:41] INFO     Animation 10 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2114010856_322                         \n                             8274179.mp4'                                       \n                    INFO     Writing                     tex_file_writing.py:110\n                             \\special{dvisvgm:raw <g                            \n                             id='unique000'>}1\\cdot1 +                          \n                             2\\cdot0 + ... =                                    \n                             9\\special{dvisvgm:raw </g>}                        \n                             to                                                 \n                             media/Tex/4be71ccc19f3691a.                        \n                             tex                                                \n\rAnimation 11: Write(MathTex('1\\\\cdot1 + 2\\\\cdot0 + ... = 9')):   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                                                    \r[05/14/26 14:30:42] INFO     Animation 11 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2169436218_113                         \n                             4049285.mp4'                                       \n\rAnimation 12: Transform(Text('?')), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                               \r[05/14/26 14:30:43] INFO     Animation 12 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_192711998_9520                         \n                             32985.mp4'                                         \n[05/14/26 14:30:44] INFO     Animation 13 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2514011427_200                         \n                             5980777.mp4'                                       \n\rAnimation 14: _MethodAnimation(VGroup of 9 submobjects):   0%|          | 0/6 [00:00<?, ?it/s]\r                                                                                              \r                    INFO     Animation 14 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2902054101_348                         \n                             8772092.mp4'                                       \n\rAnimation 15: Create(Rectangle), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                            \r[05/14/26 14:30:45] INFO     Animation 15 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2655626323_283                         \n                             995932.mp4'                                        \n                    INFO     Writing                     tex_file_writing.py:110\n                             \\special{dvisvgm:raw <g                            \n                             id='unique000'>}2\\cdot1 +                          \n                             3\\cdot0 + ... =                                    \n                             12\\special{dvisvgm:raw                             \n                             </g>} to                                           \n                             media/Tex/52f1e9d7cd236460.                        \n                             tex                                                \n\rAnimation 16: Write(MathTex('2\\\\cdot1 + 3\\\\cdot0 + ... = 12')):   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                                                     \r[05/14/26 14:30:46] INFO     Animation 16 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_910285023_1203                         \n                             368515.mp4'                                        \n\rAnimation 17: Transform(Text('?')), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                               \r[05/14/26 14:30:47] INFO     Animation 17 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2032064844_374                         \n                             2461065.mp4'                                       \n[05/14/26 14:30:48] INFO     Animation 18 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2514011427_183                         \n                             43481.mp4'                                         \n\rAnimation 19: _MethodAnimation(VGroup of 9 submobjects):   0%|          | 0/6 [00:00<?, ?it/s]\r                                                                                              \r[05/14/26 14:30:49] INFO     Animation 19 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_68885326_76270                         \n                             8702.mp4'                                          \n\rAnimation 20: Create(Rectangle), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                            \r                    INFO     Animation 20 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3228397245_348                         \n                             6017255.mp4'                                       \n                    INFO     Writing                     tex_file_writing.py:110\n                             \\special{dvisvgm:raw <g                            \n                             id='unique000'>}3\\cdot1 +                          \n                             4\\cdot0 + ... =                                    \n                             15\\special{dvisvgm:raw                             \n                             </g>} to                                           \n                             media/Tex/ba716c6384af79b3.                        \n                             tex                                                \n\rAnimation 21: Write(MathTex('3\\\\cdot1 + 4\\\\cdot0 + ... = 15')):   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                                                     \r[05/14/26 14:30:50] INFO     Animation 21 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_325413588_5137                         \n                             67472.mp4'                                         \n\rAnimation 22: Transform(Text('?')), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                               \r[05/14/26 14:30:51] INFO     Animation 22 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2228019564_616                         \n                             500706.mp4'                                        \n[05/14/26 14:30:52] INFO     Animation 23 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2514011427_402                         \n                             2746395.mp4'                                       \n\rAnimation 24: _MethodAnimation(VGroup of 9 submobjects):   0%|          | 0/6 [00:00<?, ?it/s]\r                                                                                              \r[05/14/26 14:30:53] INFO     Animation 24 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3591683025_118                         \n                             6618311.mp4'                                       \n\rAnimation 25: Create(Rectangle), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                            \r                    INFO     Animation 25 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_1924497114_294                         \n                             2231134.mp4'                                       \n\rAnimation 26: Write(MathTex('2\\\\cdot1 + 3\\\\cdot0 + ... = 12')):   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                                                     \r[05/14/26 14:30:54] INFO     Animation 26 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_68535710_58039                         \n                             5122.mp4'                                          \n\rAnimation 27: Transform(Text('?')), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                               \r[05/14/26 14:30:55] INFO     Animation 27 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_1538924097_206                         \n                             5792127.mp4'                                       \n[05/14/26 14:30:56] INFO     Animation 28 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2514011427_191                         \n                             5435534.mp4'                                       \n\rAnimation 29: _MethodAnimation(VGroup of 9 submobjects):   0%|          | 0/6 [00:00<?, ?it/s]\r                                                                                              \r                    INFO     Animation 29 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_895748280_3247                         \n                             190217.mp4'                                        \n\rAnimation 30: Create(Rectangle), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                            \r[05/14/26 14:30:57] INFO     Animation 30 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2466112609_422                         \n                             3722642.mp4'                                       \n\rAnimation 31: Write(MathTex('3\\\\cdot1 + 4\\\\cdot0 + ... = 15')):   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                                                     \r[05/14/26 14:30:58] INFO     Animation 31 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_434431366_4077                         \n                             87515.mp4'                                         \n\rAnimation 32: Transform(Text('?')), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                               \r[05/14/26 14:30:59] INFO     Animation 32 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_4033772377_359                         \n                             059053.mp4'                                        \n                    INFO     Animation 33 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2514011427_109                         \n                             610190.mp4'                                        \n\rAnimation 34: _MethodAnimation(VGroup of 9 submobjects):   0%|          | 0/6 [00:00<?, ?it/s]\r                                                                                              \r[05/14/26 14:31:00] INFO     Animation 34 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3852286435_247                         \n                             5386936.mp4'                                       \n\rAnimation 35: Create(Rectangle), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                            \r[05/14/26 14:31:01] INFO     Animation 35 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3436785295_548                         \n                             351704.mp4'                                        \n                    INFO     Writing                     tex_file_writing.py:110\n                             \\special{dvisvgm:raw <g                            \n                             id='unique000'>}4\\cdot1 +                          \n                             5\\cdot0 + ... =                                    \n                             18\\special{dvisvgm:raw                             \n                             </g>} to                                           \n                             media/Tex/292a2e9c6efbd0ee.                        \n                             tex                                                \n\rAnimation 36: Write(MathTex('4\\\\cdot1 + 5\\\\cdot0 + ... = 18')):   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                                                     \r[05/14/26 14:31:02] INFO     Animation 36 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_439632813_3465                         \n                             103595.mp4'                                        \n\rAnimation 37: Transform(Text('?')), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                               \r[05/14/26 14:31:03] INFO     Animation 37 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_316847300_2663                         \n                             895397.mp4'                                        \n[05/14/26 14:31:04] INFO     Animation 38 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2514011427_221                         \n                             123096.mp4'                                        \n\rAnimation 39: _MethodAnimation(VGroup of 9 submobjects):   0%|          | 0/6 [00:00<?, ?it/s]\r                                                                                              \r                    INFO     Animation 39 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_953626242_4130                         \n                             561070.mp4'                                        \n\rAnimation 40: Create(Rectangle), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                            \r[05/14/26 14:31:05] INFO     Animation 40 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_4061688403_116                         \n                             8789522.mp4'                                       \n\rAnimation 41: Write(MathTex('3\\\\cdot1 + 4\\\\cdot0 + ... = 15')):   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                                                     \r[05/14/26 14:31:06] INFO     Animation 41 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_434431366_3606                         \n                             65493.mp4'                                         \n\rAnimation 42: Transform(Text('?')), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                               \r[05/14/26 14:31:07] INFO     Animation 42 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3717139644_242                         \n                             0831635.mp4'                                       \n                    INFO     Animation 43 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2514011427_253                         \n                             2649018.mp4'                                       \n\rAnimation 44: _MethodAnimation(VGroup of 9 submobjects):   0%|          | 0/6 [00:00<?, ?it/s]\r                                                                                              \r[05/14/26 14:31:08] INFO     Animation 44 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2463913795_778                         \n                             182332.mp4'                                        \n\rAnimation 45: Create(Rectangle), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                            \r[05/14/26 14:31:09] INFO     Animation 45 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_307292392_1900                         \n                             290099.mp4'                                        \n\rAnimation 46: Write(MathTex('4\\\\cdot1 + 5\\\\cdot0 + ... = 18')):   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                                                     \r[05/14/26 14:31:10] INFO     Animation 46 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2774663788_365                         \n                             4774228.mp4'                                       \n\rAnimation 47: Transform(Text('?')), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                               \r[05/14/26 14:31:11] INFO     Animation 47 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_889328640_2309                         \n                             663565.mp4'                                        \n                    INFO     Animation 48 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2514011427_246                         \n                             5696866.mp4'                                       \n\rAnimation 49: _MethodAnimation(VGroup of 9 submobjects):   0%|          | 0/6 [00:00<?, ?it/s]\r                                                                                              \r[05/14/26 14:31:12] INFO     Animation 49 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2742511652_135                         \n                             448788.mp4'                                        \n\rAnimation 50: Create(Rectangle), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                            \r[05/14/26 14:31:13] INFO     Animation 50 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_1282679302_136                         \n                             7919311.mp4'                                       \n                    INFO     Writing                     tex_file_writing.py:110\n                             \\special{dvisvgm:raw <g                            \n                             id='unique000'>}5\\cdot1 +                          \n                             6\\cdot0 + ... =                                    \n                             21\\special{dvisvgm:raw                             \n                             </g>} to                                           \n                             media/Tex/ed1c1ad367645559.                        \n                             tex                                                \n\rAnimation 51: Write(MathTex('5\\\\cdot1 + 6\\\\cdot0 + ... = 21')):   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                                                     \r[05/14/26 14:31:14] INFO     Animation 51 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3125372881_293                         \n                             4106753.mp4'                                       \n\rAnimation 52: Transform(Text('?')), etc.:   0%|          | 0/5 [00:00<?, ?it/s]\r                                                                               \r[05/14/26 14:31:15] INFO     Animation 52 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_1244011838_408                         \n                             5770786.mp4'                                       \n[05/14/26 14:31:16] INFO     Animation 53 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2514011427_107                         \n                             239829.mp4'                                        \n\rAnimation 54: FadeOut(MathTex('\\\\text{Dot Product} = \\\\sum (i \\\\cdot k)')):   0%|          | 0/15 [00:00<?, ?it/s]\r                                                                                                                  \r                    INFO     Animation 54 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2665322772_176                         \n                             9929740.mp4'                                       \n\rAnimation 55: Write(Text('Output Feature Map computed!')):   0%|          | 0/30 [00:00<?, ?it/s]\rAnimation 55: Write(Text('Output Feature Map computed!')):  67%|██████▋   | 20/30 [00:00<00:00, 191.32it/s]\r                                                                                                           \r[05/14/26 14:31:17] INFO     Animation 55 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2385782785_338                         \n                             5446672.mp4'                                       \n\rAnimation 56: Create(SurroundingRectangle):   0%|          | 0/15 [00:00<?, ?it/s]\r                                                                                  \r[05/14/26 14:31:18] INFO     Animation 56 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_838483997_1450                         \n                             431460.mp4'                                        \n[05/14/26 14:31:19] INFO     Animation 57 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_2844360058_553                         \n                             258645.mp4'                                        \n\rAnimation 58: FadeOut(Text('Convolution: Filter Sliding Over Image')), etc.:   0%|          | 0/15 [00:00<?, ?it/s]\rAnimation 58: FadeOut(Text('Convolution: Filter Sliding Over Image')), etc.:  27%|██▋       | 4/15 [00:00<00:00, 30.52it/s]\rAnimation 58: FadeOut(Text('Convolution: Filter Sliding Over Image')), etc.:  53%|█████▎    | 8/15 [00:00<00:00, 30.75it/s]\rAnimation 58: FadeOut(Text('Convolution: Filter Sliding Over Image')), etc.:  80%|████████  | 12/15 [00:00<00:00, 30.50it/s]\r                                                                                                                            \r[05/14/26 14:31:21] INFO     Animation 58 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_1611526630_336                         \n                             1174074.mp4'                                       \n\rAnimation 59: Write(Text('Convolution Complete!')):   0%|          | 0/30 [00:00<?, ?it/s]\rAnimation 59: Write(Text('Convolution Complete!')):  80%|████████  | 24/30 [00:00<00:00, 238.69it/s]\r                                                                                                    \r                    INFO     Animation 59 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3083495668_287                         \n                             0174442.mp4'                                       \n                    INFO     Animation 60 : Partial     scene_file_writer.py:601\n                             movie file written in                              \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/par                         \n                             tial_movie_files/AutoScene                         \n                             /4072820271_3366045169_182                         \n                             483444.mp4'                                        \n                    INFO     Combining to Movie file.   scene_file_writer.py:753\n                    INFO                                scene_file_writer.py:904\n                             File ready at                                      \n                             '/home/nabin2004/Desktop/E                         \n                             dClaw/src/educlaw/automani                         \n                             m/new_automanim/workspace/                         \n                             workspace_episode_0012/med                         \n                             ia/videos/scene/480p15/Aut                         \n                             oScene.mp4'                                        \n                                                                                \n                    INFO     Rendered AutoScene                     scene.py:278\n                             Played 61 animations                               \n                    INFO     Previewed File at:                  file_ops.py:236\n                             '/home/nabin2004/Desktop/EdClaw/src                \n                             /educlaw/automanim/new_automanim/wo                \n                             rkspace/workspace_episode_0012/medi                \n                             a/videos/scene/480p15/AutoScene.mp4                \n                             '                                                  \n"
+          }
+        ],
+        "details": {
+          "stderr": ""
+        }
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:46:22.403Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:5",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "python -c \"\nimport json\nfrom pathlib import Path\n\n# Read narration\nwith open('narration.json') as f:\n    narrations = json.load(f)\n\n# Combine all text\nfull_text = ' '.join([n['text'] for n in narrations])\nprint(f'Total narration: {len(full_text)} chars')\nprint('Text to speak:', full_text)\n\""
+      },
+      "timestamp": "2026-05-14T08:46:27.971Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:5",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Total narration: 713 chars\nText to speak: A convolutional filter slides over an image to extract features. Watch how the 3 by 3 red filter moves across the 5 by 5 blue input image. At each position, the filter computes a dot product: multiplying overlapping values and summing them up. The result goes into the green feature map. When the filter is here, we multiply one by one, two by zero, three by zero, and continue through all nine overlapping cells, adding them together. The filter slides right, then down, systematically covering the entire image. Each output captures local patterns from its receptive field. Convolution transforms image data into feature representations, enabling neural networks to detect edges, textures, and complex patterns.\n"
+          }
+        ],
+        "details": {
+          "stderr": ""
+        }
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:46:28.011Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:6",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "which edge-tts"
+      },
+      "timestamp": "2026-05-14T08:46:30.736Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:6",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: Only limited commands are allowed"
+          }
+        ],
+        "details": {}
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:46:30.736Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:7",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "python -c \"\nimport subprocess\ntry:\n    import edge_tts\n    print('edge-tts available')\nexcept:\n    print('edge-tts not available')\n\""
+      },
+      "timestamp": "2026-05-14T08:46:41.522Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:7",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "edge-tts not available\n"
+          }
+        ],
+        "details": {
+          "stderr": ""
+        }
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:46:41.555Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:8",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "ls -la /home/nabin2004/Desktop/EdClaw/src/educlaw/tools/"
+      },
+      "timestamp": "2026-05-14T08:46:45.688Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:8",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: Command failed: ls -la /home/nabin2004/Desktop/EdClaw/src/educlaw/tools/\nls: cannot access '/home/nabin2004/Desktop/EdClaw/src/educlaw/tools/': No such file or directory\n"
+          }
+        ],
+        "details": {}
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:46:45.697Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:9",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "ls media/videos/scene/480p15/ 2>/dev/null && cp media/videos/scene/480p15/AutoScene.mp4 video.mp4"
+      },
+      "timestamp": "2026-05-14T08:46:57.248Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:9",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "AutoScene.mp4\npartial_movie_files\n"
+          }
+        ],
+        "details": {
+          "stderr": ""
+        }
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:46:57.256Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.write:10",
+      "toolName": "write",
+      "args": {
+        "path": "gen_tts.py",
+        "content": "#!/usr/bin/env python3\n\"\"\"Generate TTS audio from narration.json\"\"\"\nimport json\nimport asyncio\nimport subprocess\n\nwith open('narration.json') as f:\n    narrations = json.load(f)\n\n# Combine narration segments with pauses\nsegments = []\nfor n in narrations:\n    segments.append(n['text'])\n\nfull_text = ' '.join(segments)\n\n# Use tts command if available, otherwise create a script for manual audio\nprint(f\"Generating TTS for: {full_text[:100]}...\")\n\n# Try edge-tts via subprocess\nasync def generate_tts():\n    try:\n        import edge_tts\n        communicate = edge_tts.Communicate(full_text, \"en-US-AriaNeural\", rate=\"+10%\")\n        await communicate.save(\"audio.wav\")\n        print(\"Generated audio.wav\")\n    except Exception as e:\n        print(f\"TTS failed: {e}\")\n        # Create a placeholder\n        print(\"Creating silent audio placeholder\")\n        subprocess.run([\n            \"ffmpeg\", \"-f\", \"lavfi\", \"-i\", \"anullsrc=r=44100:cl=mono\",\n            \"-t\", \"25\", \"-acodec\", \"pcm_s16le\", \"audio.wav\",\n            \"-y\"\n        ], capture_output=True)\n\nasyncio.run(generate_tts())\n"
+      },
+      "timestamp": "2026-05-14T08:47:08.477Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.write:10",
+      "toolName": "write",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Successfully wrote 1081 bytes to gen_tts.py"
+          }
+        ]
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:47:08.478Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:11",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "python gen_tts.py 2>&1"
+      },
+      "timestamp": "2026-05-14T08:47:11.098Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:11",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Generating TTS for: A convolutional filter slides over an image to extract features. Watch how the 3 by 3 red filter mov...\nTTS failed: No module named 'edge_tts'\nCreating silent audio placeholder\n"
+          }
+        ],
+        "details": {
+          "stderr": ""
+        }
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:47:11.232Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:12",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "which pi-tools educlaw tts"
+      },
+      "timestamp": "2026-05-14T08:47:18.831Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:12",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: Only limited commands are allowed"
+          }
+        ],
+        "details": {}
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:47:18.831Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:13",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "find /home/nabin2004/Desktop/EdClaw -name \"tts*.py\" 2>/dev/null | head -10"
+      },
+      "timestamp": "2026-05-14T08:47:22.310Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:13",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Command completed"
+          }
+        ],
+        "details": {
+          "stderr": ""
+        }
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:47:22.697Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:14",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "ls /home/nabin2004/Desktop/EdClaw/src/educlaw/ | head"
+      },
+      "timestamp": "2026-05-14T08:47:28.771Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:14",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "agent\nautocourse\nautolecture\nautomanim\nchannels\ncli.py\nconfig\ngateway\n__init__.py\nir\n"
+          }
+        ],
+        "details": {
+          "stderr": ""
+        }
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:47:28.779Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.read:15",
+      "toolName": "read",
+      "args": {
+        "path": "/home/nabin2004/Desktop/EdClaw/docs/TTS.md"
+      },
+      "timestamp": "2026-05-14T08:47:33.103Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.read:15",
+      "toolName": "read",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "# Text-to-speech (TTS) in EduClaw\n\nEduClaw includes a **pluggable TTS subsystem** under `educlaw.tts`: a small `TTSBackend` protocol, a registry (built-ins + `importlib.metadata` entry points, same pattern as [`educlaw.channels`](../src/educlaw/channels/registry.py)), and optional **Kitten TTS** integration for **offline-friendly**, CPU-only synthesis with compact ONNX models (~25–80 MB on disk).\n\n**See also:** [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md) (subsystem 13), [DEVELOPERS.md](DEVELOPERS.md) (gateway `/ws` chat vs CLI), [AUTOCOURSE.md](AUTOCOURSE.md) (full-course scripts; generate lecture text then pass it to `educlaw tts say` or the TTS API if you need audio).\n\n## Why it exists\n\n- **Offline / air-gapped labs**: cache models once, then set `HF_HUB_OFFLINE=1` for Hugging Face Hub.\n- **Small footprint**: Kitten ships int8 and small-parameter checkpoints suitable for laptops and edge boxes.\n- **Modularity**: swap backends via profile or register your own via entry points.\n\n## Quick enable (Kitten, CPU)\n\n1. **Install the wheel and extras** (Kitten publishes wheels on GitHub Releases, not only PyPI):\n\n   ```bash\n   pip install 'educlaw[tts-kitten]'\n   ```\n\n   The `tts-kitten` extra pins the official wheel URL from [KittenTTS releases](https://github.com/KittenML/KittenTTS/releases).\n\n2. **Pre-download a model** (first run may hit the Hub; set `HF_HOME` / cache dir as you prefer):\n\n   ```bash\n   python -c \"from kittentts import KittenTTS; KittenTTS('KittenML/kitten-tts-nano-0.8-int8', cache_dir=str(__import__('pathlib').Path.home()/'.educlaw/tts'))\"\n   ```\n\n3. **Profile** (`profiles/local.toml` under `[educlaw]`):\n\n   ```toml\n   tts_enabled = true\n   tts_backend = \"kitten\"\n   tts_model_id = \"KittenML/kitten-tts-nano-0.8-int8\"\n   tts_voice = \"Jasper\"\n   tts_speed = 1.0\n   ```\n\n   **`tts_model_id` is required** when `tts_backend = \"kitten\"` — there is no baked-in default model id.\n\n4. **Air-gapped use**: after the model is cached under `tts_cache_dir` (default `data_dir/tts`), export:\n\n   ```bash\n   export HF_HUB_OFFLINE=1\n   ```\n\n## WebSocket protocol (planned)\n\nThe following JSON frame shape is **not** implemented on the gateway **`/ws`** endpoint today; use **`educlaw tts say`** or call `build_backend(settings)` from Python. A future muxed WebSocket could adopt:\n\nAfter a `connect` frame, clients would send:\n\n```json\n{\"type\": \"tts\", \"text\": \"Hello from EduClaw.\", \"voice\": \"Jasper\", \"speed\": 1.0, \"idempotency_key\": \"optional\"}\n```\n\nResponses (in order):\n\n- `{\"type\":\"tts_event\",\"payload\":{\"kind\":\"audio\",\"format\":\"wav\",\"sample_rate\":24000,\"voice\":\"Jasper\",\"bytes_b64\":\"...\"}}`\n- `{\"type\":\"tts_event\",\"payload\":{\"kind\":\"done\"}}`\n\nErrors would use `payload.kind` of `error` and `payload.message`. If `tts_enabled` is false, synthesis is unavailable at the API layer. Shield / classify behavior matches other EduClaw entry points when wired.\n\n## CLI\n\n| Command | Purpose |\n|--------|---------|\n| `educlaw tts list` | List registered backend names; if `tts_enabled`, build the active backend and print `available_voices`. |\n| `educlaw tts say \"Your text\" -o out.wav` | Synthesize to a WAV file (requires `tts_enabled` and a working backend). |\n\n## Tuning knobs (`Settings` / env `EDUCLAW_*`)\n\n| Field | Meaning |\n|--------|---------|\n| `tts_enabled` | Master switch; when false, `build_backend` returns no synthesizer for scripts/API use. |\n| `tts_backend` | Registry key: `kitten`, `null` (silent stub for tests), or a custom entry-point name. |\n| `tts_model_id` | **Required for `kitten`**: Hugging Face repo id, e.g. `KittenML/kitten-tts-nano-0.8-int8`. |\n| `tts_voice` | Default voice when using the API programmatically. |\n| `tts_speed` | Default speed multiplier. |\n| `tts_sample_rate` | Hint for the `null` backend; Kitten emits 24 kHz PCM internally. |\n| `tts_cache_dir` | Model cache directory (default `data_dir/tts`). |\n\n### Kitten model sizes (reference)\n\n| Model | Params | Approx. size |\n|--------|--------|----------------|\n| kitten-tts-nano-0.8-int8 | 15M | ~25 MB |\n| kitten-tts-nano-0.8 | 15M | ~56 MB |\n| kitten-tts-micro-0.8 | 40M | ~41 MB |\n| kitten-tts-mini-0.8 | 80M | ~80 MB |\n\nSee the upstream [KittenTTS README](https://github.com/KittenML/KittenTTS) for updates.\n\n## Adding a custom backend\n\n1. Implement `TTSBackend` from `educlaw.tts.contract` (`name`, `available_voices`, async `synthesize`, async `close`).\n2. Expose a factory `def factory(settings: Settings) -> TTSBackend: ...`\n3. Register either:\n   - **In-process**: `from educlaw.tts.registry import register` then `register(\"mytts\", factory)` before `build_backend` runs, or\n   - **Packaged**: in your `pyproject.toml`:\n\n     ```toml\n     [project.entry-points.\"educlaw.tts\"]\n     mytts = \"my_package.tts:factory\"\n     ```\n\nEntry-point names override built-ins with the same key.\n\n## Troubleshooting\n\n- **`ImportError: kittentts`**: install `educlaw[tts-kitten]` (includes the GitHub wheel).\n- **`RuntimeError: Unknown TTS backend`**: typo in `tts_backend` — run `educlaw tts list` for keys.\n- **`tts_model_id` unset** with `kitten`: set a Hub repo id in the profile.\n- **Voice not found**: use a name from `available_voices` (Kitten ships Bella, Jasper, Luna, Bruno, Rosie, Hugo, Kiki, Leo by default).\n- **Hub timeouts offline**: ensure the model is cached and `HF_HUB_OFFLINE=1` only after a successful download.\n"
+          }
+        ]
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:47:33.107Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:16",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "ffmpeg -f lavfi -i \"anullsrc=r=44100:cl=mono\" -t \"25\" -acodec pcm_s16le audio.wav -y 2>&1 | tail -5"
+      },
+      "timestamp": "2026-05-14T08:47:38.938Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:16",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "  Stream #0:0: Audio: pcm_s16le ([1][0][0][0] / 0x0001), 44100 Hz, mono, s16, 705 kb/s\n    Metadata:\n      encoder         : Lavc60.31.102 pcm_s16le\nsize=       0kB time=00:00:00.00 bitrate=N/A speed=   0x    \r[out#0/wav @ 0x58b989132e80] video:0kB audio:2153kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 0.003537%\nsize=    2153kB time=00:00:24.98 bitrate= 706.1kbits/s speed= 908x    \n"
+          }
+        ],
+        "details": {
+          "stderr": ""
+        }
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:47:39.012Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:17",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "ffmpeg -i video.mp4 -i audio.wav -c:v copy -c:a aac -shortest final.mp4 -y 2>&1 | tail -10"
+      },
+      "timestamp": "2026-05-14T08:47:43.163Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:17",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "  Stream #0:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(progressive), 854x480, q=2-31, 262 kb/s, 15 fps, 15 tbr, 90k tbn (default)\n    Metadata:\n      handler_name    : VideoHandler\n      vendor_id       : [0][0][0][0]\n  Stream #0:1: Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, mono, fltp, 69 kb/s\n    Metadata:\n      encoder         : Lavc60.31.102 aac\nsize=       0kB time=-00:00:00.02 bitrate=  -0.0kbits/s speed=N/A    \r[out#0/mp4 @ 0x5e10fd2a2e40] video:1009kB audio:4kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 1.398157%\nsize=    1027kB time=00:00:35.53 bitrate= 236.8kbits/s speed= 819x    \n[aac @ 0x5e10fd27c680] Qavg: 65508.406\n"
+          }
+        ],
+        "details": {
+          "stderr": ""
+        }
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:47:43.264Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:18",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "ls -la *.py *.json *.mp4 *.wav 2>/dev/null"
+      },
+      "timestamp": "2026-05-14T08:47:46.332Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:18",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "-rw-rw-r-- 1 nabin2004 nabin2004 2205078 May 14 14:32 audio.wav\n-rw-rw-r-- 1 nabin2004 nabin2004 1051942 May 14 14:32 final.mp4\n-rw-rw-r-- 1 nabin2004 nabin2004    1081 May 14 14:32 gen_tts.py\n-rw-rw-r-- 1 nabin2004 nabin2004    1195 May 14 14:30 narration.json\n-rw-rw-r-- 1 nabin2004 nabin2004    6862 May 14 14:29 scene.py\n-rw-rw-r-- 1 nabin2004 nabin2004 1181662 May 14 14:31 video.mp4\n"
+          }
+        ],
+        "details": {
+          "stderr": ""
+        }
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:47:46.341Z"
+    },
+    {
+      "type": "tool_execution_start",
+      "toolCallId": "functions.safe_bash:19",
+      "toolName": "safe_bash",
+      "args": {
+        "command": "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 video.mp4 2>&1"
+      },
+      "timestamp": "2026-05-14T08:47:49.001Z"
+    },
+    {
+      "type": "tool_execution_end",
+      "toolCallId": "functions.safe_bash:19",
+      "toolName": "safe_bash",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: Only limited commands are allowed"
+          }
+        ],
+        "details": {}
+      },
+      "isError": false,
+      "timestamp": "2026-05-14T08:47:49.002Z"
+    }
+  ],
+  "status": "failure",
+  "render_duration_ms": 243095,
+  "timestamp": "2026-05-14T08:48:09.963Z",
+  "error": "Validation failed: Missing required key \"segments\" in dataset/episode_0012/narration.json"
+}

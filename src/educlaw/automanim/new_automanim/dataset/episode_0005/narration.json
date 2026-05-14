@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "text": "This animation visualizes gradient descent on a two-dimensional loss surface.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "The surface represents the loss function f of x y equals x squared plus y squared, a convex bowl shape.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "Yellow contour lines show constant loss values, helping visualize the landscape.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "The red dot marks our starting position, with a shadow showing its projection.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "Watch as gradient descent iteratively moves the point downhill, following the negative gradient.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 6,
+    "text": "Each step reduces the loss value, and the step size adapts to the gradient magnitude.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 7,
+    "text": "Notice how the path becomes shorter as we approach the minimum, where the gradient is smaller.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 8,
+    "text": "The algorithm converges to the minimum at the origin, where both x and y approach zero.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 9,
+    "text": "Green indicates convergence. Gradient descent successfully found the global minimum of the convex function.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  }
+]

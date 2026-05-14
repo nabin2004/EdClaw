@@ -1,0 +1,38 @@
+[
+  {
+    "id": "intro",
+    "text": "Let's visualize a forward pass through a 3-layer multi-layer perceptron.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": "input_layer",
+    "text": "We start with 3 input values. These represent our input features.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": "first_layer",
+    "text": "Each input connects to every node in the hidden layer. The values multiply by weights, sum with biases, then pass through the ReLU activation function.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": "second_layer",
+    "text": "The activated hidden values flow to the output layer, again multiplying by weights and adding biases.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": "softmax",
+    "text": "Finally, we apply softmax to get class probabilities. The model predicts the class with the highest probability.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": "conclusion",
+    "text": "This is the forward pass of a neural network: matrix multiplication, bias addition, and non-linear activation, layer by layer.",
+    "voice": "default",
+    "speed": 1.0
+  }
+]

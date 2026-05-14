@@ -1,0 +1,12 @@
+{
+  "episode_id": "episode_0042",
+  "prompt": "Show GELU activation function vs ReLU with the smooth nonzero negative region highlighted.",
+  "model": "moonshotai/kimi-k2.5",
+  "generated_code": "",
+  "narration_segments": [],
+  "tool_logs": [],
+  "status": "failure",
+  "render_duration_ms": 147,
+  "timestamp": "2026-05-14T10:09:09.093Z",
+  "error": "Validation failed: Required file missing: dataset/episode_0042/scene.py, Required file missing: dataset/episode_0042/video.mp4"
+}

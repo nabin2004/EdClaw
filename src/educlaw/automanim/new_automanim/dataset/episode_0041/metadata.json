@@ -1,0 +1,12 @@
+{
+  "episode_id": "episode_0041",
+  "prompt": "Animate how knowledge distillation transfers soft targets from teacher logits to student model.",
+  "model": "moonshotai/kimi-k2.5",
+  "generated_code": "",
+  "narration_segments": [],
+  "tool_logs": [],
+  "status": "failure",
+  "render_duration_ms": 148,
+  "timestamp": "2026-05-14T10:09:08.946Z",
+  "error": "Validation failed: Required file missing: dataset/episode_0041/scene.py, Required file missing: dataset/episode_0041/video.mp4"
+}

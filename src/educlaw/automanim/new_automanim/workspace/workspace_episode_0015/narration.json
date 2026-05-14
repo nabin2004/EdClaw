@@ -1,0 +1,8 @@
+[
+  {"id": 1, "text": "Let's explore the softmax function, which transforms raw neural network outputs into interpretable probabilities.", "voice": "default", "speed": 1.0},
+  {"id": 2, "text": "We start with raw logits: 2.0, 1.0, and 0.1 for classes A, B, and C.", "voice": "default", "speed": 1.0},
+  {"id": 3, "text": "First, we apply the exponential function to each logit. This amplifies differences and ensures positive values.", "voice": "default", "speed": 1.0},
+  {"id": 4, "text": "Next, we compute the sum of all exponential values, which serves as our normalization factor.", "voice": "default", "speed": 1.0},
+  {"id": 5, "text": "Finally, we divide each exponential by the sum. This normalizes the values so they all add up to exactly one.", "voice": "default", "speed": 1.0},
+  {"id": 6, "text": "Class A now has 63% probability, Class B has 23%, and Class C has 14%. Notice they sum to 100 percent.", "voice": "default", "speed": 1.0}
+]

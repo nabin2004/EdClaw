@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "text": "Let's explore how the learning rate affects gradient descent on a parabolic loss curve.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "First, let's look at what happens when the learning rate is too high.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "With a high learning rate of 1.8, the algorithm overshoots the minimum and diverges, jumping wildly from side to side until it completely loses stability.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "Now, let's examine a learning rate that is too low.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "With a tiny learning rate of 0.08, gradient descent crawls painfully slow toward the minimum. It takes many more steps to converge, wasting computational resources.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 6,
+    "text": "Finally, here's a well-chosen learning rate.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 7,
+    "text": "With a balanced learning rate of 0.4, gradient descent smoothly converges to the minimum in just a few efficient steps, finding the optimal solution quickly and stably.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 8,
+    "text": "Remember: too high causes overshooting and divergence, too low causes slow crawling, but just right achieves smooth convergence.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 9,
+    "text": "Choose your learning rate wisely to optimize your machine learning models!",
+    "voice": "default",
+    "speed": 1.0
+  }
+]

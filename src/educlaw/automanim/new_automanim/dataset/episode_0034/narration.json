@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "text": "The transformer feedforward sublayer is a simple yet powerful component of the transformer architecture.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "Starting with an input vector of dimension 512, the data first passes through a linear transformation using weight matrix W1 and bias B1.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "W1 has dimensions 2048 by 512, expanding the representation from 512 to 2048 dimensions. This expansion allows the network to learn richer features.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "Next, the ReLU activation function is applied. ReLU introduces non-linearity by setting all negative values to zero, enabling the model to learn complex patterns.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "The activated hidden state then passes through a second linear transformation. Weight matrix W2, with dimensions 512 by 2048, projects the data back down to the original 512 dimensions.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": 6,
+    "text": "Bias B2 is added to produce the final output. This up-projection followed by down-projection creates a bottleneck architecture that enhances the model's representational capacity.",
+    "voice": "alloy",
+    "speed": 1.0
+  },
+  {
+    "id": 7,
+    "text": "The complete formula is FFN of x equals W2 times ReLU of W1 times x plus b1, plus b2.",
+    "voice": "alloy",
+    "speed": 1.0
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "episode_id": "episode_0040",
+  "prompt": "Visualize LoRA: frozen base weight matrix plus low-rank A and B matrices combining to form the update.",
+  "model": "moonshotai/kimi-k2.5",
+  "generated_code": "",
+  "narration_segments": [],
+  "tool_logs": [],
+  "status": "failure",
+  "render_duration_ms": 174,
+  "timestamp": "2026-05-14T10:09:08.798Z",
+  "error": "Validation failed: Required file missing: dataset/episode_0040/scene.py, Required file missing: dataset/episode_0040/video.mp4"
+}

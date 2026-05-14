@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "text": "Dead ReLU neurons. When x is negative, ReLU outputs zero.",
+    "voice": "default",
+    "speed": 1.3
+  },
+  {
+    "id": 2,
+    "text": "The red zone is dead. Any input here produces zero output.",
+    "voice": "default",
+    "speed": 1.3
+  },
+  {
+    "id": 3,
+    "text": "At x equals negative two, output is zero.",
+    "voice": "default",
+    "speed": 1.3
+  },
+  {
+    "id": 4,
+    "text": "The gradient is zero for negatives, one for positives.",
+    "voice": "default",
+    "speed": 1.3
+  },
+  {
+    "id": 5,
+    "text": "Zero gradient kills the signal during backpropagation.",
+    "voice": "default",
+    "speed": 1.3
+  },
+  {
+    "id": 6,
+    "text": "Weight update uses gradient times upstream. If gradient is zero, update is zero.",
+    "voice": "default",
+    "speed": 1.3
+  },
+  {
+    "id": 7,
+    "text": "New weight equals old weight. Nothing changes.",
+    "voice": "default",
+    "speed": 1.3
+  },
+  {
+    "id": 8,
+    "text": "Dead neuron. Frozen weights forever.",
+    "voice": "default",
+    "speed": 1.3
+  },
+  {
+    "id": 9,
+    "text": "ReLU dies when x is negative. Gradient zero. No updates.",
+    "voice": "default",
+    "speed": 1.3
+  }
+]

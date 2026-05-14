@@ -1,0 +1,545 @@
+Manim Community v0.20.1
+
+[05/14/26 14:39:50] INFO     Animation 0 : Using cached     cairo_renderer.py:94
+                             data (hash :                                       
+                             1584795214_4197417573_22313245                     
+                             7)                                                 
+Animation 0: Write(Title('SGD: With vs Without Weight Decay (L2)')):   0%|          | 0/1 [00:00<?, ?it/s]                                                                                                                              INFO     Animation 1 : Using cached     cairo_renderer.py:94
+                             data (hash :                                       
+                             4072820271_3394500337_10428452                     
+                             03)                                                
+                    INFO     Writing                     tex_file_writing.py:110
+                             \special{dvisvgm:raw <g                            
+                             id='unique000'>}w_2\special                        
+                             {dvisvgm:raw </g>} to                              
+                             media/Tex/700e13b76f25d5d8.                        
+                             tex                                                
+[05/14/26 14:39:51] INFO     Writing                     tex_file_writing.py:110
+                             \special{dvisvgm:raw <g                            
+                             id='unique000'>}\vec{0}\spe                        
+                             cial{dvisvgm:raw </g>} to                          
+                             media/Tex/273b5c2431e84dd4.                        
+                             tex                                                
+Animation 2: Create(Axes of 2 submobjects), etc.:   0%|          | 0/15 [00:00<?, ?it/s]                                                                                        [05/14/26 14:39:52] INFO     Animation 2 : Partial      scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_1296474020_150                         
+                             1245808.mp4'                                       
+                    INFO     Animation 3 : Partial      scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3394500337_160                         
+                             7461208.mp4'                                       
+Animation 4: Create(VGroup of 5 submobjects):   0%|          | 0/15 [00:00<?, ?it/s]Animation 4: Create(VGroup of 5 submobjects):  67%|██████▋   | 10/15 [00:00<00:00, 88.57it/s]                                                                                                                 INFO     Animation 4 : Partial      scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3618962946_198                         
+                             8186729.mp4'                                       
+                    INFO     Writing                     tex_file_writing.py:110
+                             \special{dvisvgm:raw <g                            
+                             id='unique000'>}\min                               
+                             L(\vec{w})\special{dvisvgm:                        
+                             raw </g>} to                                       
+                             media/Tex/21dbd593affb67ec.                        
+                             tex                                                
+Animation 5: FadeIn(Dot), etc.:   0%|          | 0/12 [00:00<?, ?it/s]                                                                      [05/14/26 14:39:53] INFO     Animation 5 : Partial      scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3331945863_118                         
+                             0828228.mp4'                                       
+                    INFO     Animation 6 : Partial      scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3394500337_330                         
+                             9709085.mp4'                                       
+                    INFO     Writing                     tex_file_writing.py:110
+                             \special{dvisvgm:raw <g                            
+                             id='unique000'>}\vec{w}_0\s                        
+                             pecial{dvisvgm:raw </g>} to                        
+                             media/Tex/51d122b751855a7a.                        
+                             tex                                                
+Animation 7: FadeIn(Dot), etc.:   0%|          | 0/9 [00:00<?, ?it/s]                                                                     [05/14/26 14:39:54] INFO     Animation 7 : Partial      scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_1997035349_214                         
+                             4835714.mp4'                                       
+                    INFO     Animation 8 : Partial      scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_2318836581_593                         
+                             583895.mp4'                                        
+Animation 9: Write(Text('SGD (no weight decay)')):   0%|          | 0/8 [00:00<?, ?it/s]                                                                                        [05/14/26 14:39:55] INFO     Animation 9 : Partial      scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_1493016319_328                         
+                             382095.mp4'                                        
+Animation 10: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 10 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_2997567169_350                         
+                             2680822.mp4'                                       
+Animation 11: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 11 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3838882628_427                         
+                             5816380.mp4'                                       
+Animation 12: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 12 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_2399343065_494                         
+                             697088.mp4'                                        
+Animation 13: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                         [05/14/26 14:39:56] INFO     Animation 13 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3266201579_222                         
+                             3045791.mp4'                                       
+Animation 14: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 14 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3996959881_227                         
+                             5119928.mp4'                                       
+Animation 15: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 15 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_1585917562_191                         
+                             5620028.mp4'                                       
+Animation 16: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 16 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_602144990_2799                         
+                             106290.mp4'                                        
+Animation 17: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                         [05/14/26 14:39:57] INFO     Animation 17 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3860982664_416                         
+                             4631586.mp4'                                       
+Animation 18: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 18 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_57142103_31965                         
+                             36266.mp4'                                         
+Animation 19: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 19 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_892964422_3194                         
+                             108317.mp4'                                        
+Animation 20: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 20 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_1905174242_432                         
+                             463538.mp4'                                        
+Animation 21: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                         [05/14/26 14:39:58] INFO     Animation 21 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_1815752783_169                         
+                             65330.mp4'                                         
+Animation 22: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 22 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_940510746_3104                         
+                             589607.mp4'                                        
+Animation 23: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 23 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_517780359_5741                         
+                             94003.mp4'                                         
+Animation 24: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 24 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_2465794730_344                         
+                             949244.mp4'                                        
+Animation 25: Transform(Dot):   0%|          | 0/3 [00:00<?, ?it/s]                                                                   [05/14/26 14:39:59] INFO     Animation 25 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_1419525336_147                         
+                             5640416.mp4'                                       
+                    INFO     Animation 26 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3394500337_157                         
+                             4653003.mp4'                                       
+Animation 27: Write(Text('SGD + Weight Decay')):   0%|          | 0/8 [00:00<?, ?it/s]                                                                                      [05/14/26 14:40:00] INFO     Animation 27 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_741730164_2292                         
+                             959500.mp4'                                        
+Animation 28: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 28 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_572393707_2990                         
+                             032202.mp4'                                        
+Animation 29: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 29 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3877605987_498                         
+                             097333.mp4'                                        
+Animation 30: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 30 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_611481392_1032                         
+                             597855.mp4'                                        
+Animation 31: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                         [05/14/26 14:40:01] INFO     Animation 31 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3943826713_391                         
+                             5979503.mp4'                                       
+Animation 32: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 32 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3768918346_274                         
+                             0240048.mp4'                                       
+Animation 33: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 33 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_1803934485_407                         
+                             4822633.mp4'                                       
+Animation 34: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                         [05/14/26 14:40:02] INFO     Animation 34 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_1741408964_261                         
+                             2507622.mp4'                                       
+Animation 35: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 35 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3908413924_477                         
+                             167645.mp4'                                        
+Animation 36: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 36 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3208146934_239                         
+                             1452296.mp4'                                       
+Animation 37: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                         [05/14/26 14:40:03] INFO     Animation 37 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_1449797386_357                         
+                             452475.mp4'                                        
+Animation 38: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 38 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3212791589_414                         
+                             7646570.mp4'                                       
+Animation 39: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 39 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_600654778_6135                         
+                             5948.mp4'                                          
+Animation 40: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                         [05/14/26 14:40:04] INFO     Animation 40 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3208194023_421                         
+                             2011050.mp4'                                       
+Animation 41: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 41 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_2851213684_583                         
+                             369358.mp4'                                        
+Animation 42: Transform(Dot), etc.:   0%|          | 0/3 [00:00<?, ?it/s]                                                                                             INFO     Animation 42 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_2672118839_156                         
+                             8470753.mp4'                                       
+Animation 43: Transform(Dot):   0%|          | 0/3 [00:00<?, ?it/s]                                                                   [05/14/26 14:40:05] INFO     Animation 43 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_4184645766_242                         
+                             43386.mp4'                                         
+                    INFO     Animation 44 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3394500337_315                         
+                             4238255.mp4'                                       
+                    INFO     Writing                     tex_file_writing.py:110
+                             \special{dvisvgm:raw <g                            
+                             id='unique000'>}Weight                             
+                             decay: $\vec{w} \leftarrow                         
+                             \vec{w} - \eta(\nabla L +                          
+                             \lambda                                            
+                             \vec{w})$\special{dvisvgm:r                        
+                             aw </g>} to                                        
+                             media/Tex/1c2d8a57f556a500.                        
+                             tex                                                
+Animation 45: Create(Arrow), etc.:   0%|          | 0/15 [00:00<?, ?it/s]                                                                         [05/14/26 14:40:06] INFO     Animation 45 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_358459645_3665                         
+                             883681.mp4'                                        
+[05/14/26 14:40:07] INFO     Animation 46 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3394500337_121                         
+                             7802653.mp4'                                       
+                    INFO     Writing                     tex_file_writing.py:110
+                             \special{dvisvgm:raw <g                            
+                             id='unique000'>}L2 pulls                           
+                             weights toward                                     
+                             zero!\special{dvisvgm:raw                          
+                             </g>} to                                           
+                             media/Tex/4b14bb1812f51ee3.                        
+                             tex                                                
+Animation 47: Write(Tex('L2 pulls weights toward zero!')):   0%|          | 0/15 [00:00<?, ?it/s]                                                                                                 [05/14/26 14:40:08] INFO     Animation 47 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_324916500_2015                         
+                             194093.mp4'                                        
+                    INFO     Animation 48 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_4217992463_371                         
+                             4406896.mp4'                                       
+Animation 49: FadeOut(Title('SGD: With vs Without Weight Decay (L2)')), etc.:   0%|          | 0/15 [00:00<?, ?it/s]Animation 49: FadeOut(Title('SGD: With vs Without Weight Decay (L2)')), etc.:  20%|██        | 3/15 [00:00<00:00, 24.38it/s]Animation 49: FadeOut(Title('SGD: With vs Without Weight Decay (L2)')), etc.:  40%|████      | 6/15 [00:00<00:00, 24.21it/s]Animation 49: FadeOut(Title('SGD: With vs Without Weight Decay (L2)')), etc.:  60%|██████    | 9/15 [00:00<00:00, 23.89it/s]Animation 49: FadeOut(Title('SGD: With vs Without Weight Decay (L2)')), etc.:  80%|████████  | 12/15 [00:00<00:00, 23.87it/s]Animation 49: FadeOut(Title('SGD: With vs Without Weight Decay (L2)')), etc.: 100%|██████████| 15/15 [00:00<00:00, 23.49it/s]                                                                                                                             [05/14/26 14:40:10] INFO     Animation 49 : Partial     scene_file_writer.py:601
+                             movie file written in                              
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/par                         
+                             tial_movie_files/AutoScene                         
+                             /4072820271_3901992132_908                         
+                             08309.mp4'                                         
+                    INFO     Combining to Movie file.   scene_file_writer.py:753
+                    INFO                                scene_file_writer.py:904
+                             File ready at                                      
+                             '/home/nabin2004/Desktop/E                         
+                             dClaw/src/educlaw/automani                         
+                             m/new_automanim/workspace/                         
+                             workspace_episode_0016/med                         
+                             ia/videos/scene/480p15/Aut                         
+                             oScene.mp4'                                        
+                                                                                
+                    INFO     Rendered AutoScene                     scene.py:278
+                             Played 50 animations                               

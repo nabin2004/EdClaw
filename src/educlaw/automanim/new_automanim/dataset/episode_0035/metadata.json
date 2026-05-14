@@ -1,0 +1,12 @@
+{
+  "episode_id": "episode_0035",
+  "prompt": "Show how causal masking in a decoder prevents attending to future tokens with a masked attention matrix.",
+  "model": "moonshotai/kimi-k2.5",
+  "generated_code": "",
+  "narration_segments": [],
+  "tool_logs": [],
+  "status": "failure",
+  "render_duration_ms": 157,
+  "timestamp": "2026-05-14T10:09:07.964Z",
+  "error": "Validation failed: Required file missing: dataset/episode_0035/scene.py, Required file missing: dataset/episode_0035/video.mp4"
+}

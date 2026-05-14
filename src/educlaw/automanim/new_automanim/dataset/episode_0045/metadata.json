@@ -1,0 +1,12 @@
+{
+  "episode_id": "episode_0045",
+  "prompt": "Show the difference between pre-norm and post-norm transformer architectures with gradient flow arrows.",
+  "model": "moonshotai/kimi-k2.5",
+  "generated_code": "",
+  "narration_segments": [],
+  "tool_logs": [],
+  "status": "failure",
+  "render_duration_ms": 179,
+  "timestamp": "2026-05-14T10:09:09.561Z",
+  "error": "Validation failed: Required file missing: dataset/episode_0045/scene.py, Required file missing: dataset/episode_0045/video.mp4"
+}

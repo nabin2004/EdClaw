@@ -1,0 +1,12 @@
+{
+  "episode_id": "episode_0037",
+  "prompt": "Visualize KL divergence between two distributions shrinking as the model distribution approaches target.",
+  "model": "moonshotai/kimi-k2.5",
+  "generated_code": "",
+  "narration_segments": [],
+  "tool_logs": [],
+  "status": "failure",
+  "render_duration_ms": 162,
+  "timestamp": "2026-05-14T10:09:08.286Z",
+  "error": "Validation failed: Required file missing: dataset/episode_0037/scene.py, Required file missing: dataset/episode_0037/video.mp4"
+}

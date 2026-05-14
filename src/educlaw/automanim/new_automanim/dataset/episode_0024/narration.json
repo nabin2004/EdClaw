@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "text": "This is a loss surface for a simple quadratic function: the loss equals weight squared.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "We start at weight w zero equals three, and compute the gradient.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "With a normal learning rate of zero point one, gradient descent converges smoothly to the minimum.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "Now let's see what happens with an exploding gradient, using a learning rate of one point five, which is much larger than the critical value.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "The overshoot is catastrophic! The weights flip to the opposite side with even larger magnitude.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 6,
+    "text": "Each update drives the weights further away from the minimum, causing the system to diverge completely.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 7,
+    "text": "A large learning rate causes weights to explode, making training impossible.",
+    "voice": "default",
+    "speed": 1.0
+  }
+]

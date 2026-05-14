@@ -1,0 +1,12 @@
+{
+  "episode_id": "episode_0047",
+  "prompt": "Visualize gradient flow through a sigmoid bottleneck showing saturation killing gradients at extremes.",
+  "model": "moonshotai/kimi-k2.5",
+  "generated_code": "",
+  "narration_segments": [],
+  "tool_logs": [],
+  "status": "failure",
+  "render_duration_ms": 142,
+  "timestamp": "2026-05-14T10:09:09.858Z",
+  "error": "Validation failed: Required file missing: dataset/episode_0047/scene.py, Required file missing: dataset/episode_0047/video.mp4"
+}

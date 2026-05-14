@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "text": "The vanishing gradient problem is a critical challenge in deep neural networks. During backpropagation, gradients are multiplied by small weight derivatives as they flow backward through each layer.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "This compounding multiplication causes gradients to shrink exponentially with each backward step. The output layer receives strong gradients, while early layers receive gradients that are virtually zero.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "As the bar heights show, the gradient magnitude drops dramatically from the later layers to the first layer. This is why very deep networks with sigmoid or tanh activations struggle to learn.",
+    "voice": "default",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "The result? Early layers learn almost nothing, preventing the network from capturing low-level features effectively. Solutions include ReLU activations, residual connections, and careful weight initialization.",
+    "voice": "default",
+    "speed": 1.0
+  }
+]

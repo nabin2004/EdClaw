@@ -1,0 +1,12 @@
+{
+  "episode_id": "episode_0048",
+  "prompt": "Show how AdaGrad accumulates squared gradients causing learning rate to decay faster for frequent features.",
+  "model": "moonshotai/kimi-k2.5",
+  "generated_code": "",
+  "narration_segments": [],
+  "tool_logs": [],
+  "status": "failure",
+  "render_duration_ms": 147,
+  "timestamp": "2026-05-14T10:09:10.005Z",
+  "error": "Validation failed: Required file missing: dataset/episode_0048/scene.py, Required file missing: dataset/episode_0048/video.mp4"
+}

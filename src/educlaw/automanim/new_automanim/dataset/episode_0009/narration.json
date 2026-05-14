@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "text": "Backpropagation is the algorithm that computes gradients in neural networks. Let me show you how gradients flow backward from output to input.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "The network has three layers: input, hidden, and output. After the forward pass computes predictions, backpropagation begins from the output layer.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "At the output layer, we calculate delta values representing how much each output neuron contributes to the error. These deltas are shown in yellow.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "Gradients flow backward through the network, shown by red arrows. Each delta at a layer is computed by propagating deltas from the next layer backward through the weights.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "The delta values at the hidden layer accumulate gradients from all connected output neurons. This pattern continues layer by layer.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 6,
+    "text": "Finally, deltas reach the input layer. The chain rule tells us that the gradient with respect to any weight equals the delta of the target neuron multiplied by the activation from the previous layer.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 7,
+    "text": "This backward flow of deltas is what makes backpropagation so efficient for training deep neural networks.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "intro",
+    "text": "A convolutional filter slides over an image to extract features. Watch how the 3 by 3 red filter moves across the 5 by 5 blue input image.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.1
+  },
+  {
+    "id": "mechanics",
+    "text": "At each position, the filter computes a dot product: multiplying overlapping values and summing them up. The result goes into the green feature map.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.1
+  },
+  {
+    "id": "example",
+    "text": "When the filter is here, we multiply one by one, two by zero, three by zero, and continue through all nine overlapping cells, adding them together.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": "sliding",
+    "text": "The filter slides right, then down, systematically covering the entire image. Each output captures local patterns from its receptive field.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.1
+  },
+  {
+    "id": "conclusion",
+    "text": "Convolution transforms image data into feature representations, enabling neural networks to detect edges, textures, and complex patterns.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  }
+]

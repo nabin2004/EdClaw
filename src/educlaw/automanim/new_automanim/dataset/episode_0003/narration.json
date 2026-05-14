@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "text": "In this visualization, we'll compare three popular optimization algorithms used in training neural networks: SGD, Adam, and RMSProp.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "The elliptical contours represent a loss surface, with warmer colors indicating higher loss. The arrows show the gradient direction pointing toward the minimum at the center.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "All three optimizers start from the same position. Watch as they take different paths to reach the minimum.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "The red path represents SGD, or Stochastic Gradient Descent. Notice how it oscillates significantly and takes many steps to converge.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "The blue path shows Adam, which uses adaptive learning rates and momentum. It converges smoothly and fastest among the three.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 6,
+    "text": "The green path represents RMSProp, which adapts the learning rate per parameter. It converges faster than SGD but maintains stability.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 7,
+    "text": "Key observations: SGD is simple but slow with more oscillation. Adam offers the fastest, smoothest convergence. RMSProp provides a balanced approach with adaptive step sizes.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  },
+  {
+    "id": 8,
+    "text": "Understanding these differences helps you choose the right optimizer for your neural network training.",
+    "voice": "en-US-AriaNeural",
+    "speed": 1.0
+  }
+]

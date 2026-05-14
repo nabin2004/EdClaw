@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "text": "Attention mechanism. The core idea is to compute a weighted sum of values, where the weights depend on the similarity between a query and key vectors.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 2,
+    "text": "First, we compute dot products between the query vector and each key vector. These raw scores measure how relevant each key is to the query.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 3,
+    "text": "Next, we apply the softmax function to normalized these scores into attention weights that sum to one, creating a probability distribution.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 4,
+    "text": "Finally, each value vector is scaled by its corresponding attention weight, and we sum them together to produce the final attention output.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  },
+  {
+    "id": 5,
+    "text": "The output is a weighted combination of values, focusing most on the values whose keys matched the query best.",
+    "voice": "en-US-Standard-C",
+    "speed": 1.0
+  }
+]
