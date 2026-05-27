@@ -64,6 +64,12 @@ pi = [
 automanim = [
   "manim>=0.18.0",
 ]
+# Unsloth SFT locally (CUDA); see training/automanim/README.md — prefer ``uv run`` + PEP 723 scripts.
+automanim-training = [
+  "unsloth",
+  "jinja2>=3.1",
+  "wandb>=0.18",
+]
 tts-kitten = [
   "kittentts @ https://github.com/KittenML/KittenTTS/releases/download/0.8.1/kittentts-0.8.1-py3-none-any.whl",
   "soundfile>=0.12",
@@ -98,6 +104,10 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"training/automanim/automanim_sft/template.py" = ["E501"]
+
 
 [tool.mypy]
 python_version = "3.11"
