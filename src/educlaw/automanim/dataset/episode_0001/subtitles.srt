@@ -1,0 +1,28 @@
+1
+00:00:00,000 --> 00:00:07,891
+Stochastic Gradient Descent visualizes how neural networks learn by updating weights to minimize loss.
+
+2
+00:00:07,891 --> 00:00:15,950
+This bowl-shaped surface represents the loss function. Higher points mean larger prediction errors.
+
+3
+00:00:15,950 --> 00:00:23,308
+We start here with random weights. The gradient shows the direction of steepest increase.
+
+4
+00:00:23,308 --> 00:00:28,966
+Step one. We move opposite to the gradient, reducing the loss.
+
+5
+00:00:28,966 --> 00:00:36,466
+Step two. The learning rate controls step size. Too large and we overshoot.
+
+6
+00:00:36,466 --> 00:00:42,849
+Each step follows the local gradient. The path zigzags toward the minimum.
+
+7
+00:00:42,849 --> 00:00:50,608
+We converge to the minimum loss where gradients approach zero. The weights are now optimal.
+

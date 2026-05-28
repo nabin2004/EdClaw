@@ -1,0 +1,7 @@
+{
+  "valid": true,
+  "errors": [],
+  "warnings": [
+    "Optional file missing: dataset-test/episode_0002/metadata.json"
+  ]
+}

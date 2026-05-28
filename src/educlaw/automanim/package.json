@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
+    "predev": "node scripts/check-node.mjs",
+    "pregenerate": "node scripts/check-node.mjs",
     "dev": "tsx src/index.ts",
     "generate": "tsx src/generate.ts",
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -57,10 +57,12 @@ saveSubtitles(timeline);
 ```
 
 ### 4. FFmpeg Merge
-Finally, use FFmpeg to combine your Manim video with the generated audio.
+After TTS, the pipeline probes each segment WAV, rebuilds subtitle timings, and pads the Manim video (last-frame hold) when it is shorter than `audio.wav`, then muxes:
 
 ```bash
-ffmpeg -i video.mp4 -i audio.wav -c:v copy -c:a aac -shortest final.mp4
+# Pad when video < audio (handled automatically in postprocess)
+ffmpeg -i video.mp4 -vf "tpad=stop_mode=clone:stop_duration=PAD" -an padded.mp4
+ffmpeg -i padded.mp4 -i audio.wav -map 0:v -map 1:a -c:v copy -c:a aac -shortest final.mp4
 ```
 
 ---
@@ -135,4 +137,4 @@ Now you can specify your new engine's name or its supported voices in your `Narr
 
 ## ⚠️ Important Notes
 - **Paths**: The system defaults to saving artifacts in the `./workspace` directory.
-- **Timing Drift**: The current duration estimation is a heuristic (2.5 words/sec). For perfect sync, consider providing a `durationHint` if you know the exact length of an audio clip.
+- **Timing**: Subtitle times use measured TTS segment lengths after synthesis (`durationHint` is written back to `narration.json`). Manim scenes may still be shorter than narration; post-processing pads the video to match audio before mux.

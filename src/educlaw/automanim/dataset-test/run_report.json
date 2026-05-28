@@ -1,0 +1,16 @@
+{
+  "total_episodes": 2,
+  "success_count": 2,
+  "failure_count": 0,
+  "average_duration_ms": 56913.5,
+  "episodes": [
+    {
+      "id": "episode_0001",
+      "status": "success"
+    },
+    {
+      "id": "episode_0002",
+      "status": "success"
+    }
+  ]
+}

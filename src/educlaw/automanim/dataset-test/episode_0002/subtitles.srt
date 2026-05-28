@@ -1,0 +1,24 @@
+1
+00:00:00,000 --> 00:00:08,000
+Momentum in Stochastic Gradient Descent. Let's visualize how velocity accumulates as a ball rolls down a curved loss landscape.
+
+2
+00:00:08,000 --> 00:00:18,105
+Here we see the loss landscape. The curve represents how the loss changes with different parameter values. Our goal is to find the minimum.
+
+3
+00:00:18,105 --> 00:00:25,684
+The gradient points in the direction of steepest ascent. We follow the negative gradient to minimize the loss.
+
+4
+00:00:25,684 --> 00:00:34,526
+With momentum, we accumulate velocity over time. The ball picks up speed as it rolls and carries momentum through the valley.
+
+5
+00:00:34,526 --> 00:00:41,684
+Notice how the ball overshoots the minimum and oscillates, gradually settling due to the momentum coefficient damping.
+
+6
+00:00:41,684 --> 00:00:49,684
+Momentum helps accelerate convergence and can help escape local minima. The accumulated velocity carries us faster toward the optimum.
+

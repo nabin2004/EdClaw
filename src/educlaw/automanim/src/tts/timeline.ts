@@ -31,7 +31,8 @@ export function buildTimeline(script: NarrationScript): TimedSegment[] {
 export async function generateAudio(
   tts: TTSRegistry,
   script: NarrationScript,
-  timeline: TimedSegment[]
+  timeline: TimedSegment[],
+  workspaceDir?: string
 ) {
   const provider = tts.get("kitten");
 
@@ -41,15 +42,29 @@ export async function generateAudio(
 
     if (!seg || !t) continue;
 
+    const outputPath =
+      workspaceDir && !path.isAbsolute(t.audioPath)
+        ? path.join(workspaceDir, path.basename(t.audioPath))
+        : path.isAbsolute(t.audioPath)
+          ? t.audioPath
+          : path.resolve(t.audioPath);
+
+    let result;
     if (provider.synthesizeSegment) {
-      await provider.synthesizeSegment(seg, t.audioPath);
+      result = await provider.synthesizeSegment(seg, outputPath);
     } else {
-      await provider.synthesize({
+      result = await provider.synthesize({
         text: seg.text,
         voice: seg.voice,
         speed: seg.speed,
-        outputPath: t.audioPath,
+        outputPath,
       });
+    }
+
+    if (!result.success) {
+      throw new Error(
+        `TTS failed for segment "${seg.id}": ${result.error ?? "unknown error"}`
+      );
     }
   }
 }

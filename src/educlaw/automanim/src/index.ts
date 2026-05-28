@@ -38,7 +38,7 @@ async function main() {
     modelRegistry,
     model,
     thinkingLevel: "medium",
-    tools: ["read", "write", "edit", "safe_bash"],
+    tools: ["read", "write", "edit", "safe_bash", "generate_tts"],
     customTools: createTools(WORKSPACE_DIR),
   });
 
@@ -106,13 +106,8 @@ If rendering fails:
 - rerun the render
 
 After rendering scene.py:
-1. Extract narration into a NarrationScript with NarrationSegments (id, text, voice, speed).
-2. Use timeline builder to map segments to a TimedSegment timeline.
-3. Generate segmented audio for each segment in the timeline using Kitten TTS.
-4. Merge segment audios into a single audio.wav if needed, or process them individually.
-5. Generate and save subtitles.srt using the timeline.
-6. Use ffmpeg to merge video and audio:
-   ffmpeg -i video.mp4 -i audio.wav -c:v copy -c:a aac -shortest final.mp4
+1. Write narration.json as { "segments": [ { "id", "text", "voice": "Jasper", "speed": 1.0 } ] }.
+2. Do not generate audio.wav or silent placeholder audio; post-processing handles TTS.
 `;
 
     await session.prompt(prompt);

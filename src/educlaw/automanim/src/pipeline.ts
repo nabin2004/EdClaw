@@ -12,6 +12,10 @@ import { retryWithBackoff } from "./utils/retry.js";
 import { withTimeout, TimeoutError } from "./utils/timeout.js";
 import { validateEpisodeOutputs } from "./utils/validation.js";
 import { CircuitBreaker, CircuitState } from "./utils/circuitBreaker.js";
+import {
+  loadNarrationScript,
+  postprocessEpisodeAudio,
+} from "./audio/postprocess.js";
 
 export interface EpisodeMetadata {
   episode_id: string;
@@ -80,7 +84,7 @@ export async function generateEpisode(
     modelRegistry,
     model,
     thinkingLevel: "medium",
-    tools: ["read", "write", "edit", "safe_bash"],
+    tools: ["read", "write", "edit", "safe_bash", "generate_tts"],
     customTools: createTools(workspaceDir),
   });
 
@@ -106,9 +110,9 @@ Requirements:
 - Use modern Manim CE APIs only
 - Keep animation under 30 seconds
 - Render using: manim -pql scene.py AutoScene
-- Extract narration into narration.json (array of {id, text, voice, speed})
-- Generate audio.wav using the generate_tts tool (you can generate it for the entire narration or per segment and merge using ffmpeg)
-- Finally, produce final.mp4 (merged video and audio using ffmpeg: ffmpeg -i video.mp4 -i audio.wav -c:v copy -c:a aac -shortest final.mp4)
+- Extract narration into narration.json as a JSON object: { "segments": [ { "id": "intro", "text": "...", "voice": "Jasper", "speed": 1.0 } ] }
+- Do NOT generate audio.wav yourself; the pipeline synthesizes narration after you finish.
+- Render the scene and leave the Manim output as video.mp4 (or under media/videos/.../AutoScene.mp4). Do not use ffmpeg silence or placeholder audio.
 
 If rendering fails:
 - analyze the error
@@ -117,8 +121,8 @@ If rendering fails:
 
 Output Files Expected in workspace:
 - scene.py
-- narration.json
-- final.mp4
+- narration.json (with "segments" array)
+- video from Manim render (no silent audio hacks)
 `;
 
   let status: "success" | "failure" = "failure";
@@ -158,6 +162,25 @@ Output Files Expected in workspace:
     };
 
     await executeWithRetry();
+
+    if (!fs.existsSync(path.join(workspaceDir, "narration.json"))) {
+      throw new Error("Agent did not produce narration.json");
+    }
+
+    const script = loadNarrationScript(
+      path.join(workspaceDir, "narration.json")
+    );
+    if (script) {
+      fs.writeFileSync(
+        path.join(workspaceDir, "narration.json"),
+        JSON.stringify(script, null, 2)
+      );
+    }
+
+    console.log(`[${episodeId}] Synthesizing narration audio (Kitten TTS)...`);
+    await postprocessEpisodeAudio(workspaceDir);
+    console.log(`[${episodeId}] Audio synthesis complete`);
+
     status = "success";
   } catch (err: any) {
     status = "failure";
@@ -213,7 +236,7 @@ Output Files Expected in workspace:
   }
 
   // Validate outputs
-  const validationResult = validateEpisodeOutputs(episodeDir);
+  const validationResult = await validateEpisodeOutputs(episodeDir);
   if (!validationResult.valid) {
     console.warn(`[${episodeId}] Validation failed:`, validationResult.errors);
     if (status === "success") {

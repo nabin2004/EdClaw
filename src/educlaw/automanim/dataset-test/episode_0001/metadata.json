@@ -9,55 +9,48 @@
         "id": "intro",
         "text": "Stochastic Gradient Descent visualizes how neural networks learn by updating weights to minimize loss.",
         "voice": "Jasper",
-        "speed": 1,
-        "durationHint": 7.891667
+        "speed": 1
       },
       {
         "id": "surface",
         "text": "This bowl-shaped surface represents the loss function. Higher points mean larger prediction errors.",
         "voice": "Jasper",
-        "speed": 1,
-        "durationHint": 8.058333
+        "speed": 1
       },
       {
         "id": "sgd_start",
         "text": "We start here with random weights. The gradient shows the direction of steepest increase.",
         "voice": "Jasper",
-        "speed": 1,
-        "durationHint": 7.358332999999998
+        "speed": 1
       },
       {
         "id": "step1",
         "text": "Step one. We move opposite to the gradient, reducing the loss.",
         "voice": "Jasper",
-        "speed": 1,
-        "durationHint": 5.658332999999999
+        "speed": 1
       },
       {
         "id": "step2",
         "text": "Step two. The learning rate controls step size. Too large and we overshoot.",
         "voice": "Jasper",
-        "speed": 1,
-        "durationHint": 7.5
+        "speed": 1
       },
       {
         "id": "path",
         "text": "Each step follows the local gradient. The path zigzags toward the minimum.",
         "voice": "Jasper",
-        "speed": 1,
-        "durationHint": 6.383333
+        "speed": 1
       },
       {
         "id": "convergence",
         "text": "We converge to the minimum loss where gradients approach zero. The weights are now optimal.",
         "voice": "Jasper",
-        "speed": 1,
-        "durationHint": 7.758333
+        "speed": 1
       }
     ]
   },
   "tool_logs": [],
   "status": "success",
-  "render_duration_ms": 60740,
-  "timestamp": "2026-05-28T04:49:22.673Z"
+  "render_duration_ms": 55440,
+  "timestamp": "2026-05-28T04:32:24.246Z"
 }
