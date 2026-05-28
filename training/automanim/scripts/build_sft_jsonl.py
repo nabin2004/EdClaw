@@ -11,8 +11,8 @@ Emit Gemma-4-style JSONL ({\"text\": ...}) from AutoManim episode metadata.
 Run from repo root or from ``training/automanim``::
 
   uv run training/automanim/scripts/build_sft_jsonl.py \\
-    --dataset-dir src/educlaw/automanim/new_automanim/dataset \\
-    --output src/educlaw/automanim/new_automanim/sft_dataset.jsonl
+    --dataset-dir src/educlaw/automanim/dataset \\
+    --output src/educlaw/automanim/sft_dataset.jsonl
 """
 
 from __future__ import annotations

@@ -2,7 +2,7 @@
 
 How to set up a dev environment, run the gateway, run checks, and use profiles. For architecture and subsystem mapping, see [EduClaw_Concepts_Explained.md](EduClaw_Concepts_Explained.md). For learner graph memory (PyPI `dagestan`), see [DAGESTAN.md](DAGESTAN.md). For multi-lecture generation over WebSocket, see [AUTOCOURSE.md](AUTOCOURSE.md). For optional speech synthesis, see [TTS.md](TTS.md). For course site generation and the catalog, see [SITE_GENERATION.md](SITE_GENERATION.md). For future work, see [ROADMAP.md](ROADMAP.md).
 
-For **ManiBench / Manim CE** fine-tuning: step-by-step runbook (every command), see [MANIBENCH_RUNBOOK.md](MANIBENCH_RUNBOOK.md). Package overview and stage summary: [training/manibench/README.md](../training/manibench/README.md). Hugging Face Jobs: [training/manibench/SUBMIT_HF_JOBS.md](../training/manibench/SUBMIT_HF_JOBS.md). For the **gateway Manim tool** (not yet fully wired), see the implementation spec [MANIM_PIPELINE.md](MANIM_PIPELINE.md).
+For **ManiBench / Manim CE** fine-tuning: step-by-step runbook (every command), see [MANIBENCH_RUNBOOK.md](MANIBENCH_RUNBOOK.md). Package overview and stage summary: [training/manibench/README.md](../training/manibench/README.md). Hugging Face Jobs: [training/manibench/SUBMIT_HF_JOBS.md](../training/manibench/SUBMIT_HF_JOBS.md). For **AutoManim Gemma-4 SFT** (Unsloth Core + Studio UI): [training/automanim/README.md](../training/automanim/README.md). For the **gateway Manim tool** (not yet fully wired), see the implementation spec [MANIM_PIPELINE.md](MANIM_PIPELINE.md).
 
 ## Prerequisites
 
@@ -112,6 +112,9 @@ Use the bundled [static client](../src/educlaw/gateway/static/index.html) at `GE
 | `educlaw site generate <series-dir>` | Generate Jekyll course site from autocourse output (see [SITE_GENERATION.md](SITE_GENERATION.md)) |
 | `educlaw site catalog` | Re-render course catalog landing page |
 | `educlaw site list` | List all registered courses |
+| `educlaw train dataset automanim` | Build AutoManim SFT JSONL (see [training/automanim/README.md](../training/automanim/README.md)) |
+| `educlaw train sft automanim` | LoRA SFT with Unsloth Core (CUDA) |
+| `educlaw train studio` | Launch Unsloth Studio local training UI |
 | `scripts/run_full_course_pipeline.sh "…" --lectures N` | One-shot: autocourse + optional AutoManim + TTS to `content/ir/series/…` (see [AUTOCOURSE.md](AUTOCOURSE.md)) |
 
 ## Configuration

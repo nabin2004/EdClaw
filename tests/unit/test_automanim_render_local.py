@@ -55,7 +55,7 @@ def test_docker_render_sync_writes_workspace(
         mp.write_bytes(b"fake")
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
-    monkeypatch.setattr("educlaw.automanim.render.subprocess.run", fake_run)
+    monkeypatch.setattr("educlaw.automanim.adk.render.subprocess.run", fake_run)
     s = Settings(data_dir=tmp_path, automanim_backend="docker", automanim_docker_user="none")
     dest = tmp_path / "lec" / "01-a" / "scene.mp4"
     art = _docker_render_sync(
@@ -90,7 +90,7 @@ def test_docker_render_sync_includes_user_when_auto(
         mp.write_bytes(b"x")
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
-    monkeypatch.setattr("educlaw.automanim.render.subprocess.run", fake_run)
+    monkeypatch.setattr("educlaw.automanim.adk.render.subprocess.run", fake_run)
     s = Settings(data_dir=tmp_path, automanim_backend="docker", automanim_docker_user="auto")
     dest = tmp_path / "s" / "scene.mp4"
     art = _docker_render_sync(
@@ -115,7 +115,7 @@ async def test_local_render_invokes_render_to_mp4(
         dest_mp4.write_bytes(b"x")
         return True, ""
 
-    monkeypatch.setattr("educlaw.automanim.render.render_to_mp4", fake_render_to_mp4)
+    monkeypatch.setattr("educlaw.automanim.adk.render.render_to_mp4", fake_render_to_mp4)
 
     s = Settings(data_dir=tmp_path)
     backend = LocalRenderBackend(s)
@@ -145,7 +145,7 @@ async def test_docker_render_builds_command(
         _ = settings, code
         return RenderArtifact(artifact_path=str(dest_mp4), scene_name=scene, exit_code=0)
 
-    monkeypatch.setattr("educlaw.automanim.render._docker_render_sync", fake_sync)
+    monkeypatch.setattr("educlaw.automanim.adk.render._docker_render_sync", fake_sync)
     s = Settings(data_dir=tmp_path, automanim_backend="docker")
     backend = DockerRenderBackend(s)
     art = await backend.render_scene(

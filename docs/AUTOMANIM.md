@@ -2,6 +2,16 @@
 
 **AutoManim** turns lecture Markdown (plus IR-shaped YAML frontmatter) into **Manim Community Edition** scenes and **MP4** artifacts. It is built from **Google ADK** `LlmAgent` instances (planner + codegen) plus a deterministic **render** step (local `manim` subprocess or **Docker** one-shot). A **static critic** loop rewrites bad codegen before render; an optional **LLM critic** adds a second Ollama pass.
 
+## Package layout (`src/educlaw/automanim/`)
+
+| Area | Path | Role |
+|------|------|------|
+| **Production render** | [`adk/`](../../src/educlaw/automanim/adk/) | Ollama ADK planner/codegen/critic + `run_automanim` (CLI, gateway WS, autocourse) |
+| **Dataset factory** | [`src/`](../../src/educlaw/automanim/src/) (TypeScript) | pi-coding-agent episode generator (`npm run generate`) |
+| **Training data** | [`dataset/`](../../src/educlaw/automanim/dataset/), [`sft_dataset.jsonl`](../../src/educlaw/automanim/sft_dataset.jsonl) | Bundled teacher traces; build JSONL with `educlaw train dataset automanim` |
+
+Run TypeScript tools from `src/educlaw/automanim/` (`npm install`, then `npm run dev` or `npm run generate`). See [training/automanim/README.md](../training/automanim/README.md) for SFT.
+
 ## Architecture
 
 1. **Shield** — classifies lecture text once (`ALLOW` / `BLOCK`), same policy as chat/autocourse.

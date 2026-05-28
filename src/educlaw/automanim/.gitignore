@@ -1,0 +1,4 @@
+node_modules/
+workspace/
+**/media/videos/
+**/__pycache__/

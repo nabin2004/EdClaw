@@ -46,7 +46,7 @@ def parse_args():
     parser.add_argument(
         "--train-jsonl",
         type=Path,
-        required=True,
+        default=None,
         help='Training JSONL where each row is {"text": "…"}',
     )
     parser.add_argument(
@@ -129,6 +129,12 @@ def parse_args():
         help="HF repo id to push adapters (requires HF_TOKEN)",
     )
     parser.add_argument("--logging-steps", type=int, default=1)
+    parser.add_argument(
+        "--export-studio-config",
+        type=Path,
+        default=None,
+        help="Write Unsloth Studio YAML matching these args and exit (no training)",
+    )
     return parser.parse_args()
 
 
@@ -138,8 +144,26 @@ def _hub_token(tok_env: str) -> str | None:
     return cleaned or None
 
 
+def _export_studio_config(args) -> None:
+    here = Path(__file__).resolve().parent
+    studio_dir = here.parent / "studio"
+    sys.path.insert(0, str(studio_dir))
+    from export_config import params_from_train_args, write_studio_config  # noqa: WPS433
+
+    params = params_from_train_args(args)
+    out = write_studio_config(args.export_studio_config, params)
+    print("Wrote Studio config to", out.resolve(), flush=True)
+
+
 def main() -> None:
     args = parse_args()
+    if args.export_studio_config is not None:
+        _export_studio_config(args)
+        return
+
+    if args.train_jsonl is None:
+        raise SystemExit("--train-jsonl is required for training")
+
     check_cuda_or_exit()
 
     token = _hub_token(args.hf_token_env)

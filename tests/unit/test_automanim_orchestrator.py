@@ -31,9 +31,9 @@ async def test_run_automanim_smoke(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
             dest_mp4.write_bytes(b"")
             return RenderArtifact(artifact_path=str(dest_mp4), scene_name="CScene", exit_code=0)
 
-    monkeypatch.setattr("educlaw.automanim.orchestrator.run_llm_agent_once", fake_llm)
-    monkeypatch.setattr("educlaw.automanim.orchestrator.build_render_backend", lambda _s: _FB())
-    monkeypatch.setattr("educlaw.automanim.orchestrator.manim_available", lambda: True)
+    monkeypatch.setattr("educlaw.automanim.adk.orchestrator.run_llm_agent_once", fake_llm)
+    monkeypatch.setattr("educlaw.automanim.adk.orchestrator.build_render_backend", lambda _s: _FB())
+    monkeypatch.setattr("educlaw.automanim.adk.orchestrator.manim_available", lambda: True)
 
     shield = Shield(AsyncMock(), model="shield")
     shield.classify = AsyncMock(return_value=Verdict.ALLOW)
@@ -91,9 +91,9 @@ async def test_run_automanim_render_subprocess_failure_emits_error(
                 stderr_tail="manim: not found",
             )
 
-    monkeypatch.setattr("educlaw.automanim.orchestrator.run_llm_agent_once", fake_llm)
-    monkeypatch.setattr("educlaw.automanim.orchestrator.build_render_backend", lambda _s: _FB())
-    monkeypatch.setattr("educlaw.automanim.orchestrator.manim_available", lambda: True)
+    monkeypatch.setattr("educlaw.automanim.adk.orchestrator.run_llm_agent_once", fake_llm)
+    monkeypatch.setattr("educlaw.automanim.adk.orchestrator.build_render_backend", lambda _s: _FB())
+    monkeypatch.setattr("educlaw.automanim.adk.orchestrator.manim_available", lambda: True)
 
     shield = Shield(AsyncMock(), model="shield")
     shield.classify = AsyncMock(return_value=Verdict.ALLOW)
@@ -128,8 +128,8 @@ async def test_run_automanim_local_aborts_when_manim_missing(
         called.append(getattr(agent, "name", ""))
         return "{}"
 
-    monkeypatch.setattr("educlaw.automanim.orchestrator.run_llm_agent_once", boom_llm)
-    monkeypatch.setattr("educlaw.automanim.orchestrator.manim_available", lambda: False)
+    monkeypatch.setattr("educlaw.automanim.adk.orchestrator.run_llm_agent_once", boom_llm)
+    monkeypatch.setattr("educlaw.automanim.adk.orchestrator.manim_available", lambda: False)
 
     shield = Shield(AsyncMock(), model="shield")
     shield.classify = AsyncMock(return_value=Verdict.ALLOW)

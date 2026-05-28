@@ -1,0 +1,37 @@
+model:
+  name: google/gemma-4-E2B-it
+  method: qlora
+  load_in_4bit: true
+  max_seq_length: 8192
+  trust_remote_code: false
+dataset:
+  format_type: auto
+  text_field: text
+  eval_split: 0.1
+  train_on_completions: true
+  instruction_part: "<|turn>user\n"
+  response_part: "<|turn>model\n"
+training:
+  max_steps: 0
+  num_train_epochs: 5
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 4
+  learning_rate: 0.0002
+  warmup_steps: 5
+  weight_decay: 0.001
+  optim: adamw_8bit
+  lr_scheduler_type: linear
+  seed: 3407
+  gradient_checkpointing: unsloth
+  save_steps: 50
+lora:
+  r: 8
+  lora_alpha: 8
+  lora_dropout: 0
+  finetune_vision_layers: false
+  finetune_language_layers: true
+  finetune_attention_modules: true
+  finetune_mlp_modules: true
+logging:
+  report_to: none
+  logging_steps: 1

@@ -18,7 +18,7 @@ For human-oriented setup (venv, Ollama, `educlaw serve`, troubleshooting), see [
 - Shield: classify input in `before_model_callback`, output in `after_model_callback`; audit hashes only. The WebSocket **autocourse** and **tts** paths also run `Shield.classify` on the user string before Ollama / TTS.
 - Sandbox: default `NullSandbox` for dev; use `DockerSandbox` when `educlaw/runner:latest` exists.
 - IR: Markdown + YAML frontmatter under `content/ir` or `~/.educlaw/ir`; run `educlaw ir lint`.
-- **Autocourse** (`autocourse/`, `autolecture/`), **AutoManim** (`automanim/` — ADK `LlmAgent` + `educlaw.viz` render), and **TTS** (`tts/`) are Ollama- or backend-driven outside the main ADK tutor `Runner`, but share settings and the gateway.
+- **Autocourse** (`autocourse/`, `autolecture/`), **AutoManim** (`automanim/` — `adk/` Ollama render + pi-coding-agent dataset factory under the same package), and **TTS** (`tts/`) are Ollama- or backend-driven outside the main ADK tutor `Runner`, but share settings and the gateway.
 
 ## Commands
 

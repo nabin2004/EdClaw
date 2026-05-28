@@ -276,6 +276,10 @@ def automanim_cmd(
 site_typer = typer.Typer(help="Course site generation and catalog (see docs/SITE_GENERATION.md).")
 app.add_typer(site_typer, name="site")
 
+from educlaw.train.cli import train_typer  # noqa: E402
+
+app.add_typer(train_typer, name="train")
+
 
 @site_typer.command("generate")
 def site_generate(
