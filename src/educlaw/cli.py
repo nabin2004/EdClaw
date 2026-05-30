@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import subprocess
+import sys
 from pathlib import Path
 from typing import Annotated, Any, cast
 
@@ -20,6 +21,40 @@ from educlaw.tts.contract import TTSRequest
 from educlaw.tts.registry import build_backend, known_backends
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
+
+
+def _intro_logo_path() -> Path:
+    return Path(__file__).resolve().parents[2] / "assets" / "ascii-logo.txt"
+
+
+def _load_intro_logo() -> str:
+    return _intro_logo_path().read_text(encoding="utf-8").rstrip()
+
+
+def _play_intro(stream: Any | None = None) -> bool:
+    output = stream or sys.stdout
+    if not hasattr(output, "isatty") or not output.isatty():
+        return False
+
+    logo = _load_intro_logo()
+    if not logo.strip():
+        return False
+
+    try:
+        from terminaltexteffects.effects.effect_print import Print
+    except ImportError:
+        typer.echo(logo)
+        return True
+
+    try:
+        effect = Print(logo)
+        with effect.terminal_output() as terminal:
+            for frame in effect:
+                terminal.print(frame)
+    except Exception:
+        typer.echo(logo)
+
+    return True
 
 
 @app.command()
@@ -83,6 +118,152 @@ def doctor_cmd(
 
 tts_typer = typer.Typer(help="Text-to-speech (offline backends; see docs/TTS.md).")
 app.add_typer(tts_typer, name="tts")
+
+autocourse_typer = typer.Typer(help="Autocourse specific commands.")
+app.add_typer(autocourse_typer, name="autocourse")
+
+
+@autocourse_typer.command("plan")
+def autocourse_plan(
+    prompt: Annotated[
+        str | None,
+        typer.Option("--prompt", "-p", help="Prompt to plan the course"),
+    ] = None,
+) -> None:
+    """Plan a full course curriculum interactively or via prompt option."""
+    if not prompt:
+        prompt = typer.prompt(
+            typer.style("Enter course curriculum prompt", fg=typer.colors.CYAN, bold=True)
+        )
+    
+    typer.echo(f"Planning course curriculum with prompt: '{prompt}'...")
+    # placeholder logic
+    typer.secho(
+        "✓ Course plan generated successfully (placeholder)!",
+        fg=typer.colors.GREEN,
+        bold=True,
+    )
+
+
+@autocourse_typer.command("generate")
+def autocourse_generate(
+    prompt: Annotated[
+        str | None,
+        typer.Option("--prompt", "-p", help="Prompt to generate the course content"),
+    ] = None,
+) -> None:
+    """Generate a complete course including lectures and materials."""
+    if not prompt:
+        prompt = typer.prompt(
+            typer.style("Enter course generation prompt", fg=typer.colors.CYAN, bold=True)
+        )
+    
+    typer.echo(f"Generating full course with prompt: '{prompt}'...")
+    # placeholder logic
+    typer.secho(
+        "✓ Course generated successfully (placeholder)!",
+        fg=typer.colors.GREEN,
+        bold=True,
+    )
+
+
+autolecture_typer = typer.Typer(help="Autolecture specific commands.")
+app.add_typer(autolecture_typer, name="autolecture")
+
+
+@autolecture_typer.command("plan")
+def autolecture_plan(
+    prompt: Annotated[
+        str | None,
+        typer.Option("--prompt", "-p", help="Prompt to plan the lecture"),
+    ] = None,
+) -> None:
+    """Plan a single lecture outline interactively."""
+    if not prompt:
+        prompt = typer.prompt(
+            typer.style("Enter lecture planning prompt", fg=typer.colors.CYAN, bold=True)
+        )
+    
+    typer.echo(f"Planning lecture outline with prompt: '{prompt}'...")
+    # placeholder logic
+    typer.secho(
+        "✓ Lecture outline planned successfully (placeholder)!",
+        fg=typer.colors.GREEN,
+        bold=True,
+    )
+
+
+@autolecture_typer.command("generate")
+def autolecture_generate(
+    prompt: Annotated[
+        str | None,
+        typer.Option("--prompt", "-p", help="Prompt to generate the lecture content"),
+    ] = None,
+) -> None:
+    """Generate a single complete lecture in Markdown."""
+    if not prompt:
+        prompt = typer.prompt(
+            typer.style("Enter lecture content prompt", fg=typer.colors.CYAN, bold=True)
+        )
+    
+    typer.echo(f"Generating lecture content with prompt: '{prompt}'...")
+    # placeholder logic
+    typer.secho(
+        "✓ Lecture generated successfully (placeholder)!",
+        fg=typer.colors.GREEN,
+        bold=True,
+    )
+
+
+automanim_typer = typer.Typer(help="AutoManim animation and rendering specific commands.")
+app.add_typer(automanim_typer, name="automanim")
+
+
+@automanim_typer.command("plan")
+def automanim_plan(
+    prompt: Annotated[
+        str | None,
+        typer.Option(
+            "--prompt", "-p", help="Prompt to plan the visual animation scenes"
+        ),
+    ] = None,
+) -> None:
+    """Plan a Manim animation's visual intent and scene breakdown."""
+    if not prompt:
+        prompt = typer.prompt(
+            typer.style("Enter visual planning prompt", fg=typer.colors.CYAN, bold=True)
+        )
+    
+    typer.echo(f"Planning Manim scenes with prompt: '{prompt}'...")
+    # placeholder logic
+    typer.secho(
+        "✓ Manim scene plan generated successfully (placeholder)!",
+        fg=typer.colors.GREEN,
+        bold=True,
+    )
+
+
+@automanim_typer.command("render")
+def automanim_render(
+    prompt: Annotated[
+        str | None,
+        typer.Option("--prompt", "-p", help="Prompt to render Manim video"),
+    ] = None,
+) -> None:
+    """Render a Manim scene video using a prompt."""
+    if not prompt:
+        prompt = typer.prompt(
+            typer.style("Enter rendering prompt", fg=typer.colors.CYAN, bold=True)
+        )
+    
+    typer.echo(f"Rendering Manim scenes with prompt: '{prompt}'...")
+    # placeholder logic
+    typer.secho(
+        "✓ Manim scenes rendered successfully (placeholder)!",
+        fg=typer.colors.GREEN,
+        bold=True,
+    )
+
 
 
 @tts_typer.command("list")
@@ -154,6 +335,41 @@ def tts_say(
     typer.secho(f"Wrote {out.expanduser()}", fg=typer.colors.GREEN)
 
 
+@tts_typer.command("speak")
+def tts_speak(
+    text: Annotated[
+        str | None, typer.Option("--text", "-t", help="Text to speak")
+    ] = None,
+) -> None:
+    """Interactively speak text via TTS."""
+    if not text:
+        text = typer.prompt(
+            typer.style("Enter text to speak", fg=typer.colors.CYAN, bold=True)
+        )
+    
+    typer.echo(f"Synthesizing and speaking text: '{text}'...")
+    # placeholder logic
+    typer.secho(
+        "✓ Speech synthesized successfully (placeholder)!",
+        fg=typer.colors.GREEN,
+        bold=True,
+    )
+
+
+@tts_typer.command("status")
+def tts_status() -> None:
+    """Check TTS backend active status and configuration options."""
+    s = load_settings()
+    typer.echo(f"TTS Enabled: {s.tts_enabled}")
+    typer.echo(f"Default Voice: {s.tts_voice}")
+    typer.echo(f"Sample Rate: {s.tts_sample_rate}")
+    typer.secho(
+        "✓ TTS system check completed (placeholder)!",
+        fg=typer.colors.GREEN,
+        bold=True,
+    )
+
+
 ir_typer = typer.Typer(help="IR maintenance commands.")
 app.add_typer(ir_typer, name="ir")
 
@@ -202,7 +418,7 @@ def ir_index(
     typer.echo(f"Indexed {n} IR nodes into {out_p}")
 
 
-@app.command("automanim")
+@automanim_typer.command("run")
 def automanim_cmd(
     series_dir: Annotated[
         Path,
@@ -344,6 +560,9 @@ def pull_models() -> None:
 
 
 def main() -> None:
+    is_tty = getattr(sys.stdout, "isatty", lambda: False)()
+    if not sys.argv[1:] and is_tty and _play_intro(sys.stdout):
+        typer.echo()
     app()
 
 

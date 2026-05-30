@@ -1501,6 +1501,7 @@ dependencies = [
     { name = "python-frontmatter" },
     { name = "rich" },
     { name = "ruamel-yaml" },
+    { name = "soundfile" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "structlog" },
     { name = "typer", version = "0.23.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15'" },
@@ -1515,6 +1516,7 @@ automanim = [
 ]
 automanim-training = [
     { name = "jinja2" },
+    { name = "pyyaml" },
     { name = "unsloth" },
     { name = "wandb", version = "0.26.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15'" },
     { name = "wandb", version = "0.27.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15'" },
@@ -1594,9 +1596,11 @@ requires-dist = [
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24" },
     { name = "python-frontmatter", specifier = ">=1.1" },
     { name = "python-telegram-bot", marker = "extra == 'channels'", specifier = ">=21.6" },
+    { name = "pyyaml", marker = "extra == 'automanim-training'", specifier = ">=6" },
     { name = "rich", specifier = ">=13.9" },
     { name = "ruamel-yaml", specifier = ">=0.18" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8" },
+    { name = "soundfile" },
     { name = "soundfile", marker = "extra == 'tts-kitten'", specifier = ">=0.12" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0" },
     { name = "sqlite-vec", marker = "extra == 'sqlite-vec'", specifier = ">=0.1.6" },

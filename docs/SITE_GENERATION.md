@@ -14,6 +14,8 @@ python scripts/run_full_course_pipeline.py "Linear Algebra" --lectures 4 --gener
 
 The generated site lands under `sites/<course-slug>/` and the course is registered in `sites/courses.yml`. A catalog landing page is rendered at `sites/index.html`.
 
+Important: `educlaw site generate` only scaffolds and registers the site. It does not install Ruby gems or start Jekyll for you.
+
 ## How it works
 
 ```
@@ -31,7 +33,7 @@ lecture-02-*.md   ─────┤  generate       ├── _config.yml     (
                                          └── ...
 ```
 
-1. **Read plan** — Parses `course-plan.json` for `title`, `audience`, `lecture_count`.
+1. **Read plan** — Parses `course-plan.json` for `title`, `audience`, and `lecture_count`.
 2. **Copier scaffold** — Renders `templates/course_site/` with course-specific values into `sites/<slug>/`.
 3. **Lecture conversion** — Transforms IR lecture markdown (frontmatter: `id`, `title`, `objective`, etc.) into Jekyll lecture format (`type: lecture`, `date`, `title`, `tldr`).
 4. **Registry** — Adds the course to `sites/courses.yml`.
@@ -45,6 +47,8 @@ lecture-02-*.md   ─────┤  generate       ├── _config.yml     (
 | `educlaw site generate <series-dir> -o /path/to/sites` | Specify output parent directory |
 | `educlaw site catalog` | Re-render the catalog page from the registry |
 | `educlaw site list` | List all registered courses |
+
+The generated course directory includes a `Gemfile`, so the normal local preview flow is to run Bundler inside `sites/<slug>/` and then start Jekyll with that bundle.
 
 ## Template variables
 
@@ -90,6 +94,27 @@ thumbnail: /static_files/presentations/lec.jpg
 
 Dates are derived from the series directory name (e.g. `2026-04-23-intro-*`) with weekly spacing between lectures.
 
+## Local preview
+
+From the generated site directory:
+
+```bash
+cd sites/introduction-to-linear-algebra
+bundle config set --local path vendor/bundle
+bundle install
+bundle exec jekyll serve
+```
+
+This assumes a writable, non-root Ruby environment. If `bundle install` tries to write to a system gem cache or replaces the locked Bundler version, use a project-local Ruby/Bundler setup instead of `sudo`. The error you pasted is consistent with Bundler trying to install into `/var/lib/gems/...` and then failing when it cannot write there, which prevents `jekyll` from being installed into the bundle.
+
+You also need Ruby development headers for native gems such as `commonmarker` and `nokogiri` (`ruby-dev` on Debian/Ubuntu, `ruby-devel` on Fedora/RHEL).
+
+If an older generated site still has a committed `Gemfile.lock`, delete it and rerun `bundle install` so Bundler can resolve a bundle that matches your Ruby version.
+
+If the site was generated on another machine or the lockfile is stale, delete the generated site directory and rerun `educlaw site generate <series-dir>` to recreate a fresh Jekyll bundle.
+
+With the generated `baseurl`, the site is usually available at `http://localhost:4000/<course-slug>/`.
+
 ## Course registry
 
 The registry at `sites/courses.yml` tracks all generated courses:
@@ -117,18 +142,6 @@ The template lives at `templates/course_site/`. Files without a `.jinja` suffix 
 - **Navigation** — Edit `_data/nav.yml`.
 - **New pages** — Add `.md` files with Jekyll frontmatter.
 - **New template variables** — Add entries to `copier.yml` and reference them with `[[ var_name ]]` in `.jinja` files.
-
-## Serving locally
-
-Each generated site is a standard Jekyll project:
-
-```bash
-cd sites/introduction-to-linear-algebra
-bundle install
-bundle exec jekyll serve
-```
-
-Requires Ruby and Bundler. The site will be available at `http://localhost:4000/<course-slug>/`.
 
 ## Deploying to GitHub Pages
 

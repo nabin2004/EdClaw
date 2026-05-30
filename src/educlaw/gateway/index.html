@@ -1,52 +1,1097 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Delta Streaming Editor</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delta Stream Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0d0e11;
+  --surface: #13151a;
+  --surface2: #1a1d24;
+  --surface3: #21252e;
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(255,255,255,0.13);
+  --accent: #6c63ff;
+  --accent2: #a78bfa;
+  --accent-dim: rgba(108,99,255,0.15);
+  --accent-glow: rgba(108,99,255,0.3);
+  --green: #22d3a0;
+  --green-dim: rgba(34,211,160,0.12);
+  --amber: #f5a623;
+  --amber-dim: rgba(245,166,35,0.12);
+  --red: #f87171;
+  --red-dim: rgba(248,113,113,0.12);
+  --text: #e8eaf0;
+  --text2: #8b90a0;
+  --text3: #555b6e;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Syne', sans-serif;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Background grid */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(108,99,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(108,99,255,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 1.25rem 0 1rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.logo {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  background: var(--accent-dim);
+  border: 1px solid rgba(108,99,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo svg { width: 18px; height: 18px; stroke: var(--accent2); fill: none; stroke-width: 1.8; }
+
+.header-text h1 {
+  font-family: var(--sans);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.header-text p {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 1px;
+  letter-spacing: 0.03em;
+}
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.conn-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.conn-badge .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text3);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.conn-badge.connected .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.conn-badge.connected { color: var(--green); border-color: rgba(34,211,160,0.2); background: var(--green-dim); }
+.conn-badge.error .dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.conn-badge.error { color: var(--red); border-color: rgba(248,113,113,0.2); background: var(--red-dim); }
+
+/* Mode tabs */
+.mode-bar {
+  display: flex;
+  gap: 2px;
+  padding: 0.75rem 0 0;
+  flex-shrink: 0;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text3);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  position: relative;
+}
+
+.tab svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+.tab:hover { color: var(--text2); background: var(--surface2); }
+.tab.active { color: var(--accent2); background: var(--accent-dim); }
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* Main content */
+.content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0 1.5rem;
+  gap: 0;
+}
+
+.panel { display: none; flex-direction: column; gap: 12px; height: 100%; }
+.panel.active { display: flex; }
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.spacer { flex: 1; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.01em;
+}
+
+.btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+.btn:hover { color: var(--text); border-color: var(--border-hover); background: var(--surface3); }
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--accent-dim);
+  border-color: rgba(108,99,255,0.4);
+  color: var(--accent2);
+}
+.btn-primary:hover { background: rgba(108,99,255,0.25); border-color: var(--accent); color: #c4b5fd; }
+
+.btn-success {
+  background: var(--green-dim);
+  border-color: rgba(34,211,160,0.3);
+  color: var(--green);
+}
+.btn-success:hover { background: rgba(34,211,160,0.2); color: #6ee7cc; }
+
+/* Editor */
+.editor-wrap { flex: 1; position: relative; min-height: 0; }
+
+#editor {
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  padding: 16px;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  line-height: 1.75;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text);
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  caret-color: var(--accent2);
+}
+
+#editor:focus {
+  border-color: rgba(108,99,255,0.5);
+  box-shadow: 0 0 0 3px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+#editor::placeholder { color: var(--text3); }
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+
+.status-bar .sep { color: var(--text3); opacity: 0.4; }
+
+.delta-log-wrap { flex-shrink: 0; }
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+
+.delta-log {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  min-height: 42px;
+  max-height: 72px;
+  overflow-y: auto;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Ask panel */
+.ask-panel { display: flex; flex-direction: column; gap: 12px; height: 100%; }
+
+.ask-input-wrap { display: flex; gap: 8px; align-items: flex-start; flex-shrink: 0; }
+
+#ask-input {
+  flex: 1;
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  outline: none;
+  resize: none;
+  line-height: 1.6;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  caret-color: var(--accent2);
+  min-height: 72px;
+}
+
+#ask-input:focus {
+  border-color: rgba(108,99,255,0.5);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+#ask-input::placeholder { color: var(--text3); }
+
+.ask-response-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+#ask-response {
+  flex: 1;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.8;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text2);
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ask-response-placeholder { color: var(--text3); font-style: italic; }
+
+/* Agent panel */
+.agent-task-bar { display: flex; gap: 8px; flex-shrink: 0; }
+
+.agent-log-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+#agent-log {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.8;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.log-entry { display: flex; gap: 10px; align-items: baseline; }
+.log-time { color: var(--text3); flex-shrink: 0; font-size: 11px; }
+.log-text { flex: 1; }
+.log-info { color: var(--accent2); }
+.log-ok { color: var(--green); }
+.log-warn { color: var(--amber); }
+.log-err { color: var(--red); }
+.log-muted { color: var(--text3); }
+
+/* Plan panel */
+.plan-header { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.progress-track {
+  flex: 1;
+  height: 3px;
+  background: var(--surface3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  width: 0%;
+}
+
+.progress-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  flex-shrink: 0;
+  min-width: 36px;
+  text-align: right;
+}
+
+.plan-steps { display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; }
+
+.plan-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.plan-step.active {
+  border-color: rgba(108,99,255,0.4);
+  background: rgba(108,99,255,0.06);
+}
+
+.plan-step.done {
+  border-color: rgba(34,211,160,0.25);
+  background: rgba(34,211,160,0.04);
+}
+
+.step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text3);
+  flex-shrink: 0;
+  background: var(--surface2);
+  transition: all 0.3s;
+}
+
+.plan-step.active .step-num {
+  border-color: var(--accent);
+  color: var(--accent2);
+  background: var(--accent-dim);
+  animation: pulse-ring 1.5s infinite;
+}
+
+.plan-step.done .step-num {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-dim);
+}
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(108,99,255,0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(108,99,255,0); }
+}
+
+.step-body { flex: 1; }
+.step-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.step-desc { font-size: 12.5px; color: var(--text3); line-height: 1.5; font-family: var(--mono); }
+
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.badge-todo { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+.badge-active { background: var(--accent-dim); color: var(--accent2); border: 1px solid rgba(108,99,255,0.3); }
+.badge-done { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,211,160,0.25); }
+
+.plan-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+.launch-banner {
+  display: none;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, rgba(34,211,160,0.08), rgba(34,211,160,0.03));
+  border: 1px solid rgba(34,211,160,0.25);
+  border-radius: var(--radius-lg);
+  gap: 14px;
+  flex-shrink: 0;
+  animation: slide-up 0.4s cubic-bezier(.4,0,.2,1);
+}
+
+.launch-banner.visible { display: flex; align-items: center; }
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.launch-banner-text h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--green);
+  margin-bottom: 2px;
+}
+
+.launch-banner-text p {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.launch-banner .spacer { flex: 1; }
+
+/* Spinner */
+.spinning { animation: spin 0.8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text);
+  font-family: var(--mono);
+  z-index: 100;
+  animation: slide-up 0.2s ease;
+}
+
+#toast.show { display: flex; }
+#toast svg { width: 14px; height: 14px; stroke: var(--green); fill: none; stroke-width: 2.5; }
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+/* Loading indicator for AI responses */
+.thinking-dots { display: inline-flex; gap: 4px; align-items: center; }
+.thinking-dots span {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent2);
+  animation: dot-bounce 1.2s infinite ease-in-out;
+}
+.thinking-dots span:nth-child(2) { animation-delay: 0.15s; }
+.thinking-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+</style>
 </head>
 <body>
 
-<h2>Delta Stream Editor</h2>
+<div class="app">
 
-<textarea id="editor" rows="10" cols="60"></textarea>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div class="header-text">
+      <h1>Delta Stream Editor</h1>
+      <p>ws://127.0.0.1:8000/ws</p>
+    </div>
+    <div class="header-right">
+      <div class="conn-badge" id="conn-badge">
+        <div class="dot"></div>
+        <span id="conn-label">Connecting</span>
+      </div>
+      <button class="btn btn-primary" onclick="connectWS()">
+        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Reconnect
+      </button>
+    </div>
+  </div>
+
+  <!-- Mode tabs -->
+  <div class="mode-bar" role="tablist">
+    <button class="tab active" data-panel="editor" role="tab">
+      <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Editor
+    </button>
+    <button class="tab" data-panel="ask" role="tab">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Ask
+    </button>
+    <button class="tab" data-panel="agent" role="tab">
+      <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      Agent
+    </button>
+    <button class="tab" data-panel="plan" role="tab">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><polyline points="3 6 4 7 6 5"/><polyline points="3 12 4 13 6 11"/><polyline points="3 18 4 19 6 17"/></svg>
+      Plan
+    </button>
+  </div>
+
+  <div class="content">
+
+    <!-- EDITOR PANEL -->
+    <div class="panel active" id="panel-editor">
+      <div class="toolbar">
+        <button class="btn" onclick="clearEditor()">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          Clear
+        </button>
+        <button class="btn" onclick="copyContent()">
+          <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>
+        <div class="spacer"></div>
+        <div class="status-bar">
+          <span id="char-count">0 chars</span>
+          <span class="sep">·</span>
+          <span id="cursor-pos">Ln 1 Col 1</span>
+          <span class="sep">·</span>
+          <span id="last-delta">no deltas</span>
+        </div>
+      </div>
+
+      <div class="editor-wrap">
+        <textarea id="editor" placeholder="Start typing — deltas stream in real time over WebSocket…" spellcheck="false" aria-label="Collaborative editor"></textarea>
+      </div>
+
+      <div class="delta-log-wrap">
+        <div class="section-label">Delta log</div>
+        <div class="delta-log" id="delta-log">Waiting for incoming deltas…</div>
+      </div>
+    </div>
+
+    <!-- ASK PANEL -->
+    <div class="panel" id="panel-ask">
+      <div class="section-label">Ask a question about your content</div>
+      <div class="ask-input-wrap">
+        <textarea id="ask-input" rows="3" placeholder="E.g. Summarize this document, fix grammar, translate to French, explain what this code does…" aria-label="Ask question"></textarea>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn btn-primary" onclick="runAsk()" id="ask-btn" style="white-space:nowrap">
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Send
+          </button>
+          <button class="btn" onclick="clearAsk()">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Clear
+          </button>
+        </div>
+      </div>
+      <div class="section-label">Response</div>
+      <div class="ask-response-wrap">
+        <div id="ask-response" class="ask-response-placeholder">Response will appear here…</div>
+      </div>
+    </div>
+
+    <!-- AGENT PANEL -->
+    <div class="panel" id="panel-agent">
+      <div class="section-label">Agent tasks</div>
+      <div class="agent-task-bar">
+        <button class="btn" onclick="runAgent('analyze')" id="btn-analyze">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Analyze
+        </button>
+        <button class="btn" onclick="runAgent('refactor')" id="btn-refactor">
+          <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Refactor
+        </button>
+        <button class="btn" onclick="runAgent('document')" id="btn-document">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Document
+        </button>
+        <button class="btn" onclick="runAgent('test')" id="btn-test">
+          <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Generate tests
+        </button>
+        <div class="spacer"></div>
+        <button class="btn" onclick="clearLog()">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          Clear log
+        </button>
+      </div>
+      <div class="section-label">Activity log</div>
+      <div class="agent-log-wrap">
+        <div id="agent-log" aria-live="polite" aria-label="Agent activity log"></div>
+      </div>
+    </div>
+
+    <!-- PLAN PANEL -->
+    <div class="panel" id="panel-plan">
+      <div class="plan-header">
+        <div class="section-label" style="margin:0">Course creation plan</div>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="progress-label" id="progress-label">0 / 5</div>
+      </div>
+
+      <div class="plan-steps" id="plan-steps">
+        <div class="plan-step" data-step="0">
+          <div class="step-num" id="snum-0">1</div>
+          <div class="step-body">
+            <div class="step-title">Define objectives</div>
+            <div class="step-desc">Learning goals, target audience, success criteria</div>
+            <span class="step-badge badge-todo" id="sbadge-0">○ Pending</span>
+          </div>
+        </div>
+        <div class="plan-step" data-step="1">
+          <div class="step-num" id="snum-1">2</div>
+          <div class="step-body">
+            <div class="step-title">Structure content</div>
+            <div class="step-desc">Modules, lessons, sequencing, and pacing</div>
+            <span class="step-badge badge-todo" id="sbadge-1">○ Pending</span>
+          </div>
+        </div>
+        <div class="plan-step" data-step="2">
+          <div class="step-num" id="snum-2">3</div>
+          <div class="step-body">
+            <div class="step-title">Generate assessments</div>
+            <div class="step-desc">Quizzes, exercises, and grading rubrics per module</div>
+            <span class="step-badge badge-todo" id="sbadge-2">○ Pending</span>
+          </div>
+        </div>
+        <div class="plan-step" data-step="3">
+          <div class="step-num" id="snum-3">4</div>
+          <div class="step-body">
+            <div class="step-title">Review &amp; validate</div>
+            <div class="step-desc">Consistency checks, gap analysis, objective alignment</div>
+            <span class="step-badge badge-todo" id="sbadge-3">○ Pending</span>
+          </div>
+        </div>
+        <div class="plan-step" data-step="4">
+          <div class="step-num" id="snum-4">5</div>
+          <div class="step-body">
+            <div class="step-title">Finalize &amp; export</div>
+            <div class="step-desc">Package materials and prepare for publishing</div>
+            <span class="step-badge badge-todo" id="sbadge-4">○ Pending</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="plan-actions">
+        <button class="btn btn-primary" onclick="runPlan()" id="plan-run-btn">
+          <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Run plan
+        </button>
+        <button class="btn" onclick="resetPlan()">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Reset
+        </button>
+      </div>
+
+      <div class="launch-banner" id="launch-banner">
+        <div>
+          <svg style="width:22px;height:22px;stroke:var(--green);fill:none;stroke-width:2;display:block" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="launch-banner-text">
+          <h3>Plan complete</h3>
+          <p>All 5 steps verified — your course structure is ready to build.</p>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-success" onclick="startCourse()">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          Start course creation
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast">
+  <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg"></span>
+</div>
 
 <script>
-const ws = new WebSocket("ws://127.0.0.1:8000/ws");
-const editor = document.getElementById("editor");
+// ─── WebSocket ────────────────────────────────────────────────
+let ws = null;
 
-let localChange = false;
+function connectWS() {
+  const badge = document.getElementById('conn-badge');
+  const label = document.getElementById('conn-label');
+  badge.className = 'conn-badge';
+  label.textContent = 'Connecting';
+  try {
+    if (ws) { try { ws.close(); } catch(e) {} }
+    ws = new WebSocket('ws://127.0.0.1:8000/ws');
+    ws.onopen = () => {
+      badge.className = 'conn-badge connected';
+      label.textContent = 'Connected';
+      appendDelta('WebSocket connected to ws://127.0.0.1:8000');
+    };
+    ws.onclose = () => {
+      badge.className = 'conn-badge';
+      label.textContent = 'Disconnected';
+    };
+    ws.onerror = () => {
+      badge.className = 'conn-badge error';
+      label.textContent = 'Failed';
+    };
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      const ed = document.getElementById('editor');
+      const v = ed.value;
+      if (msg.type === 'insert') {
+        ed.value = v.slice(0, msg.pos) + msg.char + v.slice(msg.pos);
+      }
+      if (msg.type === 'delete') {
+        ed.value = v.slice(0, msg.pos) + v.slice(msg.pos + 1);
+      }
+      const entry = msg.type === 'insert'
+        ? `[${now()}] insert "${msg.char}" @ ${msg.pos}`
+        : `[${now()}] delete @ ${msg.pos}`;
+      appendDelta(entry);
+      document.getElementById('last-delta').textContent = entry.slice(entry.indexOf(']') + 2, 50) + '…';
+      updateStatus();
+    };
+  } catch(e) {
+    badge.className = 'conn-badge error';
+    label.textContent = 'Error';
+  }
+}
 
-// -----------------------------
-// APPLY incoming delta
-// -----------------------------
-ws.onmessage = (event) => {
-    const msg = JSON.parse(event.data);
+// ─── Editor helpers ───────────────────────────────────────────
+function now() {
+  return new Date().toLocaleTimeString('en-GB', { hour12: false });
+}
 
-    const value = editor.value;
+function appendDelta(text) {
+  const log = document.getElementById('delta-log');
+  log.textContent = text + (log.textContent !== 'Waiting for incoming deltas…' ? '\n' + log.textContent : '');
+  if (log.textContent.length > 800) log.textContent = log.textContent.slice(0, 800);
+}
 
-    if (msg.type === "insert") {
-        editor.value =
-            value.slice(0, msg.pos) +
-            msg.char +
-            value.slice(msg.pos);
-    }
+function updateStatus() {
+  const ed = document.getElementById('editor');
+  const v = ed.value;
+  document.getElementById('char-count').textContent = v.length + ' chars';
+  const before = v.substring(0, ed.selectionStart).split('\n');
+  document.getElementById('cursor-pos').textContent = 'Ln ' + before.length + ' Col ' + before[before.length - 1].length;
+}
 
-    if (msg.type === "delete") {
-        editor.value =
-            value.slice(0, msg.pos) +
-            value.slice(msg.pos + 1);
-    }
+function clearEditor() {
+  document.getElementById('editor').value = '';
+  updateStatus();
+  showToast('Editor cleared');
+}
+
+function copyContent() {
+  const v = document.getElementById('editor').value;
+  if (!v) { showToast('Nothing to copy'); return; }
+  navigator.clipboard.writeText(v).then(() => showToast('Copied to clipboard'));
+}
+
+document.getElementById('editor').addEventListener('input', () => {
+  if (ws && ws.readyState === 1) ws.send(document.getElementById('editor').value);
+  updateStatus();
+});
+document.getElementById('editor').addEventListener('keyup', updateStatus);
+document.getElementById('editor').addEventListener('click', updateStatus);
+
+// ─── Tabs ─────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+  });
+});
+
+// ─── Toast ────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.className = 'show';
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.className = ''; }, 2400);
+}
+
+// ─── Ask ──────────────────────────────────────────────────────
+async function runAsk() {
+  const q = document.getElementById('ask-input').value.trim();
+  if (!q) { showToast('Enter a question first'); return; }
+  const content = document.getElementById('editor').value.trim();
+  const btn = document.getElementById('ask-btn');
+  const resp = document.getElementById('ask-response');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="thinking-dots"><span></span><span></span><span></span></span>';
+  resp.className = '';
+  resp.innerHTML = '<span class="thinking-dots"><span></span><span></span><span></span></span>';
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: content
+            ? 'Editor content:\n```\n' + content + '\n```\n\nQuestion: ' + q
+            : q
+        }]
+      })
+    });
+    const data = await r.json();
+    const text = (data.content || []).map(b => b.text || '').join('');
+    resp.textContent = text || 'No response received.';
+  } catch(e) {
+    resp.textContent = 'Error: ' + e.message;
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send';
+}
+
+function clearAsk() {
+  document.getElementById('ask-input').value = '';
+  const resp = document.getElementById('ask-response');
+  resp.textContent = 'Response will appear here…';
+  resp.className = 'ask-response-placeholder';
+}
+
+document.getElementById('ask-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) runAsk();
+});
+
+// ─── Agent ────────────────────────────────────────────────────
+function logEntry(text, cls = '') {
+  const log = document.getElementById('agent-log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = '<span class="log-time">' + now() + '</span><span class="log-text ' + cls + '">' + escHtml(text) + '</span>';
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function clearLog() {
+  document.getElementById('agent-log').innerHTML = '';
+  logEntry('Log cleared.', 'log-info');
+}
+
+const AGENT_PROMPTS = {
+  analyze: c => 'Analyze the following content. Give a structured breakdown: key topics, complexity level, quality issues, and 3 concrete improvement suggestions.\n\n' + (c || '(empty)'),
+  refactor: c => 'Refactor or improve the following content for clarity, structure, and conciseness. Show the improved version with a brief explanation of changes.\n\n' + (c || '(empty)'),
+  document: c => 'Generate clear, concise documentation or inline comments for the following content. Format as proper technical documentation.\n\n' + (c || '(empty)'),
+  test: c => 'Generate test cases or validation criteria for the following content. Be specific and practical.\n\n' + (c || '(empty)'),
 };
 
+const AGENT_LABELS = { analyze: 'Analyzing…', refactor: 'Refactoring…', document: 'Generating docs…', test: 'Writing tests…' };
+const AGENT_BTNS = { analyze: 'btn-analyze', refactor: 'btn-refactor', document: 'btn-document', test: 'btn-test' };
 
-// -----------------------------
-// SEND delta (true key streaming)
-// -----------------------------
-editor.addEventListener("input", (e) => {
-    if (localChange) return;
+async function runAgent(task) {
+  const content = document.getElementById('editor').value.trim();
+  const btn = document.getElementById(AGENT_BTNS[task]);
+  btn.disabled = true;
+  logEntry(AGENT_LABELS[task], 'log-info');
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: AGENT_PROMPTS[task](content) }]
+      })
+    });
+    const data = await r.json();
+    const result = (data.content || []).map(b => b.text || '').join('');
+    logEntry('Done ✓', 'log-ok');
+    const lines = result.split('\n').filter(l => l.trim()).slice(0, 10);
+    lines.forEach(l => logEntry('  ' + l.trim(), 'log-muted'));
+    if (result.split('\n').length > 10) logEntry('  … (truncated — run Ask for full output)', 'log-warn');
+  } catch(e) {
+    logEntry('Error: ' + e.message, 'log-err');
+  }
+  btn.disabled = false;
+}
 
-    ws.send(editor.value);
-});
+// ─── Plan ─────────────────────────────────────────────────────
+let planRunning = false;
+
+const PLAN_PROMPTS = [
+  t => 'List exactly 3 concise learning objectives for a course about: ' + t + '. Be specific.',
+  t => 'Outline 3 modules with 2-3 lessons each for a course about: ' + t + '. Keep it structured.',
+  t => 'Create 2 quiz questions per module for a course about: ' + t + '. Include answer keys.',
+  t => 'List 5 review checklist items to validate a course plan about: ' + t,
+  t => 'Describe the steps to export and publish a course about: ' + t + '. Be concise.',
+];
+
+function setStep(i, state) {
+  const step = document.querySelector('[data-step="' + i + '"]');
+  const num = document.getElementById('snum-' + i);
+  const badge = document.getElementById('sbadge-' + i);
+  step.className = 'plan-step' + (state === 'active' ? ' active' : state === 'done' ? ' done' : '');
+  if (state === 'active') {
+    num.innerHTML = '<span class="spinning">↻</span>';
+    badge.className = 'step-badge badge-active';
+    badge.textContent = '◉ In progress';
+  } else if (state === 'done') {
+    num.textContent = '✓';
+    badge.className = 'step-badge badge-done';
+    badge.textContent = '✓ Complete';
+  } else {
+    num.textContent = i + 1;
+    badge.className = 'step-badge badge-todo';
+    badge.textContent = '○ Pending';
+  }
+}
+
+function setProgress(done) {
+  document.getElementById('progress-fill').style.width = (done / 5 * 100) + '%';
+  document.getElementById('progress-label').textContent = done + ' / 5';
+}
+
+async function runPlan() {
+  if (planRunning) return;
+  planRunning = true;
+  document.getElementById('plan-run-btn').disabled = true;
+  document.getElementById('launch-banner').classList.remove('visible');
+  const topic = document.getElementById('editor').value.trim() || 'the provided topic';
+  for (let i = 0; i < 5; i++) setStep(i, 'todo');
+  setProgress(0);
+
+  for (let i = 0; i < 5; i++) {
+    setStep(i, 'active');
+    try {
+      await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: PLAN_PROMPTS[i](topic) }]
+        })
+      });
+    } catch(e) {}
+    setStep(i, 'done');
+    setProgress(i + 1);
+    await new Promise(res => setTimeout(res, 180));
+  }
+
+  document.getElementById('launch-banner').classList.add('visible');
+  document.getElementById('plan-run-btn').disabled = false;
+  planRunning = false;
+}
+
+function resetPlan() {
+  if (planRunning) return;
+  for (let i = 0; i < 5; i++) setStep(i, 'todo');
+  setProgress(0);
+  document.getElementById('launch-banner').classList.remove('visible');
+}
+
+function startCourse() {
+  const topic = document.getElementById('editor').value.trim() || 'the topic in my editor';
+  alert('Course creation started for: "' + topic + '".\n\nIn a real integration, this would open your course authoring workflow.');
+}
+
+// ─── Init ─────────────────────────────────────────────────────
+logEntry('Agent ready. Select a task above.', 'log-info');
+connectWS();
+updateStatus();
 </script>
-
 </body>
 </html>

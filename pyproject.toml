@@ -27,6 +27,7 @@ dependencies = [
   "ruamel.yaml>=0.18",
   "typer>=0.13",
   "rich>=13.9",
+  "terminaltexteffects>=0.15.0",
   "structlog>=24.4",
   "cachetools>=5.5",
   "google-adk>=0.1.0",
@@ -35,6 +36,7 @@ dependencies = [
   "ollama>=0.4",
   "dagestan>=0.1.0",
   "copier>=9.1",
+  "soundfile",
 ]
 
 [project.optional-dependencies]
@@ -86,7 +88,7 @@ dev = [
 ]
 
 [project.scripts]
-educlaw = "educlaw.cli:app"
+educlaw = "educlaw.cli:main"
 
 [project.entry-points."educlaw.tts"]
 null = "educlaw.tts.backends.null:factory"
@@ -96,7 +98,7 @@ kitten = "educlaw.tts.backends.kitten:factory"
 where = ["src"]
 
 [tool.setuptools.package-data]
-educlaw.gateway = ["static/*.html"]
+"educlaw.gateway" = ["static/*.html"]
 
 [tool.ruff]
 line-length = 100

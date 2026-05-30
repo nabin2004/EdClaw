@@ -1,17 +1,18 @@
 ```text
 
-    ______    __      ________              
-   / ____/___/ /_  __/ ____/ /___ __      __
-  / __/ / __  / / / / /   / / __ `/ | /| / /
- / /___/ /_/ / /_/ / /___/ / /_/ /| |/ |/ / 
-/_____/\__,_/\__,_/\____/_/\__,_/ |__/|__/  
+                                ______    __      ________              
+                               / ____/___/ /_  __/ ____/ /___ __      __
+                              / __/ / __  / / / / /   / / __ `/ | /| / /
+                             / /___/ /_/ / /_/ / /___/ / /_/ /| |/ |/ / 
+                            /_____/\__,_/\__,_/\____/_/\__,_/ |__/|__/  
+
+
+
 ```
 
 # EduClaw
 
 **Local-first educational agent gateway:** **Google ADK** for the agent loop, **Ollama** for Gemma / EmbeddingGemma (Shield classification reuses your main chat model by default), **FastAPI** for HTTP + WebSocket, **SQLAlchemy** + **sqlite-vec** (optional) for IR indexing, and **PyPI `dagestan`** for temporal-graph learner memory.
-
-Wordmark source: [assets/ascii-logo.txt](assets/ascii-logo.txt) (font *slant*; regenerate with `pyfiglet -f slant EduClaw`).
 
 ## Quickstart
 
@@ -52,6 +53,3 @@ educlaw serve
 
 Use `LiteLlm(model="ollama_chat/<tag>")` and set `OLLAMA_API_BASE` (required by LiteLLM). Prefer `ollama_chat/` over `ollama/` for tool-calling stability per ADK docs.
 
-## License
-
-Apache-2.0

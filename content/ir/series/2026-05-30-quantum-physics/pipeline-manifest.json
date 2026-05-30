@@ -1,0 +1,11 @@
+{
+  "topic": "Quantum Physics",
+  "lecture_count": 4,
+  "output_dir": "/home/nabin2004/Desktop/EdClaw/content/ir/series/2026-05-30-quantum-physics",
+  "automanim": true,
+  "tts": true,
+  "shield_ollama": true,
+  "manim_artifacts": [],
+  "lectures": [],
+  "exit_code": 1
+}

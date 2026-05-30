@@ -10,7 +10,30 @@
 | **Dataset factory** | [`src/`](../../src/educlaw/automanim/src/) (TypeScript) | pi-coding-agent episode generator (`npm run generate`) |
 | **Training data** | [`dataset/`](../../src/educlaw/automanim/dataset/), [`sft_dataset.jsonl`](../../src/educlaw/automanim/sft_dataset.jsonl) | Bundled teacher traces; build JSONL with `educlaw train dataset automanim` |
 
-Run TypeScript tools from `src/educlaw/automanim/` (`npm install`, then `npm run dev` or `npm run generate`). See [training/automanim/README.md](../training/automanim/README.md) for SFT.
+Run TypeScript tools from `src/educlaw/automanim/` (**Node.js 20+** required — `pi-coding-agent` does not run on Node 18; use `nvm use` with [`.nvmrc`](../../src/educlaw/automanim/.nvmrc) or install Node 22). Then `npm install`, `npm run dev` or `npm run generate`. See [training/automanim/README.md](../training/automanim/README.md) for SFT.
+
+### Dataset factory audio (Kitten TTS)
+
+Episodes produced by `npm run generate` get **deterministic narration** after the coding agent finishes: the pipeline reads `narration.json`, synthesizes each segment with **Kitten TTS**, concatenates to `audio.wav`, writes `subtitles.srt`, and merges into `final.mp4` when a Manim video exists.
+
+**Prerequisites** (repo venv):
+
+```bash
+pip install 'educlaw[tts-kitten]'
+# Warm the model once (downloads ~25–80 MB); see docs/TTS.md
+python -c "from kittentts import KittenTTS; KittenTTS('KittenML/kitten-tts-nano-0.8-int8', cache_dir=str(__import__('pathlib').Path.home()/'.educlaw/tts'))"
+```
+
+Optional env vars when running from `src/educlaw/automanim/`:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `AUTOMANIM_TTS_MODEL_ID` | `KittenML/kitten-tts-nano-0.8-int8` | Hugging Face Kitten model id |
+| `AUTOMANIM_TTS_VOICE` | `Jasper` | Default voice when narration uses `"default"` |
+| `AUTOMANIM_TTS_CACHE_DIR` | `~/.educlaw/tts` | Model cache directory |
+| `AUTOMANIM_PYTHON` | `python3` | Python executable for `kitten_runner.py` |
+
+The agent must **not** generate silent placeholder audio; TTS failures fail the episode (no `anullsrc` fallback).
 
 ## Architecture
 

@@ -154,6 +154,7 @@ The gateway currently defaults to `NullSandbox` for shell tools unless you wire 
 - **Autocourse errors** from `run_autocourse()` / pipeline scripts (`AutocourseEvent` with `kind: error`): invalid JSON from the planner, empty lecture list, or Ollama failures — check `OLLAMA_API_BASE` / Ollama logs; reduce topic length; ensure `model_id` supports JSON-style chat for the plan step.
 - **TTS disabled or `tts_model_id` required**: see [TTS.md](TTS.md) — for `kitten`, set a Hugging Face repo id; for tests use `tts_backend = "null"`.
 - **Dagestan `stub` and empty ingest**: the default `dagestan_provider` does not run a real LLM for extraction, so session ingestion may add no graph nodes. Switch to `ollama` or a cloud provider for populated graph memory; see [DAGESTAN.md](DAGESTAN.md).
+- **Jekyll bundle install fails in a generated course site**: use a writable, non-root Ruby environment inside `sites/<slug>/`. Run `bundle config set --local path vendor/bundle` before `bundle install`, and do not rely on `sudo bundle install`; if Bundler tries to write to `/var/lib/gems/...` or swap to a different Bundler version, recreate the site or reconfigure Ruby locally, then run `bundle install` and `bundle exec jekyll serve` again. Install Ruby development headers (`ruby-dev` / `ruby-devel`) if native gems such as `commonmarker` fail to compile. See [SITE_GENERATION.md](SITE_GENERATION.md).
 
 ## Contributing
 
