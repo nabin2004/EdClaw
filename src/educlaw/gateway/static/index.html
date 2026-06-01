@@ -1,532 +1,877 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EduClaw Gateway</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduClaw Dashboard</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
+    /* =========================================
+       Design System & CSS Variables
+       ========================================= */
     :root {
-      --bg: #0f1419;
-      --surface: #1a2332;
-      --border: #2d3a4d;
-      --text: #e6edf3;
-      --muted: #8b9cb3;
-      --accent: #3d9eff;
-      --user-bg: #1e3a5f;
-      --assistant-bg: #1a2820;
+      --bg-page: #F9F9F9;
+      --bg-card: #FFFFFF;
+      --accent: #10A37F;
+      --accent-hover: #0D8B6C;
+      --text-main: #1A1A1A;
+      --text-sec: #6B6B6B;
+      --border: #E5E5E5;
+      --shadow: 0 4px 12px rgba(0,0,0,0.05);
+      --font-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+      --radius-btn: 8px;
+      --radius-card: 12px;
+      --spacing: 8px;
     }
-    * { box-sizing: border-box; }
-    body {
-      font-family: ui-sans-serif, system-ui, sans-serif;
+
+    * {
+      box-sizing: border-box;
       margin: 0;
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-stack);
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Accessibility Focus */
+    *:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* =========================================
+       Typography & Utilities
+       ========================================= */
+    h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    p { color: var(--text-sec); font-size: 0.95rem; }
+    .text-sm { font-size: 0.85rem; }
+    .mt { margin-top: 1rem; }
+    .mt-sm { margin-top: 0.5rem; }
+    .w-full { width: 100%; }
+    .hidden { display: none !important; }
+    
+    /* Animations */
+    .reveal { animation: slideUpFade 0.4s ease forwards; }
+    @keyframes slideUpFade {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* =========================================
+       Buttons & Inputs
+       ========================================= */
+    button {
+      font-family: var(--font-stack);
+      border-radius: var(--radius-btn);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      border: none;
+    }
+    
+    .btn-primary {
+      background-color: var(--accent);
+      color: #FFF;
+      padding: 0.75rem 1.5rem;
+    }
+    .btn-primary:hover { background-color: var(--accent-hover); }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+    }
+    .btn-secondary:hover { background-color: #F0F0F0; }
+
+    .btn-icon {
+      background: transparent;
+      color: var(--text-sec);
+      padding: 0.25rem;
+    }
+    .btn-icon:hover { color: var(--text-main); }
+
+    textarea {
+      font-family: var(--font-stack);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-btn);
+      padding: 0.75rem 1rem;
+      resize: none;
+      width: 100%;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: var(--accent); outline: none; }
+
+    /* =========================================
+       Phase 0 & 1: Search Wrapper
+       ========================================= */
+    #search-wrapper {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      max-width: 680px;
+      padding: 0 1.5rem;
+      transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
       display: flex;
       flex-direction: column;
-      max-width: 42rem;
-      margin-inline: auto;
-      padding: 1rem;
+      align-items: center;
+      z-index: 1000;
     }
-    header {
+
+    #logo-container {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 1rem;
+      gap: 0.5rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      transition: all 0.5s;
     }
-    h1 { font-size: 1.125rem; font-weight: 600; margin: 0; }
-    #status {
-      font-size: 0.75rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 6px;
-      background: var(--surface);
-      color: var(--muted);
-      border: 1px solid var(--border);
-    }
-    #status.connected { color: #3fb950; border-color: #238636; }
-    #status.disconnected { color: var(--muted); }
-    #status.error { color: #f85149; border-color: #da3633; }
-    .mode-row {
+
+    .input-row {
       display: flex;
-      flex-wrap: wrap;
+      width: 100%;
+      gap: 0.5rem;
+      align-items: flex-end;
+    }
+
+    /* Top Bar Transformation (Phase 1) */
+    #search-wrapper.top-bar {
+      top: 0;
+      left: 0;
+      transform: none;
+      max-width: 100%;
+      height: 72px;
+      flex-direction: row;
+      justify-content: center;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+    }
+    #search-wrapper.top-bar #logo-container {
+      margin-bottom: 0;
+      font-size: 1.25rem;
+      margin-right: 2rem;
+    }
+    #search-wrapper.top-bar .input-row {
+      max-width: 800px;
+      align-items: center;
+    }
+    #search-wrapper.top-bar textarea {
+      padding: 0.5rem 1rem;
+    }
+
+    /* =========================================
+       Main Content Layout (Phase 1+)
+       ========================================= */
+    #content-wrapper {
+      padding-top: 100px;
+      padding-bottom: 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .layout-grid {
+      display: grid;
+      grid-template-columns: 60% calc(40% - 1.5rem);
+      gap: 1.5rem;
+    }
+
+    /* Video Panel */
+    .video-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      background: #000;
+      color: #FFF;
+      position: relative;
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      padding: 0;
+    }
+    .video-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #888;
       gap: 1rem;
-      margin-bottom: 0.75rem;
-      font-size: 0.875rem;
-      color: var(--muted);
     }
-    .mode-row label { cursor: pointer; user-select: none; }
-    .mode-row input { margin-right: 0.35rem; vertical-align: middle; }
-    #log {
-      flex: 1;
-      overflow-y: auto;
-      min-height: 12rem;
-      padding: 0.5rem;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface);
-      margin-bottom: 1rem;
-    }
-    .msg { margin: 0 0 0.75rem; padding: 0.6rem 0.75rem; border-radius: 8px; font-size: 0.9375rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
-    .msg.user { background: var(--user-bg); border-left: 3px solid var(--accent); }
-    .msg.assistant { background: var(--assistant-bg); border-left: 3px solid #2ea043; }
-    .msg .label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.35rem; }
-    .am-progress {
-      font-size: 0.75rem;
-      font-family: ui-monospace, monospace;
-      color: var(--muted);
-      max-height: 12rem;
-      overflow-y: auto;
-      margin: 0.5rem 0 0;
-      padding: 0.45rem 0.5rem;
-      white-space: pre-wrap;
-      word-break: break-word;
-      background: rgba(0,0,0,0.2);
-      border-radius: 6px;
-      border: 1px solid var(--border);
-    }
-    .am-videos { margin-top: 0.75rem; }
-    .am-video-item { margin-bottom: 0.65rem; }
-    .am-video-cap {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-bottom: 0.35rem;
-    }
-    .am-video-hint {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-top: 0.35rem;
-    }
-    .am-videos video {
+    video, canvas.video-layer {
       width: 100%;
-      max-height: 240px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      display: block;
+      height: 100%;
+      object-fit: cover;
+      background: #FFF;
     }
-    form { display: flex; flex-direction: column; gap: 0.5rem; }
-    .form-actions { display: flex; gap: 0.5rem; align-items: stretch; }
-    #chatRow { display: flex; gap: 0.5rem; align-items: stretch; width: 100%; }
-    #input {
-      flex: 1;
-      padding: 0.6rem 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface);
-      color: var(--text);
-      font-size: 1rem;
+    
+    /* Mock Audio Player */
+    .audio-mock {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #FFF;
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      color: var(--text-main);
     }
-    #manimPanel textarea {
-      width: 100%;
-      min-height: 10rem;
-      padding: 0.6rem 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface);
-      color: var(--text);
-      font-size: 0.875rem;
-      font-family: inherit;
-      resize: vertical;
+    .audio-mock svg { color: var(--accent); }
+
+    /* Tabs Panel */
+    .tabs-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 400px;
     }
-    #manimPanel .meta {
+    .tab-header {
       display: flex;
       gap: 0.5rem;
-      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
     }
-    #manimPanel .meta input {
-      flex: 1;
-      min-width: 8rem;
-      padding: 0.45rem 0.6rem;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface);
-      color: var(--text);
-      font-size: 0.875rem;
-    }
-    #input:focus, #manimPanel textarea:focus, #manimPanel .meta input:focus { outline: none; border-color: var(--accent); }
-    #input:disabled, #manimPanel textarea:disabled, #manimPanel .meta input:disabled { opacity: 0.55; }
-    button {
-      padding: 0.6rem 1rem;
-      border-radius: 8px;
-      border: 1px solid var(--accent);
-      background: var(--accent);
-      color: #fff;
+    .tab-btn {
+      background: transparent;
+      color: var(--text-sec);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
       font-weight: 500;
-      cursor: pointer;
-      font-size: 0.9375rem;
     }
-    button:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
+    .tab-btn.active {
+      background: var(--accent);
+      color: #FFF;
     }
-    #toast {
-      font-size: 0.8125rem;
-      color: #f85149;
-      min-height: 1.25rem;
+    .tab-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .tab-pane { flex: 1; display: flex; flex-direction: column; }
+
+    /* Chat / Ask Tab */
+    .chat-log {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding-right: 0.5rem;
+    }
+    .msg-bubble {
+      max-width: 85%;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+    .msg-user {
+      align-self: flex-end;
+      background: #F0F0F0;
+      border-bottom-right-radius: 2px;
+    }
+    .msg-ai {
+      align-self: flex-start;
+      background: #FFF;
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 2px;
+    }
+    .chat-input { display: flex; gap: 0.5rem; align-items: flex-end; }
+    
+    /* Agent Trace */
+    .agent-step {
+      padding: 0.75rem;
+      border-left: 2px solid var(--accent);
+      background: #F9F9F9;
       margin-bottom: 0.5rem;
+      border-radius: 0 8px 8px 0;
+      font-family: monospace;
+      font-size: 0.9rem;
     }
-    #agentStatus {
-      font-size: 0.8125rem;
-      color: var(--muted);
-      min-height: 1.25rem;
-      margin-bottom: 0.5rem;
+
+    /* Plan Tab */
+    .plan-item {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
     }
-    #agentStatus.working { color: var(--accent); }
-    #agentStatus.err { color: #f85149; }
-    footer {
-      margin-top: 1rem;
-      font-size: 0.6875rem;
-      color: var(--muted);
+    .plan-item input[type="checkbox"] { width: 18px; height: 18px; margin-top: 4px; accent-color: var(--accent); }
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #E5E5E5;
+      border-radius: 4px;
+      margin-top: 0.5rem;
+      overflow: hidden;
     }
-    [hidden] { display: none !important; }
+    .progress-fill { height: 100%; background: var(--accent); }
+
+    /* Loading Dots */
+    .loading { display: inline-flex; gap: 4px; align-items: center; padding: 0.5rem; }
+    .loading span {
+      width: 6px; height: 6px; background: var(--text-sec); border-radius: 50%;
+      animation: pulse 1s infinite;
+    }
+    .loading span:nth-child(2) { animation-delay: 0.2s; }
+    .loading span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+
+    /* =========================================
+       Phase 2: Feature Cards
+       ========================================= */
+    .feature-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    .feature-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+    .feature-card i { color: var(--accent); margin-bottom: 0.75rem; display: block; width: 28px; height: 28px; }
+    .card-actions { display: flex; gap: 0.5rem; }
+
+    /* =========================================
+       Phase 3: YAML Engine
+       ========================================= */
+    .yaml-panel { position: relative; }
+    .yaml-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    .yaml-body { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .yaml-input-area textarea { font-family: monospace; font-size: 0.9rem; height: 200px; background: #282C34; color: #ABB2BF; border-color: #282C34; }
+    .canvas-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #F0F0F0;
+      border-radius: 8px;
+      border: 1px dashed var(--border);
+      padding: 1rem;
+    }
+    #engine-canvas { background: #FFF; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 4px; max-width: 100%; }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .layout-grid, .feature-cards, .yaml-body { grid-template-columns: 1fr; }
+      #search-wrapper.top-bar { padding: 0 1rem; }
+      #search-wrapper.top-bar #logo-container { display: none; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>EduClaw</h1>
-    <span id="status" class="disconnected">Disconnected</span>
-  </header>
-  <div id="toast" aria-live="polite"></div>
-  <div id="agentStatus" aria-live="polite"></div>
-  <div id="log" aria-label="Conversation"></div>
 
-  <form id="form">
-    <div class="mode-row" role="radiogroup" aria-label="Mode">
-      <label><input type="radio" name="mode" value="chat" checked> Chat</label>
-      <label><input type="radio" name="mode" value="manim"> AutoManim</label>
+  <div id="search-wrapper">
+    <div id="logo-container">
+      <i data-lucide="brain-circuit"></i>
+      <span>EduClaw</span>
     </div>
-
-    <div id="chatRow">
-      <input id="input" type="text" autocomplete="off" placeholder="Message (plain text to /ws)…" autofocus disabled>
+    <div class="input-row">
+      <textarea id="main-input" rows="1" placeholder="Ask EduClaw to create a course, lecture, or animation..." aria-label="Prompt Input"></textarea>
+      <button id="btn-generate" class="btn-primary" aria-label="Generate Request">Generate</button>
     </div>
+  </div>
 
-    <div id="manimPanel" hidden>
-      <div class="meta">
-        <input id="manimId" type="text" autocomplete="off" placeholder="Metadata id (optional)" disabled>
-        <input id="manimTitle" type="text" autocomplete="off" placeholder="Title (optional)" disabled>
+  <div id="content-wrapper">
+    
+    <div id="main-layout" class="layout-grid hidden">
+      
+      <div class="card video-panel" aria-label="Media Output">
+        <div id="video-placeholder" class="video-placeholder">
+          <i data-lucide="play-circle" style="width: 48px; height: 48px;"></i>
+          <p>Animation Preview – Start generating to see output</p>
+        </div>
+        <canvas id="video-canvas" class="video-layer hidden" width="600" height="400"></canvas>
+        <div id="audio-mock" class="audio-mock hidden">
+          <i data-lucide="play" style="width: 32px; height: 32px; fill: var(--accent);"></i>
+          <div>
+            <h3 style="margin-bottom:0;">Lecture Audio generated</h3>
+            <p class="text-sm">0:00 / 4:15</p>
+          </div>
+        </div>
       </div>
-      <textarea id="manimMd" placeholder="Lecture Markdown body (with optional # heading)…" disabled></textarea>
+
+      <div class="card tabs-panel">
+        <div class="tab-header" role="tablist">
+          <button class="tab-btn active" data-tab="ask" role="tab">Ask</button>
+          <button class="tab-btn" data-tab="agent" role="tab">Agent</button>
+          <button class="tab-btn" data-tab="plan" role="tab">Plan</button>
+        </div>
+
+        <div class="tab-content">
+          <div id="tab-ask" class="tab-pane active" role="tabpanel">
+            <div id="chat-log" class="chat-log"></div>
+            <div class="chat-input">
+              <textarea id="chat-reply-input" rows="1" placeholder="Reply to EduClaw..." aria-label="Chat input"></textarea>
+              <button id="btn-chat-send" class="btn-primary" aria-label="Send Message"><i data-lucide="send"></i></button>
+            </div>
+          </div>
+          
+          <div id="tab-agent" class="tab-pane hidden" role="tabpanel">
+            <h3>AI Reasoning Trace</h3>
+            <p style="margin-bottom: 1rem;">Click to see how EduClaw breaks down complex problems.</p>
+            <button id="btn-run-agent" class="btn-secondary w-full" style="margin-bottom: 1rem;">Run Agent</button>
+            <div id="agent-output"></div>
+          </div>
+
+          <div id="tab-plan" class="tab-pane hidden" role="tabpanel">
+            <h3>Learning Roadmap</h3>
+            <div id="plan-output" class="mt"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="form-actions">
-      <button type="submit" id="send" disabled>Send</button>
+    <div id="feature-cards-container" class="feature-cards hidden">
+      <div class="card feature-card" id="card-autocourse">
+        <i data-lucide="book-open"></i>
+        <h3>AutoCourse</h3>
+        <p>Generate a structured learning path with detailed modules.</p>
+        <button id="btn-autocourse" class="btn-primary w-full mt">Generate AutoCourse</button>
+      </div>
+      <div class="card feature-card" id="card-autolecture">
+        <i data-lucide="presentation"></i>
+        <h3>AutoLecture</h3>
+        <p>Synthesise concepts into a complete audio-visual lecture.</p>
+        <button id="btn-autolecture" class="btn-primary w-full mt">Generate AutoLecture</button>
+      </div>
+      <div class="card feature-card" id="card-automanim">
+        <i data-lucide="film"></i>
+        <h3>AutoManim</h3>
+        <p>Render mathematical concepts as code-driven animations.</p>
+        <div class="card-actions mt">
+          <button id="btn-automanim" class="btn-primary" style="flex:1;">Generate AutoManim</button>
+          <button id="btn-edit-yaml" class="btn-secondary btn-icon" aria-label="Edit YAML Configuration"><i data-lucide="code"></i></button>
+        </div>
+      </div>
     </div>
-  </form>
 
-  <footer>
-    Chat: plain WebSocket text. AutoManim: JSON with <code style="font-size:0.95em;color:var(--muted)">type: automanim</code>.
-    Streams <code style="font-size:0.95em;color:var(--muted)">assistant.status</code>, <code style="font-size:0.95em;color:var(--muted)">assistant.delta</code>,
-    <code style="font-size:0.95em;color:var(--muted)">automanim.progress</code>, <code style="font-size:0.95em;color:var(--muted)">automanim.done</code>.
-    Videos: <code style="font-size:0.95em;color:var(--muted)">GET /artifacts/manim/…</code>
-  </footer>
+    <div id="yaml-engine-container" class="card yaml-panel hidden">
+      <div class="yaml-header">
+        <h3>YAML Animation Engine</h3>
+        <button id="btn-close-yaml" class="btn-icon" aria-label="Close Engine"><i data-lucide="x"></i></button>
+      </div>
+      <div class="yaml-body">
+        <div class="yaml-input-area">
+          <p class="text-sm" style="margin-bottom: 0.5rem; font-weight: 600;">Animation Config (YAML)</p>
+          <textarea id="yaml-input" spellcheck="false" aria-label="YAML Editor">
+animation:
+  type: sine_wave
+  amplitude: 50
+  frequency: 0.02
+  color: "#10A37F"
+  speed: 1.0</textarea>
+          <button id="btn-run-yaml" class="btn-primary mt w-full">Run Animation</button>
+        </div>
+        <div class="canvas-container">
+          <canvas id="engine-canvas" width="300" height="150"></canvas>
+          <p class="text-sm mt-sm">Live Preview Render</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
 
   <script>
-    const logEl = document.getElementById("log");
-    const statusEl = document.getElementById("status");
-    const toastEl = document.getElementById("toast");
-    const agentStatusEl = document.getElementById("agentStatus");
-    const form = document.getElementById("form");
-    const input = document.getElementById("input");
-    const sendBtn = document.getElementById("send");
-    const chatRow = document.getElementById("chatRow");
-    const manimPanel = document.getElementById("manimPanel");
-    const manimMd = document.getElementById("manimMd");
-    const manimId = document.getElementById("manimId");
-    const manimTitle = document.getElementById("manimTitle");
-    const modeRadios = form.querySelectorAll('input[name="mode"]');
+    // Initialize Lucide Icons
+    lucide.createIcons();
 
-    const wsUrl =
-      (location.protocol === "https:" ? "wss:" : "ws:") +
-      "//" +
-      location.host +
-      "/ws";
+    /* =========================================
+       State Management
+       ========================================= */
+    let currentPhase = 0;
+    let cardsUnveiled = false;
+    let animationReqId = null;
 
-    let ws = null;
-    let assistantEl = null;
-    let assistantMsgRoot = null;
+    const MOCK_DELAYS = { typing: 600, loading: 800 };
+    const AI_REPLIES = [
+      "The derivative of x² is 2x because of the power rule, lowering the exponent by 1.",
+      "To solve a quadratic equation, factor it or use the quadratic formula: x = (-b ± √(b² - 4ac)) / 2a.",
+      "A function is a relation where each input maps to exactly one output. Think of it as a mathematical machine."
+    ];
 
-    function currentMode() {
-      const r = form.querySelector('input[name="mode"]:checked');
-      return r ? r.value : "chat";
+    /* =========================================
+       DOM Elements
+       ========================================= */
+    const els = {
+      searchWrap: document.getElementById('search-wrapper'),
+      mainInput: document.getElementById('main-input'),
+      btnGenerate: document.getElementById('btn-generate'),
+      mainLayout: document.getElementById('main-layout'),
+      chatLog: document.getElementById('chat-log'),
+      chatInput: document.getElementById('chat-reply-input'),
+      btnChatSend: document.getElementById('btn-chat-send'),
+      tabs: document.querySelectorAll('.tab-btn'),
+      tabPanes: document.querySelectorAll('.tab-pane'),
+      featureCards: document.getElementById('feature-cards-container'),
+      yamlEngine: document.getElementById('yaml-engine-container'),
+      vidPlaceholder: document.getElementById('video-placeholder'),
+      vidCanvas: document.getElementById('video-canvas'),
+      audioMock: document.getElementById('audio-mock'),
+      engineCanvas: document.getElementById('engine-canvas'),
+      yamlInput: document.getElementById('yaml-input'),
+      btnRunYaml: document.getElementById('btn-run-yaml')
+    };
+
+    /* =========================================
+       Utility Functions
+       ========================================= */
+    const getLoaderHtml = () => `<div class="loading"><span></span><span></span><span></span></div>`;
+    
+    function autoResize(textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+    }
+    
+    // UI Transitions
+    function unveilPhase1() {
+      if (currentPhase >= 1) return;
+      currentPhase = 1;
+      els.searchWrap.classList.add('top-bar');
+      els.mainLayout.classList.remove('hidden');
+      els.mainLayout.classList.add('reveal');
+      setTimeout(() => lucide.createIcons(), 50);
     }
 
-    function syncModeUi() {
-      const m = currentMode();
-      const manim = m === "manim";
-      chatRow.hidden = manim;
-      manimPanel.hidden = !manim;
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        input.disabled = manim;
-        manimMd.disabled = !manim;
-        manimId.disabled = !manim;
-        manimTitle.disabled = !manim;
-        if (manim) manimMd.focus();
-        else input.focus();
-      }
+    function unveilPhase2() {
+      if (cardsUnveiled) return;
+      cardsUnveiled = true;
+      els.featureCards.classList.remove('hidden');
+      els.featureCards.classList.add('reveal');
     }
 
-    modeRadios.forEach(function (r) {
-      r.addEventListener("change", syncModeUi);
-    });
-
-    function setStatus(kind, label) {
-      statusEl.className = kind;
-      statusEl.textContent = label;
-    }
-
-    function toast(msg) {
-      toastEl.textContent = msg || "";
-    }
-
-    function setAgentStatus(kind, msg) {
-      agentStatusEl.className = kind || "";
-      agentStatusEl.textContent = msg || "";
-    }
-
-    function appendUser(text) {
-      const div = document.createElement("div");
-      div.className = "msg user";
-      div.innerHTML =
-        '<div class="label">You</div><div class="body"></div>';
-      div.querySelector(".body").textContent = text;
-      logEl.appendChild(div);
-      logEl.scrollTop = logEl.scrollHeight;
+    /* =========================================
+       Chat / Ask Logic
+       ========================================= */
+    function addChatMessage(role, text) {
+      const div = document.createElement('div');
+      div.className = `msg-bubble msg-${role} reveal`;
+      div.innerHTML = text;
+      els.chatLog.appendChild(div);
+      els.chatLog.scrollTop = els.chatLog.scrollHeight;
       return div;
     }
 
-    function startAssistantBubble() {
-      const div = document.createElement("div");
-      div.className = "msg assistant";
-      div.innerHTML =
-        '<div class="label">Assistant</div><div class="body"></div>' +
-        '<pre class="am-progress" hidden></pre><div class="am-videos"></div>';
-      div._amVideoSrcs = new Set();
-      logEl.appendChild(div);
-      logEl.scrollTop = logEl.scrollHeight;
-      assistantMsgRoot = div;
-      assistantEl = div.querySelector(".body");
-      return assistantEl;
-    }
-
-    function appendManimVideo(msgRoot, box, src, label) {
-      if (!msgRoot || !box || !src) return;
-      const seen = msgRoot._amVideoSrcs;
-      if (!seen || seen.has(src)) return;
-      seen.add(src);
-      const wrap = document.createElement("div");
-      wrap.className = "am-video-item";
-      if (label) {
-        const cap = document.createElement("div");
-        cap.className = "am-video-cap";
-        cap.textContent = label;
-        wrap.appendChild(cap);
-      }
-      const v = document.createElement("video");
-      v.setAttribute("controls", "");
-      v.setAttribute("playsinline", "");
-      v.setAttribute("preload", "metadata");
-      v.src = src;
-      wrap.appendChild(v);
-      box.appendChild(wrap);
-    }
-
-    function formatProgress(data) {
-      const k = data.kind || "?";
-      const ex = data.extra && typeof data.extra === "object" ? data.extra : {};
-      let msg = data.message || "";
-      if (ex.attempt != null) {
-        msg = (msg ? msg + " · " : "") + "attempt " + ex.attempt;
-      }
-      if (ex.path) {
-        msg = (msg ? msg + " · " : "") + String(ex.path);
-      }
-      if (k === "scene_done" && data.artifact && typeof data.artifact === "object") {
-        const ar = data.artifact;
-        const path = ar.artifact_path ? String(ar.artifact_path).trim() : "";
-        const badExit = ar.exit_code != null && ar.exit_code !== 0;
-        const bad = badExit || !path;
-        if (bad) {
-          const bits = [];
-          if (badExit) bits.push("exit " + ar.exit_code);
-          if (!path) bits.push("no file on disk");
-          if (ar.stderr_tail) {
-            let tail = String(ar.stderr_tail).replace(/\s+/g, " ").trim();
-            if (tail.length > 220) tail = tail.slice(0, 220) + "…";
-            bits.push(tail);
-          }
-          msg = (msg ? msg + " · " : "") + bits.join(" · ");
-        } else if (path) {
-          msg = (msg ? msg + " · " : "") + path;
+    function handleAskSubmission(promptText, isInitial = false) {
+      if (!promptText.trim()) return;
+      
+      addChatMessage('user', promptText);
+      const loadingBubble = addChatMessage('ai', getLoaderHtml());
+      
+      setTimeout(() => {
+        loadingBubble.remove();
+        if (isInitial) {
+          addChatMessage('ai', `Got it! I’m preparing a personalised learning experience on: <em>${promptText}</em>. You can switch to <strong>Agent</strong> for step-by-step reasoning, or check the <strong>Plan</strong> tab for a structured roadmap.`);
+        } else {
+          const randomReply = AI_REPLIES[Math.floor(Math.random() * AI_REPLIES.length)];
+          addChatMessage('ai', randomReply);
         }
-      }
-      let prefix = "";
-      if (data.scene_index != null) {
-        prefix += "[scene " + data.scene_index + "]";
-      }
-      if (data.scene_title) {
-        prefix += (prefix ? " " : "") + data.scene_title;
-      }
-      if (prefix && msg) {
-        msg = prefix + " — " + msg;
-      } else if (prefix) {
-        msg = prefix + (msg ? " — " + msg : "");
-      }
-      if (k === "phase") {
-        return msg.trim() ? msg.trim() : "phase";
-      }
-      return msg.trim() ? k + ": " + msg.trim() : k;
+      }, MOCK_DELAYS.typing);
     }
 
-    function setInputsEnabled(ok) {
-      sendBtn.disabled = !ok;
-      const manim = currentMode() === "manim";
-      input.disabled = !ok || manim;
-      manimMd.disabled = !ok || !manim;
-      manimId.disabled = !ok || !manim;
-      manimTitle.disabled = !ok || !manim;
-      if (ok) {
-        if (manim) manimMd.focus();
-        else input.focus();
+    // Input Listeners
+    els.btnGenerate.addEventListener('click', () => {
+      const text = els.mainInput.value;
+      if (!text) return;
+      
+      if (currentPhase === 0) {
+        unveilPhase1();
+        handleAskSubmission(text, true);
+      } else {
+        els.tabs[0].click(); // Switch to Ask tab
+        handleAskSubmission(text, false);
       }
-    }
-
-    function connect() {
-      toast("");
-      ws = new WebSocket(wsUrl);
-
-      ws.onopen = function () {
-        setStatus("connected", "Connected");
-        setInputsEnabled(true);
-        syncModeUi();
-      };
-
-      ws.onclose = function () {
-        setStatus("disconnected", "Disconnected");
-        setInputsEnabled(false);
-        assistantEl = null;
-        assistantMsgRoot = null;
-        ws = null;
-      };
-
-      ws.onerror = function () {
-        setStatus("error", "Error");
-        toast("WebSocket error (check gateway is running on this host).");
-      };
-
-      ws.onmessage = function (event) {
-        try {
-          const msg = JSON.parse(event.data);
-
-          if (msg.type === "automanim.progress" && msg.data && assistantMsgRoot) {
-            const pre = assistantMsgRoot.querySelector(".am-progress");
-            if (pre) {
-              pre.hidden = false;
-              const line = formatProgress(msg.data);
-              pre.textContent += (pre.textContent ? "\n" : "") + line;
-            }
-            if (msg.data.kind === "scene_done" && msg.data.artifact_url) {
-              const box = assistantMsgRoot.querySelector(".am-videos");
-              let cap = "";
-              if (msg.data.scene_index != null) {
-                cap += "[scene " + msg.data.scene_index + "]";
-              }
-              if (msg.data.scene_title) {
-                cap += (cap ? " " : "") + msg.data.scene_title;
-              }
-              appendManimVideo(assistantMsgRoot, box, msg.data.artifact_url, cap);
-            }
-            logEl.scrollTop = logEl.scrollHeight;
-            return;
-          }
-
-          if (msg.type === "automanim.done" && msg.data && assistantMsgRoot) {
-            const box = assistantMsgRoot.querySelector(".am-videos");
-            const urls = msg.data.artifact_urls || [];
-            urls.forEach(function (src) {
-              appendManimVideo(assistantMsgRoot, box, src, "");
-            });
-            if (msg.data.success === false && urls.length > 0) {
-              const hint = document.createElement("div");
-              hint.className = "am-video-hint";
-              hint.textContent =
-                "Completed with errors; showing " + urls.length + " rendered scene(s).";
-              box.appendChild(hint);
-            }
-            logEl.scrollTop = logEl.scrollHeight;
-            return;
-          }
-
-          if (msg.type === "assistant.status" && msg.data && typeof msg.data.phase === "string") {
-            const ph = msg.data.phase;
-            if (ph === "start") {
-              setAgentStatus("working", "Generating…");
-            } else if (ph === "error") {
-              setAgentStatus("err", msg.data.message ? "Error: " + msg.data.message : "Error.");
-            } else if (ph === "end") {
-              setAgentStatus("", "");
-            }
-            return;
-          }
-          if (msg.type === "assistant.delta" && assistantEl !== null && typeof msg.token === "string") {
-            if (agentStatusEl.textContent) setAgentStatus("", "");
-            assistantEl.appendChild(document.createTextNode(msg.token));
-            logEl.scrollTop = logEl.scrollHeight;
-          }
-        } catch (e) {
-          toast("Bad JSON from server: " + (e.message || String(e)));
-        }
-      };
-    }
-
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      if (!ws || ws.readyState !== WebSocket.OPEN) return;
-
-      toast("");
-      setAgentStatus("", "");
-
-      if (currentMode() === "chat") {
-        const text = input.value.trim();
-        if (!text) return;
-        appendUser(text);
-        assistantEl = null;
-        assistantMsgRoot = null;
-        startAssistantBubble();
-        ws.send(text);
-        input.value = "";
-        return;
-      }
-
-      const md = manimMd.value.trim();
-      if (!md) {
-        toast("Paste lecture Markdown for AutoManim.");
-        return;
-      }
-
-      const meta = {};
-      const idv = manimId.value.trim();
-      const titlev = manimTitle.value.trim();
-      if (idv) meta.id = idv;
-      if (titlev) meta.title = titlev;
-
-      const payload = { type: "automanim", markdown: md, metadata: meta };
-
-      appendUser("[AutoManim] " + (titlev || idv || "lecture"));
-      assistantEl = null;
-      assistantMsgRoot = null;
-      startAssistantBubble();
-      const bubblePre = assistantMsgRoot.querySelector(".am-progress");
-      if (bubblePre) {
-        bubblePre.hidden = false;
-        bubblePre.textContent = "Queued; waiting for gateway…";
-      }
-
-      ws.send(JSON.stringify(payload));
+      els.mainInput.value = '';
+      autoResize(els.mainInput);
     });
 
-    connect();
+    els.mainInput.addEventListener('input', () => autoResize(els.mainInput));
+    els.mainInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        els.btnGenerate.click();
+      }
+    });
+
+    els.btnChatSend.addEventListener('click', () => {
+      handleAskSubmission(els.chatInput.value);
+      els.chatInput.value = '';
+      autoResize(els.chatInput);
+    });
+    
+    els.chatInput.addEventListener('input', () => autoResize(els.chatInput));
+    els.chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); els.btnChatSend.click(); }
+    });
+
+    /* =========================================
+       Tab Switching Logic
+       ========================================= */
+    let planGenerated = false;
+    
+    els.tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Trigger Phase 2 on Agent or Plan clicks
+        if (tab.dataset.tab === 'agent' || tab.dataset.tab === 'plan') {
+          if (currentPhase === 1) unveilPhase2();
+        }
+
+        // Active State Swap
+        els.tabs.forEach(t => t.classList.remove('active'));
+        els.tabPanes.forEach(p => p.classList.add('hidden'));
+        tab.classList.add('active');
+        document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
+
+        // Generate Plan on first visit
+        if (tab.dataset.tab === 'plan' && !planGenerated) {
+          planGenerated = true;
+          generateMockPlan();
+        }
+      });
+    });
+
+    function generateMockPlan() {
+      const out = document.getElementById('plan-output');
+      out.innerHTML = getLoaderHtml();
+      setTimeout(() => {
+        out.innerHTML = `
+          <div class="plan-item reveal">
+            <input type="checkbox" checked disabled>
+            <div class="w-full">
+              <h4 class="text-sm">Week 1: Foundations – Variables, Expressions</h4>
+              <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+            </div>
+          </div>
+          <div class="plan-item reveal" style="animation-delay: 0.1s">
+            <input type="checkbox" disabled>
+            <div class="w-full">
+              <h4 class="text-sm">Week 2: Linear Equations</h4>
+              <div class="progress-bar"><div class="progress-fill" style="width:25%"></div></div>
+            </div>
+          </div>
+          <div class="plan-item reveal" style="animation-delay: 0.2s">
+            <input type="checkbox" disabled>
+            <div class="w-full">
+              <h4 class="text-sm">Week 3: Functions & Graphs</h4>
+              <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+        `;
+      }, MOCK_DELAYS.loading);
+    }
+
+    // Agent Run Logic
+    document.getElementById('btn-run-agent').addEventListener('click', () => {
+      const out = document.getElementById('agent-output');
+      out.innerHTML = getLoaderHtml();
+      setTimeout(() => {
+        out.innerHTML = '';
+        const steps = [
+          "Step 1: Identify the equation: 2x + 5 = 15",
+          "Step 2: Subtract 5 from both sides → 2x = 10",
+          "Step 3: Divide both sides by 2 → x = 5",
+          "Step 4: Verify by plugging back → 2(5)+5=15 ✓"
+        ];
+        steps.forEach((step, i) => {
+          const d = document.createElement('div');
+          d.className = 'agent-step reveal';
+          d.style.animationDelay = `${i * 0.4}s`;
+          d.textContent = step;
+          out.appendChild(d);
+        });
+      }, MOCK_DELAYS.loading);
+    });
+
+    /* =========================================
+       Feature Cards Logic
+       ========================================= */
+    
+    // AutoCourse
+    const cardCourse = document.getElementById('card-autocourse');
+    const courseOriginalHtml = cardCourse.innerHTML;
+    document.getElementById('btn-autocourse').addEventListener('click', function handleCourse() {
+      cardCourse.innerHTML = getLoaderHtml();
+      setTimeout(() => {
+        cardCourse.innerHTML = `
+          <h3>Course: Algebra Fundamentals</h3>
+          <p class="text-sm mt-sm"><strong>3 Modules:</strong></p>
+          <ul class="text-sm" style="margin-left: 1rem; color: var(--text-sec);">
+            <li>1. Basics of Algebra (2h)</li>
+            <li>2. Solving Equations (3h)</li>
+            <li>3. Graphing Functions (2.5h)</li>
+          </ul>
+          <p class="text-sm mt-sm"><strong>Estimated total:</strong> 7.5 hours</p>
+          <button class="btn-secondary w-full mt text-sm" id="btn-reset-course">Reset</button>
+        `;
+        document.getElementById('btn-reset-course').addEventListener('click', () => {
+          cardCourse.innerHTML = courseOriginalHtml;
+          lucide.createIcons();
+          document.getElementById('btn-autocourse').addEventListener('click', handleCourse);
+        });
+      }, MOCK_DELAYS.loading);
+    });
+
+    // AutoLecture
+    const cardLecture = document.getElementById('card-autolecture');
+    const lectureOriginalHtml = cardLecture.innerHTML;
+    document.getElementById('btn-autolecture').addEventListener('click', function handleLecture() {
+      cardLecture.innerHTML = getLoaderHtml();
+      setTimeout(() => {
+        cardLecture.innerHTML = `
+          <h3>Lecture: Intro to Derivatives</h3>
+          <ul class="text-sm mt-sm" style="margin-left: 1rem; color: var(--text-sec);">
+            <li>Slope of a tangent</li>
+            <li>Limit definition</li>
+            <li>Basic rules</li>
+          </ul>
+          <button class="btn-secondary w-full mt text-sm" id="btn-reset-lecture">Reset</button>
+        `;
+        // Show mock audio in video panel
+        els.vidPlaceholder.classList.add('hidden');
+        els.vidCanvas.classList.add('hidden');
+        els.audioMock.classList.remove('hidden');
+        els.audioMock.classList.add('reveal');
+        
+        document.getElementById('btn-reset-lecture').addEventListener('click', () => {
+          cardLecture.innerHTML = lectureOriginalHtml;
+          lucide.createIcons();
+          document.getElementById('btn-autolecture').addEventListener('click', handleLecture);
+        });
+      }, MOCK_DELAYS.loading);
+    });
+
+    /* =========================================
+       Phase 3: YAML Engine & Canvas Drawing
+       ========================================= */
+    document.getElementById('btn-automanim').addEventListener('click', triggerYamlEngine);
+    document.getElementById('btn-edit-yaml').addEventListener('click', triggerYamlEngine);
+    document.getElementById('btn-close-yaml').addEventListener('click', () => {
+      els.yamlEngine.classList.add('hidden');
+    });
+
+    function triggerYamlEngine() {
+      els.yamlEngine.classList.remove('hidden');
+      els.yamlEngine.classList.add('reveal');
+      setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
+      els.btnRunYaml.click(); // Auto-start
+    }
+
+    // Tiny YAML Parser
+    function parseYAML(yamlString) {
+      const config = {};
+      yamlString.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('animation:')) return;
+        const [key, ...rest] = trimmed.split(':');
+        if (key && rest.length) {
+          let val = rest.join(':').trim();
+          // Remove quotes
+          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.slice(1, -1);
+          }
+          config[key.trim()] = val;
+        }
+      });
+      return config;
+    }
+
+    // Animation Loop
+    els.btnRunYaml.addEventListener('click', () => {
+      const yamlCode = els.yamlInput.value;
+      const config = parseYAML(yamlCode);
+      
+      const eCtx = els.engineCanvas.getContext('2d');
+      const vCtx = els.vidCanvas.getContext('2d');
+      
+      // Update UI panels to show Video Canvas
+      els.vidPlaceholder.classList.add('hidden');
+      els.audioMock.classList.add('hidden');
+      els.vidCanvas.classList.remove('hidden');
+      
+      if (animationReqId) cancelAnimationFrame(animationReqId);
+      
+      const startTime = performance.now();
+
+      function drawFrame(now) {
+        const time = (now - startTime) / 10;
+        
+        // Clear canvases
+        eCtx.clearRect(0, 0, els.engineCanvas.width, els.engineCanvas.height);
+        
+        const type = config.type || 'sine_wave';
+        const color = config.color || '#10A37F';
+        const speed = parseFloat(config.speed) || 1.0;
+        
+        eCtx.strokeStyle = color;
+        eCtx.fillStyle = color;
+        eCtx.lineWidth = 2;
+
+        if (type === 'sine_wave') {
+          const amp = parseFloat(config.amplitude) || 50;
+          const freq = parseFloat(config.frequency) || 0.02;
+          
+          eCtx.beginPath();
+          for (let x = 0; x <= els.engineCanvas.width; x++) {
+            const y = (els.engineCanvas.height / 2) + amp * Math.sin((x * freq) + (time * 0.05 * speed));
+            if (x === 0) eCtx.moveTo(x, y);
+            else eCtx.lineTo(x, y);
+          }
+          eCtx.stroke();
+        } 
+        else if (type === 'bouncing_ball') {
+          const radius = parseFloat(config.radius) || 15;
+          const y = (els.engineCanvas.height / 2) + 50 * Math.sin(time * 0.05 * speed);
+          eCtx.beginPath();
+          eCtx.arc(els.engineCanvas.width / 2, y, radius, 0, Math.PI * 2);
+          eCtx.fill();
+        }
+        else if (type === 'rotating_polygon') {
+          eCtx.save();
+          eCtx.translate(els.engineCanvas.width/2, els.engineCanvas.height/2);
+          eCtx.rotate(time * 0.02 * speed);
+          eCtx.beginPath();
+          // Draw hexagon
+          for (let i = 0; i < 6; i++) {
+            const angle = i * Math.PI / 3;
+            const x = 40 * Math.cos(angle);
+            const y = 40 * Math.sin(angle);
+            if (i === 0) eCtx.moveTo(x, y);
+            else eCtx.lineTo(x, y);
+          }
+          eCtx.closePath();
+          eCtx.stroke();
+          eCtx.restore();
+        }
+
+        // Mirror Engine Canvas to Video Panel Canvas
+        vCtx.clearRect(0, 0, els.vidCanvas.width, els.vidCanvas.height);
+        vCtx.drawImage(els.engineCanvas, 0, 0, els.vidCanvas.width, els.vidCanvas.height);
+
+        animationReqId = requestAnimationFrame(drawFrame);
+      }
+      
+      animationReqId = requestAnimationFrame(drawFrame);
+    });
+
   </script>
 </body>
 </html>
