@@ -1,0 +1,16 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+Welcome to Intro to Derivatives.
+
+00:00:05.000 --> 00:00:12.000
+The derivative measures the slope of a tangent line to a curve at a point.
+
+00:00:12.000 --> 00:00:20.000
+We define it as the limit of the difference quotient as h approaches zero.
+
+00:00:20.000 --> 00:00:28.000
+Basic rules: the power rule, product rule, and chain rule simplify differentiation.
+
+00:00:28.000 --> 00:00:35.000
+For example, the derivative of x squared is 2x.

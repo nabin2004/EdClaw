@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EduClaw Dashboard</title>
+  <link rel="stylesheet" href="/static/player.css">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html@10.0.0-beta.24/cdn/video-minimal-ui.js"></script>
+  <script type="module" src="/static/educlaw-player.js"></script>
   <style>
     /* =========================================
        Design System & CSS Variables
@@ -12,8 +15,8 @@
     :root {
       --bg-page: #F9F9F9;
       --bg-card: #FFFFFF;
-      --accent: #10A37F;
-      --accent-hover: #0D8B6C;
+      --accent: #1A1A1A;
+      --accent-hover: #333333;
       --text-main: #1A1A1A;
       --text-sec: #6B6B6B;
       --border: #E5E5E5;
@@ -22,6 +25,7 @@
       --radius-btn: 8px;
       --radius-card: 12px;
       --spacing: 8px;
+      --header-height: 56px;
     }
 
     * {
@@ -115,15 +119,40 @@
     /* =========================================
        Phase 0 & 1: Search Wrapper
        ========================================= */
+    #app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--header-height);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 1.5rem;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      z-index: 900;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .header-brand svg { width: 22px; height: 22px; }
+    #btn-new-session { padding: 0.5rem 1rem; font-size: 0.9rem; }
+
     #search-wrapper {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       width: 100%;
-      max-width: 680px;
+      max-width: 820px;
       padding: 0 1.5rem;
-      transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: opacity 0.4s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -148,45 +177,73 @@
       align-items: flex-end;
     }
 
-    /* Top Bar Transformation (Phase 1) */
-    #search-wrapper.top-bar {
-      top: 0;
+    /* Mode Picker (dropup) */
+    .mode-picker {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .mode-picker-btn {
+      background: transparent;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 0.65rem 0.75rem;
+      min-width: 72px;
+      height: 44px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .mode-picker-btn:hover { background: #F0F0F0; }
+    .mode-picker-btn svg { width: 14px; height: 14px; color: var(--text-sec); }
+    .mode-picker-btn.is-auto {
+      background: var(--accent);
+      color: #FFF;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .mode-picker-btn.is-auto:hover { background: var(--accent-hover); }
+    .mode-picker-btn.is-auto svg { color: #FFF; }
+    .mode-auto-icon { width: 15px !important; height: 15px !important; }
+    .mode-menu {
+      position: absolute;
+      bottom: calc(100% + 4px);
       left: 0;
-      transform: none;
-      max-width: 100%;
-      height: 72px;
-      flex-direction: row;
-      justify-content: center;
+      min-width: 120px;
       background: var(--bg-card);
-      border-bottom: 1px solid var(--border);
-      padding: 0 2rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-btn);
+      box-shadow: var(--shadow);
+      list-style: none;
+      padding: 0.25rem;
+      z-index: 1100;
     }
-    #search-wrapper.top-bar #logo-container {
-      margin-bottom: 0;
-      font-size: 1.25rem;
-      margin-right: 2rem;
+    .mode-menu [role="option"] {
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--text-main);
     }
-    #search-wrapper.top-bar .input-row {
-      max-width: 800px;
-      align-items: center;
-    }
-    #search-wrapper.top-bar textarea {
-      padding: 0.5rem 1rem;
+    .mode-menu [role="option"]:hover { background: #F0F0F0; }
+    .mode-menu [role="option"].selected {
+      background: var(--accent);
+      color: #FFF;
     }
 
     /* =========================================
        Main Content Layout (Phase 1+)
        ========================================= */
     #content-wrapper {
-      padding-top: 100px;
-      padding-bottom: 40px;
-      max-width: 1200px;
-      margin: 0 auto;
+      padding: 1rem 1.5rem 2rem;
+      width: 100%;
+      max-width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 2rem;
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
+      gap: 1.5rem;
+    }
+    #content-wrapper.in-session {
+      padding-top: calc(var(--header-height) + 1rem);
     }
 
     .card {
@@ -200,8 +257,9 @@
 
     .layout-grid {
       display: grid;
-      grid-template-columns: 60% calc(40% - 1.5rem);
+      grid-template-columns: 1fr 1fr;
       gap: 1.5rem;
+      width: 100%;
     }
 
     /* Video Panel */
@@ -209,7 +267,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 400px;
+      min-height: calc(100vh - var(--header-height) - 2rem);
       background: #000;
       color: #FFF;
       position: relative;
@@ -224,57 +282,66 @@
       color: #888;
       gap: 1rem;
     }
-    video, canvas.video-layer {
+    canvas.video-layer {
       width: 100%;
       height: 100%;
       object-fit: cover;
       background: #FFF;
     }
-    
-    /* Mock Audio Player */
-    .audio-mock {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      background: #FFF;
-      padding: 1rem 2rem;
-      border-radius: 50px;
-      color: var(--text-main);
+    .video-player-host {
+      width: 100%;
+      height: 100%;
+      min-height: inherit;
+      align-self: stretch;
     }
-    .audio-mock svg { color: var(--accent); }
+    .video-player-host media-container {
+      min-height: calc(100vh - var(--header-height) - 2rem);
+    }
 
-    /* Tabs Panel */
+    /* Chat Panel */
     .tabs-panel {
       display: flex;
       flex-direction: column;
-      height: 100%;
+      height: calc(100vh - var(--header-height) - 2rem);
       min-height: 400px;
+      overflow: hidden;
     }
-    .tab-header {
+    .chat-view {
+      flex: 1;
+      min-height: 0;
       display: flex;
-      gap: 0.5rem;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
-      margin-bottom: 1rem;
+      flex-direction: column;
+      overflow: hidden;
     }
-    .tab-btn {
-      background: transparent;
-      color: var(--text-sec);
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      font-weight: 500;
+    #mode-bottom-panel {
+      flex-shrink: 0;
+      max-height: 40%;
+      border-top: 1px solid var(--border);
+      padding-top: 0.75rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
     }
-    .tab-btn.active {
-      background: var(--accent);
-      color: #FFF;
+    .mode-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      margin-bottom: 0.5rem;
     }
-    .tab-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .tab-pane { flex: 1; display: flex; flex-direction: column; }
+    .mode-panel-header h3 { margin-bottom: 0; font-size: 0.95rem; }
+    #mode-bottom-panel .scroll-area {
+      max-height: 180px;
+    }
 
     /* Chat / Ask Tab */
     .chat-log {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
+      scroll-behavior: smooth;
       display: flex;
       flex-direction: column;
       gap: 1rem;
@@ -299,7 +366,75 @@
       border: 1px solid var(--border);
       border-bottom-left-radius: 2px;
     }
-    .chat-input { display: flex; gap: 0.5rem; align-items: flex-end; }
+    .chat-composer {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .chat-input {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+    .btn-attach {
+      background: transparent;
+      color: var(--text-sec);
+      border: 1px solid var(--border);
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .btn-attach:hover { background: #F0F0F0; color: var(--text-main); }
+    .btn-attach svg { width: 18px; height: 18px; }
+    .doc-attachments {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .doc-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      max-width: 100%;
+      padding: 0.35rem 0.5rem 0.35rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: #FAFAFA;
+      font-size: 0.8rem;
+      color: var(--text-main);
+    }
+    .doc-chip svg { width: 14px; height: 14px; color: var(--text-sec); flex-shrink: 0; }
+    .doc-chip-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 140px;
+    }
+    .doc-chip-status {
+      font-size: 0.72rem;
+      color: var(--text-sec);
+      white-space: nowrap;
+    }
+    .doc-chip-status.ready { color: var(--text-main); }
+    .doc-chip-remove {
+      background: transparent;
+      color: var(--text-sec);
+      border: none;
+      padding: 0.15rem;
+      border-radius: 50%;
+      line-height: 0;
+    }
+    .doc-chip-remove:hover { color: var(--text-main); background: #EAEAEA; }
+    .doc-chip-remove svg { width: 12px; height: 12px; }
+    .scroll-area {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
     
     /* Agent Trace */
     .agent-step {
@@ -370,15 +505,63 @@
     }
     #engine-canvas { background: #FFF; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 4px; max-width: 100%; }
 
+    /* Confirmation Dialog */
+    #confirm-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: 2000;
+    }
+    .confirm-dialog {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+    }
+    .confirm-dialog h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .confirm-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 1.25rem;
+    }
+    .confirm-actions button { padding: 0.5rem 1rem; font-size: 0.9rem; }
+
     /* Responsive Design */
     @media (max-width: 768px) {
       .layout-grid, .feature-cards, .yaml-body { grid-template-columns: 1fr; }
-      #search-wrapper.top-bar { padding: 0 1rem; }
-      #search-wrapper.top-bar #logo-container { display: none; }
+      .tabs-panel, .video-panel {
+        min-height: 320px;
+        height: auto;
+      }
+      #mode-bottom-panel { max-height: 200px; }
+      #mode-bottom-panel .scroll-area { max-height: 140px; }
     }
   </style>
 </head>
 <body>
+
+  <header id="app-header" class="hidden">
+    <div class="header-brand">
+      <i data-lucide="brain-circuit"></i>
+      <span>EduClaw</span>
+    </div>
+    <button type="button" id="btn-new-session" class="btn-secondary" aria-label="Start a new session">
+      <i data-lucide="plus"></i>
+      New Session
+    </button>
+  </header>
 
   <div id="search-wrapper">
     <div id="logo-container">
@@ -386,7 +569,7 @@
       <span>EduClaw</span>
     </div>
     <div class="input-row">
-      <textarea id="main-input" rows="1" placeholder="Ask EduClaw to create a course, lecture, or animation..." aria-label="Prompt Input"></textarea>
+      <textarea id="main-input" rows="2" placeholder="Ask EduClaw to create a course, lecture, or animation..." aria-label="Prompt Input"></textarea>
       <button id="btn-generate" class="btn-primary" aria-label="Generate Request">Generate</button>
     </div>
   </div>
@@ -401,41 +584,249 @@
           <p>Animation Preview – Start generating to see output</p>
         </div>
         <canvas id="video-canvas" class="video-layer hidden" width="600" height="400"></canvas>
-        <div id="audio-mock" class="audio-mock hidden">
-          <i data-lucide="play" style="width: 32px; height: 32px; fill: var(--accent);"></i>
-          <div>
-            <h3 style="margin-bottom:0;">Lecture Audio generated</h3>
-            <p class="text-sm">0:00 / 4:15</p>
-          </div>
+        <div id="video-player-host" class="video-player-host hidden" aria-label="Lecture video player">
+          <video-player>
+            <educlaw-learning-rates hidden></educlaw-learning-rates>
+            <media-container class="media-minimal-skin media-minimal-skin--video">
+              <video id="educlaw-video" playsinline crossorigin="anonymous"></video>
+
+              <media-poster>
+                <img src="https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.webp" alt="">
+              </media-poster>
+
+              <media-buffering-indicator class="media-buffering-indicator">
+                <media-icon name="spinner" family="minimal" class="media-icon"></media-icon>
+              </media-buffering-indicator>
+
+              <media-error-dialog class="media-error">
+                <div class="media-error__dialog">
+                  <div class="media-error__content">
+                    <media-alert-dialog-title class="media-error__title">Something went wrong.</media-alert-dialog-title>
+                    <media-alert-dialog-description class="media-error__description"></media-alert-dialog-description>
+                  </div>
+                  <div class="media-error__actions">
+                    <media-alert-dialog-close class="media-button media-button--primary">OK</media-alert-dialog-close>
+                  </div>
+                </div>
+              </media-error-dialog>
+
+              <media-controls class="media-controls">
+                <media-tooltip-group>
+                  <div class="media-button-group">
+                    <media-play-button commandfor="play-tooltip" class="media-button media-button--subtle media-button--icon media-button--play">
+                      <media-icon name="restart" family="minimal" class="media-icon media-icon--restart"></media-icon>
+                      <media-icon name="play" family="minimal" class="media-icon media-icon--play"></media-icon>
+                      <media-icon name="pause" family="minimal" class="media-icon media-icon--pause"></media-icon>
+                    </media-play-button>
+                    <media-tooltip id="play-tooltip" side="top" class="media-tooltip"></media-tooltip>
+
+                    <media-seek-button commandfor="seek-backward-tooltip" seconds="-10" class="media-button media-button--subtle media-button--icon media-button--seek">
+                      <span class="media-icon__container">
+                        <media-icon name="seek" family="minimal" class="media-icon media-icon--flipped"></media-icon>
+                        <span class="media-icon__label">10</span>
+                      </span>
+                    </media-seek-button>
+                    <media-tooltip id="seek-backward-tooltip" side="top" class="media-tooltip"></media-tooltip>
+
+                    <media-seek-button commandfor="seek-forward-tooltip" seconds="10" class="media-button media-button--subtle media-button--icon media-button--seek">
+                      <span class="media-icon__container">
+                        <media-icon name="seek" family="minimal" class="media-icon"></media-icon>
+                        <span class="media-icon__label">10</span>
+                      </span>
+                    </media-seek-button>
+                    <media-tooltip id="seek-forward-tooltip" side="top" class="media-tooltip"></media-tooltip>
+                  </div>
+
+                  <div class="media-time-controls">
+                    <media-time-group class="media-time-group">
+                      <media-time type="current" class="media-time media-time--current"></media-time>
+                      <media-time-separator class="media-time-separator"></media-time-separator>
+                      <media-time type="duration" class="media-time media-time--duration"></media-time>
+                    </media-time-group>
+
+                    <media-time-slider class="media-slider">
+                      <media-slider-track class="media-slider__track">
+                        <media-slider-fill class="media-slider__fill"></media-slider-fill>
+                        <media-slider-buffer class="media-slider__buffer"></media-slider-buffer>
+                      </media-slider-track>
+                      <media-slider-thumb class="media-slider__thumb"></media-slider-thumb>
+
+                      <div class="media-preview media-slider__preview">
+                        <div class="media-preview__thumbnail-wrapper">
+                          <media-slider-thumbnail class="media-preview__thumbnail"></media-slider-thumbnail>
+                        </div>
+                        <media-slider-value type="pointer" class="media-time media-preview__time"></media-slider-value>
+                        <media-icon name="spinner" family="minimal" class="media-preview__spinner media-icon"></media-icon>
+                      </div>
+                    </media-time-slider>
+                  </div>
+
+                  <div class="media-button-group">
+                    <media-playback-rate-menu-trigger commandfor="playback-rate-menu" class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-menu-trigger>
+                    <media-playback-rate-menu id="playback-rate-menu" side="top" align="center" class="media-popover media-menu media-menu--playback-rate">
+                      <media-playback-rate-options class="media-menu__group">
+                        <template>
+                          <media-menu-radio-item class="media-menu__item">
+                            <span data-part="label"></span>
+                            <media-menu-item-indicator force-mount class="media-menu__indicator">
+                              <media-icon name="check" family="minimal" class="media-icon"></media-icon>
+                            </media-menu-item-indicator>
+                          </media-menu-radio-item>
+                        </template>
+                      </media-playback-rate-options>
+                    </media-playback-rate-menu>
+
+                    <media-mute-button commandfor="video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
+                      <media-icon name="volume-off" family="minimal" class="media-icon media-icon--volume-off"></media-icon>
+                      <media-icon name="volume-low" family="minimal" class="media-icon media-icon--volume-low"></media-icon>
+                      <media-icon name="volume-high" family="minimal" class="media-icon media-icon--volume-high"></media-icon>
+                    </media-mute-button>
+
+                    <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="media-popover media-popover--volume">
+                      <media-volume-slider class="media-slider" orientation="vertical" thumb-alignment="edge">
+                        <media-slider-track class="media-slider__track">
+                          <media-slider-fill class="media-slider__fill"></media-slider-fill>
+                        </media-slider-track>
+                        <media-slider-thumb class="media-slider__thumb media-slider__thumb--persistent"></media-slider-thumb>
+                      </media-volume-slider>
+                    </media-popover>
+
+                    <media-captions-button commandfor="captions-tooltip" class="media-button media-button--subtle media-button--icon media-button--captions">
+                      <media-icon name="captions-off" family="minimal" class="media-icon media-icon--captions-off"></media-icon>
+                      <media-icon name="captions-on" family="minimal" class="media-icon media-icon--captions-on"></media-icon>
+                    </media-captions-button>
+                    <media-tooltip id="captions-tooltip" side="top" class="media-tooltip"></media-tooltip>
+
+                    <media-cast-button commandfor="cast-tooltip" class="media-button media-button--subtle media-button--icon media-button--cast">
+                      <media-icon name="cast-enter" family="minimal" class="media-icon media-icon--cast-enter"></media-icon>
+                      <media-icon name="cast-exit" family="minimal" class="media-icon media-icon--cast-exit"></media-icon>
+                    </media-cast-button>
+                    <media-tooltip id="cast-tooltip" side="top" class="media-tooltip"></media-tooltip>
+
+                    <media-pip-button commandfor="pip-tooltip" class="media-button media-button--subtle media-button--icon media-button--pip">
+                      <media-icon name="pip-enter" family="minimal" class="media-icon media-icon--pip-enter"></media-icon>
+                      <media-icon name="pip-exit" family="minimal" class="media-icon media-icon--pip-exit"></media-icon>
+                    </media-pip-button>
+                    <media-tooltip id="pip-tooltip" side="top" class="media-tooltip"></media-tooltip>
+
+                    <media-fullscreen-button commandfor="fullscreen-tooltip" class="media-button media-button--subtle media-button--icon media-button--fullscreen">
+                      <media-icon name="fullscreen-enter" family="minimal" class="media-icon media-icon--fullscreen-enter"></media-icon>
+                      <media-icon name="fullscreen-exit" family="minimal" class="media-icon media-icon--fullscreen-exit"></media-icon>
+                    </media-fullscreen-button>
+                    <media-tooltip id="fullscreen-tooltip" side="top" class="media-tooltip"></media-tooltip>
+                  </div>
+                </media-tooltip-group>
+              </media-controls>
+
+              <div class="media-overlay"></div>
+
+              <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+              <media-hotkey keys="k" action="togglePaused"></media-hotkey>
+              <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+              <media-hotkey keys="f" action="toggleFullscreen"></media-hotkey>
+              <media-hotkey keys="c" action="toggleSubtitles"></media-hotkey>
+              <media-hotkey keys="i" action="togglePictureInPicture"></media-hotkey>
+              <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
+              <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
+              <media-hotkey keys="l" action="seekStep" value="10"></media-hotkey>
+              <media-hotkey keys="j" action="seekStep" value="-10"></media-hotkey>
+              <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
+              <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+              <media-hotkey keys="0-9" action="seekToPercent"></media-hotkey>
+              <media-hotkey keys="Home" action="seekToPercent" value="0"></media-hotkey>
+              <media-hotkey keys="End" action="seekToPercent" value="100"></media-hotkey>
+              <media-hotkey keys=">" action="speedUp"></media-hotkey>
+              <media-hotkey keys="<" action="speedDown"></media-hotkey>
+
+              <media-gesture type="tap" action="togglePaused" pointer="mouse" region="center"></media-gesture>
+              <media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
+              <media-gesture type="doubletap" action="seekStep" value="-10" region="left"></media-gesture>
+              <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
+              <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
+
+              <media-status-announcer></media-status-announcer>
+              <div class="media-input-feedback">
+                <media-volume-indicator hidden class="media-input-feedback-island media-input-feedback-island--volume">
+                  <media-volume-indicator-fill class="media-input-feedback-island__content">
+                    <media-icon name="volume-high" family="minimal" class="media-icon media-icon--volume-high"></media-icon>
+                    <media-icon name="volume-low" family="minimal" class="media-icon media-icon--volume-low"></media-icon>
+                    <media-icon name="volume-off" family="minimal" class="media-icon media-icon--volume-off"></media-icon>
+                    <div class="media-input-feedback-island__progress" aria-hidden="true"></div>
+                    <media-volume-indicator-value class="media-input-feedback-island__value"></media-volume-indicator-value>
+                  </media-volume-indicator-fill>
+                </media-volume-indicator>
+
+                <media-status-indicator hidden actions="toggleSubtitles toggleFullscreen togglePictureInPicture" class="media-input-feedback-island media-input-feedback-island--status">
+                  <div class="media-input-feedback-island__content">
+                    <media-icon name="captions-on" family="minimal" class="media-icon media-icon--captions-on"></media-icon>
+                    <media-icon name="captions-off" family="minimal" class="media-icon media-icon--captions-off"></media-icon>
+                    <media-icon name="fullscreen-enter" family="minimal" class="media-icon media-icon--fullscreen-enter"></media-icon>
+                    <media-icon name="fullscreen-exit" family="minimal" class="media-icon media-icon--fullscreen-exit"></media-icon>
+                    <media-icon name="pip-enter" family="minimal" class="media-icon media-icon--pip-enter"></media-icon>
+                    <media-icon name="pip-exit" family="minimal" class="media-icon media-icon--pip-exit"></media-icon>
+                    <media-status-indicator-value class="media-input-feedback-island__value"></media-status-indicator-value>
+                  </div>
+                </media-status-indicator>
+
+                <media-seek-indicator hidden class="media-input-feedback-bubble">
+                  <media-icon name="chevron" family="minimal" class="media-icon media-icon--seek"></media-icon>
+                  <media-seek-indicator-value class="media-time"></media-seek-indicator-value>
+                </media-seek-indicator>
+
+                <media-status-indicator hidden actions="togglePaused" class="media-input-feedback-bubble">
+                  <media-icon name="play" family="minimal" class="media-icon media-icon--play"></media-icon>
+                  <media-icon name="pause" family="minimal" class="media-icon media-icon--pause"></media-icon>
+                </media-status-indicator>
+              </div>
+            </media-container>
+          </video-player>
         </div>
       </div>
 
       <div class="card tabs-panel">
-        <div class="tab-header" role="tablist">
-          <button class="tab-btn active" data-tab="ask" role="tab">Ask</button>
-          <button class="tab-btn" data-tab="agent" role="tab">Agent</button>
-          <button class="tab-btn" data-tab="plan" role="tab">Plan</button>
-        </div>
+        <div class="chat-view">
+          <div id="chat-log" class="chat-log"></div>
 
-        <div class="tab-content">
-          <div id="tab-ask" class="tab-pane active" role="tabpanel">
-            <div id="chat-log" class="chat-log"></div>
-            <div class="chat-input">
-              <textarea id="chat-reply-input" rows="1" placeholder="Reply to EduClaw..." aria-label="Chat input"></textarea>
-              <button id="btn-chat-send" class="btn-primary" aria-label="Send Message"><i data-lucide="send"></i></button>
+          <div id="mode-bottom-panel" class="hidden" aria-label="Mode output panel">
+            <div id="agent-section" class="hidden">
+              <div class="mode-panel-header">
+                <h3>AI Reasoning Trace</h3>
+                <button type="button" class="btn-icon btn-collapse-panel" aria-label="Collapse panel"><i data-lucide="chevron-down"></i></button>
+              </div>
+              <div id="agent-output" class="scroll-area"></div>
+            </div>
+            <div id="plan-section" class="hidden">
+              <div class="mode-panel-header">
+                <h3>Learning Roadmap</h3>
+                <button type="button" class="btn-icon btn-collapse-panel" aria-label="Collapse panel"><i data-lucide="chevron-down"></i></button>
+              </div>
+              <div id="plan-output" class="scroll-area"></div>
             </div>
           </div>
-          
-          <div id="tab-agent" class="tab-pane hidden" role="tabpanel">
-            <h3>AI Reasoning Trace</h3>
-            <p style="margin-bottom: 1rem;">Click to see how EduClaw breaks down complex problems.</p>
-            <button id="btn-run-agent" class="btn-secondary w-full" style="margin-bottom: 1rem;">Run Agent</button>
-            <div id="agent-output"></div>
-          </div>
 
-          <div id="tab-plan" class="tab-pane hidden" role="tabpanel">
-            <h3>Learning Roadmap</h3>
-            <div id="plan-output" class="mt"></div>
+          <div class="chat-composer">
+            <div id="doc-attachments" class="doc-attachments hidden" aria-label="Attached documents"></div>
+            <div class="chat-input">
+              <div class="mode-picker" id="mode-picker-chat">
+                <button type="button" class="mode-picker-btn is-auto" aria-haspopup="listbox" aria-expanded="false" aria-label="Interaction mode">
+                  <i data-lucide="sparkles" class="mode-auto-icon"></i>
+                  <span class="mode-label">Auto</span>
+                  <i data-lucide="chevron-up"></i>
+                </button>
+                <ul class="mode-menu" role="listbox" hidden>
+                  <li role="option" data-mode="auto" class="selected">Auto</li>
+                  <li role="option" data-mode="ask">Ask</li>
+                  <li role="option" data-mode="agent">Agent</li>
+                  <li role="option" data-mode="plan">Plan</li>
+                </ul>
+              </div>
+              <button type="button" id="btn-doc-upload" class="btn-attach" aria-label="Upload documents for RAG and OCR">
+                <i data-lucide="paperclip"></i>
+              </button>
+              <input type="file" id="doc-file-input" hidden multiple accept=".pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg,.webp,.tiff">
+              <textarea id="chat-reply-input" rows="1.5" placeholder="Reply to EduClaw..." aria-label="Chat input"></textarea>
+              <button id="btn-chat-send" class="btn-primary" aria-label="Send Message"><i data-lucide="send"></i></button>
+            </div>
           </div>
         </div>
       </div>
@@ -478,7 +869,7 @@ animation:
   type: sine_wave
   amplitude: 50
   frequency: 0.02
-  color: "#10A37F"
+  color: "#1A1A1A"
   speed: 1.0</textarea>
           <button id="btn-run-yaml" class="btn-primary mt w-full">Run Animation</button>
         </div>
@@ -491,6 +882,17 @@ animation:
 
   </div>
 
+  <div id="confirm-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <div class="confirm-dialog">
+      <h2 id="confirm-title">Start a new session?</h2>
+      <p id="confirm-message">Your current chat, progress, and uploads will be cleared. This cannot be undone.</p>
+      <div class="confirm-actions">
+        <button type="button" id="btn-confirm-cancel" class="btn-secondary">Cancel</button>
+        <button type="button" id="btn-confirm-ok" class="btn-primary">New Session</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Initialize Lucide Icons
     lucide.createIcons();
@@ -501,8 +903,13 @@ animation:
     let currentPhase = 0;
     let cardsUnveiled = false;
     let animationReqId = null;
+    let currentMode = 'auto';
+    let planGenerated = false;
+    let docIdCounter = 0;
+    const uploadedDocs = new Map();
 
     const MOCK_DELAYS = { typing: 600, loading: 800 };
+    const MODE_LABELS = { auto: 'Auto', ask: 'Ask', agent: 'Agent', plan: 'Plan' };
     const AI_REPLIES = [
       "The derivative of x² is 2x because of the power rule, lowering the exponent by 1.",
       "To solve a quadratic equation, factor it or use the quadratic formula: x = (-b ± √(b² - 4ac)) / 2a.",
@@ -513,23 +920,35 @@ animation:
        DOM Elements
        ========================================= */
     const els = {
+      appHeader: document.getElementById('app-header'),
+      contentWrapper: document.getElementById('content-wrapper'),
       searchWrap: document.getElementById('search-wrapper'),
       mainInput: document.getElementById('main-input'),
       btnGenerate: document.getElementById('btn-generate'),
+      btnNewSession: document.getElementById('btn-new-session'),
+      confirmOverlay: document.getElementById('confirm-overlay'),
+      btnConfirmCancel: document.getElementById('btn-confirm-cancel'),
+      btnConfirmOk: document.getElementById('btn-confirm-ok'),
       mainLayout: document.getElementById('main-layout'),
       chatLog: document.getElementById('chat-log'),
       chatInput: document.getElementById('chat-reply-input'),
       btnChatSend: document.getElementById('btn-chat-send'),
-      tabs: document.querySelectorAll('.tab-btn'),
-      tabPanes: document.querySelectorAll('.tab-pane'),
+      modeBottomPanel: document.getElementById('mode-bottom-panel'),
+      agentSection: document.getElementById('agent-section'),
+      planSection: document.getElementById('plan-section'),
+      agentOutput: document.getElementById('agent-output'),
+      planOutput: document.getElementById('plan-output'),
       featureCards: document.getElementById('feature-cards-container'),
       yamlEngine: document.getElementById('yaml-engine-container'),
       vidPlaceholder: document.getElementById('video-placeholder'),
       vidCanvas: document.getElementById('video-canvas'),
-      audioMock: document.getElementById('audio-mock'),
+      vidPlayerHost: document.getElementById('video-player-host'),
       engineCanvas: document.getElementById('engine-canvas'),
       yamlInput: document.getElementById('yaml-input'),
-      btnRunYaml: document.getElementById('btn-run-yaml')
+      btnRunYaml: document.getElementById('btn-run-yaml'),
+      btnDocUpload: document.getElementById('btn-doc-upload'),
+      docFileInput: document.getElementById('doc-file-input'),
+      docAttachments: document.getElementById('doc-attachments')
     };
 
     /* =========================================
@@ -546,7 +965,9 @@ animation:
     function unveilPhase1() {
       if (currentPhase >= 1) return;
       currentPhase = 1;
-      els.searchWrap.classList.add('top-bar');
+      els.searchWrap.classList.add('hidden');
+      els.appHeader.classList.remove('hidden');
+      els.contentWrapper.classList.add('in-session');
       els.mainLayout.classList.remove('hidden');
       els.mainLayout.classList.add('reveal');
       setTimeout(() => lucide.createIcons(), 50);
@@ -559,28 +980,260 @@ animation:
       els.featureCards.classList.add('reveal');
     }
 
+    function showNewSessionConfirm() {
+      els.confirmOverlay.classList.remove('hidden');
+      els.btnConfirmCancel.focus();
+    }
+
+    function hideNewSessionConfirm() {
+      els.confirmOverlay.classList.add('hidden');
+    }
+
+    function resetToLanding() {
+      if (animationReqId) {
+        cancelAnimationFrame(animationReqId);
+        animationReqId = null;
+      }
+
+      currentPhase = 0;
+      cardsUnveiled = false;
+      planGenerated = false;
+      currentMode = 'auto';
+      docIdCounter = 0;
+      uploadedDocs.clear();
+
+      els.chatLog.innerHTML = '';
+      els.agentOutput.innerHTML = '';
+      els.planOutput.innerHTML = '';
+      els.docAttachments.innerHTML = '';
+      els.docAttachments.classList.add('hidden');
+      els.modeBottomPanel.classList.add('hidden');
+      els.agentSection.classList.add('hidden');
+      els.planSection.classList.add('hidden');
+
+      if (window.EduClawMedia) {
+        window.EduClawMedia.reset();
+      } else {
+        els.vidPlaceholder.classList.remove('hidden');
+        els.vidCanvas.classList.add('hidden');
+        if (els.vidPlayerHost) els.vidPlayerHost.classList.add('hidden');
+      }
+
+      els.appHeader.classList.add('hidden');
+      els.contentWrapper.classList.remove('in-session');
+      els.mainLayout.classList.add('hidden');
+      els.mainLayout.classList.remove('reveal');
+      els.featureCards.classList.add('hidden');
+      els.featureCards.classList.remove('reveal');
+      els.yamlEngine.classList.add('hidden');
+
+      els.searchWrap.classList.remove('hidden');
+      els.mainInput.value = '';
+      els.chatInput.value = '';
+      autoResize(els.mainInput);
+      autoResize(els.chatInput);
+
+      setMode('auto');
+      lucide.createIcons();
+    }
+
+    /* =========================================
+       Mode Picker Logic
+       ========================================= */
+    function closeAllModeMenus() {
+      document.querySelectorAll('.mode-picker').forEach(picker => {
+        picker.querySelector('.mode-menu').hidden = true;
+        picker.querySelector('.mode-picker-btn').setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.mode-picker').forEach(picker => {
+        const btn = picker.querySelector('.mode-picker-btn');
+        btn.classList.toggle('is-auto', mode === 'auto');
+        const autoIcon = picker.querySelector('.mode-auto-icon');
+        if (autoIcon) autoIcon.classList.toggle('hidden', mode !== 'auto');
+        picker.querySelector('.mode-label').textContent = MODE_LABELS[mode];
+        picker.querySelectorAll('.mode-menu [role="option"]').forEach(opt => {
+          opt.classList.toggle('selected', opt.dataset.mode === mode);
+        });
+      });
+
+      if (mode === 'agent') {
+        els.modeBottomPanel.classList.remove('hidden');
+        els.agentSection.classList.remove('hidden');
+        els.planSection.classList.add('hidden');
+        if (currentPhase === 1) unveilPhase2();
+      } else if (mode === 'plan') {
+        els.modeBottomPanel.classList.remove('hidden');
+        els.agentSection.classList.add('hidden');
+        els.planSection.classList.remove('hidden');
+        if (!planGenerated) {
+          planGenerated = true;
+          generateMockPlan();
+        }
+        if (currentPhase === 1) unveilPhase2();
+      } else {
+        els.modeBottomPanel.classList.add('hidden');
+        els.agentSection.classList.add('hidden');
+        els.planSection.classList.add('hidden');
+      }
+
+      closeAllModeMenus();
+      lucide.createIcons();
+    }
+
+    function initModePickers() {
+      document.querySelectorAll('.mode-picker').forEach(picker => {
+        const btn = picker.querySelector('.mode-picker-btn');
+        const menu = picker.querySelector('.mode-menu');
+
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = !menu.hidden;
+          closeAllModeMenus();
+          if (!isOpen) {
+            menu.hidden = false;
+            btn.setAttribute('aria-expanded', 'true');
+          }
+        });
+
+        menu.querySelectorAll('[role="option"]').forEach(opt => {
+          opt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setMode(opt.dataset.mode);
+          });
+        });
+      });
+
+      document.addEventListener('click', closeAllModeMenus);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAllModeMenus();
+      });
+    }
+
+    function resolveAutoMode(text) {
+      const lower = text.toLowerCase();
+      if (/plan|roadmap|curriculum|schedule/.test(lower)) return 'plan';
+      if (/step|reason|trace|break\s*down|how\s+do\s+you/.test(lower)) return 'agent';
+      return 'ask';
+    }
+
+    /* =========================================
+       Document Upload (RAG + OCR mock UI)
+       ========================================= */
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    function mockOcrSummary(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (['png', 'jpg', 'jpeg', 'webp', 'tiff'].includes(ext)) {
+        const pages = 1 + Math.floor(Math.random() * 3);
+        return `OCR: ${pages} page${pages > 1 ? 's' : ''} extracted`;
+      }
+      if (ext === 'pdf') {
+        const pages = 3 + Math.floor(Math.random() * 18);
+        return `OCR: ${pages} pages indexed`;
+      }
+      return 'Text parsed for RAG';
+    }
+
+    function renderDocAttachments() {
+      if (uploadedDocs.size === 0) {
+        els.docAttachments.innerHTML = '';
+        els.docAttachments.classList.add('hidden');
+        return;
+      }
+
+      els.docAttachments.classList.remove('hidden');
+      els.docAttachments.innerHTML = '';
+      uploadedDocs.forEach((doc, id) => {
+        const chip = document.createElement('div');
+        chip.className = 'doc-chip';
+        chip.dataset.docId = id;
+        chip.innerHTML = `
+          <i data-lucide="file-text"></i>
+          <span class="doc-chip-name" title="${doc.file.name}">${doc.file.name}</span>
+          <span class="doc-chip-status ${doc.status === 'ready' ? 'ready' : ''}">${doc.statusLabel}</span>
+          <button type="button" class="doc-chip-remove" aria-label="Remove ${doc.file.name}">
+            <i data-lucide="x"></i>
+          </button>
+        `;
+        chip.querySelector('.doc-chip-remove').addEventListener('click', () => removeDoc(id));
+        els.docAttachments.appendChild(chip);
+      });
+      lucide.createIcons();
+    }
+
+    function removeDoc(id) {
+      uploadedDocs.delete(id);
+      renderDocAttachments();
+    }
+
+    function processMockDoc(file) {
+      const id = `doc-${++docIdCounter}`;
+      const doc = {
+        file,
+        status: 'processing',
+        statusLabel: 'Indexing…'
+      };
+      uploadedDocs.set(id, doc);
+      renderDocAttachments();
+
+      const delay = 900 + Math.floor(Math.random() * 700);
+      setTimeout(() => {
+        if (!uploadedDocs.has(id)) return;
+        const entry = uploadedDocs.get(id);
+        entry.status = 'ready';
+        entry.statusLabel = mockOcrSummary(file);
+        renderDocAttachments();
+
+        addChatMessage('ai', `<strong>Document ready.</strong> <em>${file.name}</em> (${formatFileSize(file.size)}) — ${entry.statusLabel}. You can ask questions against it once RAG is wired up.`);
+      }, delay);
+    }
+
+    function initDocUpload() {
+      els.btnDocUpload.addEventListener('click', () => els.docFileInput.click());
+      els.docFileInput.addEventListener('change', () => {
+        const files = Array.from(els.docFileInput.files || []);
+        files.forEach(processMockDoc);
+        els.docFileInput.value = '';
+      });
+    }
+
     /* =========================================
        Chat / Ask Logic
        ========================================= */
+    function scrollChatToBottom(el) {
+      requestAnimationFrame(() => {
+        el.scrollIntoView({ block: 'end', behavior: 'smooth' });
+        els.chatLog.scrollTop = els.chatLog.scrollHeight;
+      });
+    }
+
     function addChatMessage(role, text) {
       const div = document.createElement('div');
       div.className = `msg-bubble msg-${role} reveal`;
       div.innerHTML = text;
       els.chatLog.appendChild(div);
-      els.chatLog.scrollTop = els.chatLog.scrollHeight;
+      scrollChatToBottom(div);
       return div;
     }
 
-    function handleAskSubmission(promptText, isInitial = false) {
+    function handleAskSubmission(promptText, isInitial = false, skipUserMessage = false) {
       if (!promptText.trim()) return;
-      
-      addChatMessage('user', promptText);
+
+      if (!skipUserMessage) addChatMessage('user', promptText);
       const loadingBubble = addChatMessage('ai', getLoaderHtml());
-      
+
       setTimeout(() => {
         loadingBubble.remove();
         if (isInitial) {
-          addChatMessage('ai', `Got it! I’m preparing a personalised learning experience on: <em>${promptText}</em>. You can switch to <strong>Agent</strong> for step-by-step reasoning, or check the <strong>Plan</strong> tab for a structured roadmap.`);
+          addChatMessage('ai', `Got it! I’m preparing a personalised learning experience on: <em>${promptText}</em>. Use the mode selector to switch to <strong>Agent</strong> for step-by-step reasoning, or <strong>Plan</strong> for a structured roadmap.`);
         } else {
           const randomReply = AI_REPLIES[Math.floor(Math.random() * AI_REPLIES.length)];
           addChatMessage('ai', randomReply);
@@ -588,20 +1241,87 @@ animation:
       }, MOCK_DELAYS.typing);
     }
 
+    function runAgentTrace() {
+      els.agentOutput.innerHTML = getLoaderHtml();
+      setTimeout(() => {
+        els.agentOutput.innerHTML = '';
+        const steps = [
+          "Step 1: Identify the equation: 2x + 5 = 15",
+          "Step 2: Subtract 5 from both sides → 2x = 10",
+          "Step 3: Divide both sides by 2 → x = 5",
+          "Step 4: Verify by plugging back → 2(5)+5=15 ✓"
+        ];
+        steps.forEach((step, i) => {
+          const d = document.createElement('div');
+          d.className = 'agent-step reveal';
+          d.style.animationDelay = `${i * 0.4}s`;
+          d.textContent = step;
+          els.agentOutput.appendChild(d);
+        });
+      }, MOCK_DELAYS.loading);
+    }
+
+    function handleSubmission(promptText, isInitial = false) {
+      if (!promptText.trim()) return;
+
+      if (currentMode === 'auto') {
+        const resolved = resolveAutoMode(promptText);
+        if (resolved === 'plan') {
+          addChatMessage('user', promptText);
+          setMode('plan');
+          return;
+        }
+        if (resolved === 'agent') {
+          addChatMessage('user', promptText);
+          setMode('agent');
+          runAgentTrace();
+          return;
+        }
+        handleAskSubmission(promptText, isInitial);
+        return;
+      }
+
+      addChatMessage('user', promptText);
+      if (currentMode === 'ask') {
+        const loadingBubble = addChatMessage('ai', getLoaderHtml());
+        setTimeout(() => {
+          loadingBubble.remove();
+          const randomReply = AI_REPLIES[Math.floor(Math.random() * AI_REPLIES.length)];
+          addChatMessage('ai', randomReply);
+        }, MOCK_DELAYS.typing);
+      } else if (currentMode === 'agent') {
+        setMode('agent');
+        runAgentTrace();
+      } else if (currentMode === 'plan') {
+        setMode('plan');
+      }
+    }
+
     // Input Listeners
     els.btnGenerate.addEventListener('click', () => {
       const text = els.mainInput.value;
-      if (!text) return;
-      
-      if (currentPhase === 0) {
-        unveilPhase1();
-        handleAskSubmission(text, true);
-      } else {
-        els.tabs[0].click(); // Switch to Ask tab
-        handleAskSubmission(text, false);
-      }
+      if (!text || currentPhase !== 0) return;
+
+      unveilPhase1();
+      handleSubmission(text, true);
       els.mainInput.value = '';
       autoResize(els.mainInput);
+    });
+
+    els.btnNewSession.addEventListener('click', showNewSessionConfirm);
+
+    els.btnConfirmCancel.addEventListener('click', hideNewSessionConfirm);
+    els.btnConfirmOk.addEventListener('click', () => {
+      hideNewSessionConfirm();
+      resetToLanding();
+    });
+    els.confirmOverlay.addEventListener('click', (e) => {
+      if (e.target === els.confirmOverlay) hideNewSessionConfirm();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !els.confirmOverlay.classList.contains('hidden')) {
+        hideNewSessionConfirm();
+      }
     });
 
     els.mainInput.addEventListener('input', () => autoResize(els.mainInput));
@@ -613,7 +1333,7 @@ animation:
     });
 
     els.btnChatSend.addEventListener('click', () => {
-      handleAskSubmission(els.chatInput.value);
+      handleSubmission(els.chatInput.value);
       els.chatInput.value = '';
       autoResize(els.chatInput);
     });
@@ -623,37 +1343,14 @@ animation:
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); els.btnChatSend.click(); }
     });
 
-    /* =========================================
-       Tab Switching Logic
-       ========================================= */
-    let planGenerated = false;
-    
-    els.tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        // Trigger Phase 2 on Agent or Plan clicks
-        if (tab.dataset.tab === 'agent' || tab.dataset.tab === 'plan') {
-          if (currentPhase === 1) unveilPhase2();
-        }
-
-        // Active State Swap
-        els.tabs.forEach(t => t.classList.remove('active'));
-        els.tabPanes.forEach(p => p.classList.add('hidden'));
-        tab.classList.add('active');
-        document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
-
-        // Generate Plan on first visit
-        if (tab.dataset.tab === 'plan' && !planGenerated) {
-          planGenerated = true;
-          generateMockPlan();
-        }
-      });
-    });
+    initModePickers();
+    initDocUpload();
+    setMode('auto');
 
     function generateMockPlan() {
-      const out = document.getElementById('plan-output');
-      out.innerHTML = getLoaderHtml();
+      els.planOutput.innerHTML = getLoaderHtml();
       setTimeout(() => {
-        out.innerHTML = `
+        els.planOutput.innerHTML = `
           <div class="plan-item reveal">
             <input type="checkbox" checked disabled>
             <div class="w-full">
@@ -679,26 +1376,12 @@ animation:
       }, MOCK_DELAYS.loading);
     }
 
-    // Agent Run Logic
-    document.getElementById('btn-run-agent').addEventListener('click', () => {
-      const out = document.getElementById('agent-output');
-      out.innerHTML = getLoaderHtml();
-      setTimeout(() => {
-        out.innerHTML = '';
-        const steps = [
-          "Step 1: Identify the equation: 2x + 5 = 15",
-          "Step 2: Subtract 5 from both sides → 2x = 10",
-          "Step 3: Divide both sides by 2 → x = 5",
-          "Step 4: Verify by plugging back → 2(5)+5=15 ✓"
-        ];
-        steps.forEach((step, i) => {
-          const d = document.createElement('div');
-          d.className = 'agent-step reveal';
-          d.style.animationDelay = `${i * 0.4}s`;
-          d.textContent = step;
-          out.appendChild(d);
-        });
-      }, MOCK_DELAYS.loading);
+    // Collapse mode bottom panel (re-open by re-selecting Agent or Plan mode)
+    function collapseModePanel() {
+      els.modeBottomPanel.classList.add('hidden');
+    }
+    document.querySelectorAll('.btn-collapse-panel').forEach(btn => {
+      btn.addEventListener('click', collapseModePanel);
     });
 
     /* =========================================
@@ -745,11 +1428,13 @@ animation:
           </ul>
           <button class="btn-secondary w-full mt text-sm" id="btn-reset-lecture">Reset</button>
         `;
-        // Show mock audio in video panel
-        els.vidPlaceholder.classList.add('hidden');
-        els.vidCanvas.classList.add('hidden');
-        els.audioMock.classList.remove('hidden');
-        els.audioMock.classList.add('reveal');
+        if (window.EduClawMedia) {
+          window.EduClawMedia.showPlayer({
+            src: window.EduClawMedia.demo.video,
+            poster: window.EduClawMedia.demo.poster,
+            subtitlesUrl: window.EduClawMedia.demo.subtitles,
+          });
+        }
         
         document.getElementById('btn-reset-lecture').addEventListener('click', () => {
           cardLecture.innerHTML = lectureOriginalHtml;
@@ -802,10 +1487,13 @@ animation:
       const eCtx = els.engineCanvas.getContext('2d');
       const vCtx = els.vidCanvas.getContext('2d');
       
-      // Update UI panels to show Video Canvas
-      els.vidPlaceholder.classList.add('hidden');
-      els.audioMock.classList.add('hidden');
-      els.vidCanvas.classList.remove('hidden');
+      if (window.EduClawMedia) {
+        window.EduClawMedia.showCanvas();
+      } else {
+        els.vidPlaceholder.classList.add('hidden');
+        if (els.vidPlayerHost) els.vidPlayerHost.classList.add('hidden');
+        els.vidCanvas.classList.remove('hidden');
+      }
       
       if (animationReqId) cancelAnimationFrame(animationReqId);
       
@@ -818,7 +1506,7 @@ animation:
         eCtx.clearRect(0, 0, els.engineCanvas.width, els.engineCanvas.height);
         
         const type = config.type || 'sine_wave';
-        const color = config.color || '#10A37F';
+        const color = config.color || '#1A1A1A';
         const speed = parseFloat(config.speed) || 1.0;
         
         eCtx.strokeStyle = color;
