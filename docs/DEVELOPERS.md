@@ -108,7 +108,7 @@ Use the bundled [static client](../src/educlaw/gateway/static/index.html) at `GE
 | `educlaw pull-models` | Shell out to `ollama pull` for default model set |
 | `educlaw tts list` | List TTS backends (and voices when `tts_enabled`) |
 | `educlaw tts say "…" -o out.wav` | Synthesize speech to WAV (needs `tts_enabled` + backend) |
-| `educlaw automanim <series-dir>` | Render Manim MP4s for `lecture-*.md` (see [AUTOMANIM.md](AUTOMANIM.md)) |
+| `educlaw automanim run <series-dir>` | Render Manim MP4s for `lecture-*.md` (see [AUTOMANIM.md](AUTOMANIM.md) § Running independently) |
 | `educlaw site generate <series-dir>` | Generate Jekyll course site from autocourse output (see [SITE_GENERATION.md](SITE_GENERATION.md)) |
 | `educlaw site catalog` | Re-render course catalog landing page |
 | `educlaw site list` | List all registered courses |

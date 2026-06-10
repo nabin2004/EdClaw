@@ -29,7 +29,7 @@ tts_speed = 1.0
 # dagestan_db_path = "~/.educlaw/dagestan_memory.json"
 # For graph ingest via local Ollama: dagestan_provider = "ollama"
 # AutoManim — NOT used by gateway WebSocket chat (that path is text-only).
-# Use: `educlaw automanim <dir-with-lecture-*.md>` or scripts/run_full_course_pipeline.py.
+# Use: `educlaw automanim run <dir-with-lecture-*.md>` or scripts/run_full_course_pipeline.py.
 # Prerequisites: automanim_backend = "local" needs Manim CE in the same venv as EdClaw:
 #   pip install 'educlaw[automanim]'   (or pip install manim; `manim` on PATH also works)
 # "docker" needs image educlaw/manim:latest (see docs/AUTOMANIM.md).

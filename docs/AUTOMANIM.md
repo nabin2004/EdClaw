@@ -65,7 +65,7 @@ Optional **ADK** `SequentialAgent` factory: `educlaw.automanim.build_planner_cod
 From repo root (venv with `educlaw` installed):
 
 ```bash
-educlaw automanim content/ir/series/my-course-8
+educlaw automanim run content/ir/series/my-course-8
 ```
 
 Writes:
@@ -74,6 +74,104 @@ Writes:
 - `content/ir/series/my-course-8/videos/manifest.json`
 
 Each `lecture-*.md` is parsed with **YAML frontmatter** (metadata becomes `ir_suggestion`; body is the lecture Markdown).
+
+`educlaw automanim plan` and `educlaw automanim render` are **placeholders** — use `run` for production renders.
+
+## Running independently (verification)
+
+Use this section to smoke-test the production render pipeline without autocourse or the full course pipeline.
+
+### Prerequisites
+
+```bash
+export EDUCLAW_PROFILE_PATH=profiles/local.toml   # optional
+export OLLAMA_API_BASE=http://127.0.0.1:11434
+ollama pull gemma4:e2b                            # or your profile model_id
+pip install -e ".[automanim]"                     # Manim CE for local backend
+educlaw doctor                                    # warns if Manim missing when automanim_backend=local
+```
+
+`automanim_enabled` in the profile is **not required** for `educlaw automanim run` — it only gates `run_autocourse()` and scripts such as `run_full_course_pipeline.py`.
+
+### CLI smoke test (recommended)
+
+Create a minimal series directory with one lecture and run:
+
+```bash
+mkdir -p /tmp/automanim-smoke
+cp content/ir/series/2026-04-23-linear-algebra-e2e-tts/lecture-01-vectors-and-vector-spaces.md \
+   /tmp/automanim-smoke/
+
+educlaw automanim run /tmp/automanim-smoke
+```
+
+The CLI is **quiet during the run** — it only prints yellow `error` lines and a green manifest path at the end. Progress is not streamed to the terminal.
+
+**What to inspect after success:**
+
+| Artifact | Path | What it tells you |
+|----------|------|-------------------|
+| MP4s | `<series-dir>/videos/<lecture-id>/*.mp4` | Render succeeded |
+| Manifest | `<series-dir>/videos/manifest.json` | Per-scene `exit_code`, `artifact_path`, `log_path` |
+| Scene workspace | paths in manifest `scene_dir` / `source_path` | Generated Manim Python + render logs |
+
+### Live progress via WebSocket
+
+To watch **phase / plan / codegen / critic / render** events as they happen, use the gateway WebSocket (see [DEVELOPERS.md](DEVELOPERS.md) § WebSocket):
+
+```bash
+educlaw serve
+```
+
+Send one JSON frame to `ws://127.0.0.1:18789/ws`:
+
+```json
+{"type":"automanim","markdown":"# Dot product\n\nExplain dot product with a 2D example.","metadata":{"id":"smoke-1","title":"Dot product"}}
+```
+
+With [websocat](https://github.com/vi/websocat) installed:
+
+```bash
+printf '%s\n' '{"type":"automanim","markdown":"# Dot product\n\nExplain dot product with a 2D example.","metadata":{"id":"smoke-1","title":"Dot product"}}' \
+  | websocat -n1 ws://127.0.0.1:18789/ws
+```
+
+Watch for frames:
+
+- `automanim.progress` — `kind`: `phase`, `plan`, `scene_start`, `codegen`, `critic`, `render`, `scene_done`, `done`, `error`
+- `automanim.done` — `success`, `artifact_paths`, `artifact_urls` (served under `GET /artifacts/manim/...`)
+
+Output lands in `~/.educlaw/automanim/ws-<session-id>/` (from `automanim_output_dir`).
+
+### Automated checks (pytest)
+
+For CI-style verification without calling Ollama on every run:
+
+```bash
+# Unit tests (mocked LLM + render) — fast
+pytest tests/unit/test_automanim_orchestrator.py tests/unit/test_automanim_planner.py \
+       tests/unit/test_automanim_critic.py tests/unit/test_automanim_render_local.py -q
+
+# Real Manim subprocess — slow, skipped if manim not installed
+pytest tests/integration/test_automanim_render.py -q -m slow
+```
+
+Unit tests validate pipeline wiring; the integration test validates Manim CE install only (no Ollama).
+
+### Tuning for faster iteration
+
+Useful profile knobs in `profiles/local.toml` when checking performance:
+
+- `automanim_quality = "l"` — lowest render quality (fastest)
+- `automanim_max_scenes_per_lecture = 1` — cap scenes for smoke runs
+- `automanim_timeout_sec` — per-scene wall time
+- `automanim_backend = "docker"` — alternative if local Manim install is problematic
+
+### What is not a standalone entry point
+
+- `educlaw automanim plan` / `render` — placeholders only
+- `automanim_enabled` — autocourse hook only; not needed for `automanim run`
+- Gateway plain-text chat (`Hello`) — does not trigger AutoManim; send a JSON frame with `"type":"automanim"` instead
 
 ## Autocourse hook (Python API / CLI scripts)
 

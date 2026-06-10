@@ -26,5 +26,5 @@ For human-oriented setup (venv, Ollama, `educlaw serve`, troubleshooting), see [
 - `educlaw doctor` / `educlaw doctor --offline` — health / CI
 - `educlaw ir lint` / `educlaw ir index`
 - `educlaw tts list` / `educlaw tts say` — TTS (when enabled in profile); see [docs/TTS.md](docs/TTS.md)
-- `educlaw automanim <series-dir>` — Manim MP4s for `lecture-*.md` series; see [docs/AUTOMANIM.md](docs/AUTOMANIM.md)
+- `educlaw automanim run <series-dir>` — Manim MP4s for `lecture-*.md` series; see [docs/AUTOMANIM.md](docs/AUTOMANIM.md)
 - `ruff check src tests`, `mypy src/educlaw`, `pytest`
