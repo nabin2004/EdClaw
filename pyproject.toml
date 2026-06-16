@@ -37,6 +37,7 @@ dependencies = [
   "dagestan>=0.1.0",
   "copier>=9.1",
   "soundfile",
+  "wrapt>=2.1.2",
 ]
 
 [project.optional-dependencies]

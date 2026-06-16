@@ -1504,10 +1504,12 @@ dependencies = [
     { name = "soundfile" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "structlog" },
+    { name = "terminaltexteffects" },
     { name = "typer", version = "0.23.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15'" },
     { name = "typer", version = "0.25.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15'" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "websockets" },
+    { name = "wrapt" },
 ]
 
 [package.optional-dependencies]
@@ -1605,6 +1607,7 @@ requires-dist = [
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0" },
     { name = "sqlite-vec", marker = "extra == 'sqlite-vec'", specifier = ">=0.1.6" },
     { name = "structlog", specifier = ">=24.4" },
+    { name = "terminaltexteffects", specifier = ">=0.15.0" },
     { name = "transformers", marker = "extra == 'training'", specifier = ">=4.46" },
     { name = "trl", marker = "extra == 'training'", specifier = ">=0.12" },
     { name = "typer", specifier = ">=0.13" },
@@ -1614,6 +1617,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32" },
     { name = "wandb", marker = "extra == 'automanim-training'", specifier = ">=0.18" },
     { name = "websockets", specifier = ">=13" },
+    { name = "wrapt", specifier = ">=2.1.2" },
 ]
 provides-extras = ["sqlite-vec", "training", "channels", "cloud", "structured", "pi", "automanim", "automanim-training", "tts-kitten", "dev"]
 
@@ -7163,6 +7167,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/46/79/cf31d7a93a8fdc6aa0fbb665be84426a8c5a557d9240b6239e9e11e35fc5/termcolor-3.3.0.tar.gz", hash = "sha256:348871ca648ec6a9a983a13ab626c0acce02f515b9e1983332b17af7979521c5", size = 14434, upload-time = "2025-12-29T12:55:21.882Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/33/d1/8bb87d21e9aeb323cc03034f5eaf2c8f69841e40e4853c2627edf8111ed3/termcolor-3.3.0-py3-none-any.whl", hash = "sha256:cf642efadaf0a8ebbbf4bc7a31cec2f9b5f21a9f726f4ccbb08192c9c26f43a5", size = 7734, upload-time = "2025-12-29T12:55:20.718Z" },
+]
+
+[[package]]
+name = "terminaltexteffects"
+version = "0.15.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3c/df/4fa04990d75cc27215159bf9edec7d56546fd72e1927c5753d0de0414e7b/terminaltexteffects-0.15.0.tar.gz", hash = "sha256:f4b31c86bfa943d5bf3b2c5ecbfaea0de65ed4a951028c40f8e4cb54efd06439", size = 261994, upload-time = "2026-05-10T01:46:27.179Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ba/e8/89035cd56a3ef4fe1c2dbf790e1a2c78d4e922d3dbfc048e314e40c22b1a/terminaltexteffects-0.15.0-py3-none-any.whl", hash = "sha256:5503250dacae9a3c17e22b0010b2f5fa10332124019f485d517e0c9ebc51aa47", size = 224704, upload-time = "2026-05-10T01:46:28.48Z" },
 ]
 
 [[package]]
