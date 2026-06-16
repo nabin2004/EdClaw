@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+import warnings
+
+# Suppress experimental feature warnings from google-adk (e.g. PLUGGABLE_AUTH)
+warnings.filterwarnings("ignore", category=UserWarning, message=".*EXPERIMENTAL.*feature.*")
+
 import asyncio
 import subprocess
 import sys

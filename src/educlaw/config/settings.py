@@ -10,9 +10,21 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _get_repo_root() -> Path:
+    dev_root = Path(__file__).resolve().parents[3]
+    if (dev_root / "profiles" / "local.toml").is_file() or (dev_root / "content" / "ir").is_dir():
+        return dev_root
+
+    cwd = Path.cwd().resolve()
+    for parent in [cwd] + list(cwd.parents):
+        if (parent / "profiles" / "local.toml").is_file() or (parent / "pyproject.toml").is_file():
+            return parent
+
+    return dev_root
+
+
 def _default_profile_path() -> Path:
-    root = Path(__file__).resolve().parents[3]
-    return root / "profiles" / "local.toml"
+    return _get_repo_root() / "profiles" / "local.toml"
 
 
 class Settings(BaseSettings):
@@ -81,7 +93,7 @@ class Settings(BaseSettings):
 
     def model_post_init(self, __context: object) -> None:
         if self.ir_root is None:
-            repo_ir = Path(__file__).resolve().parents[3] / "content" / "ir"
+            repo_ir = _get_repo_root() / "content" / "ir"
             object.__setattr__(
                 self,
                 "ir_root",

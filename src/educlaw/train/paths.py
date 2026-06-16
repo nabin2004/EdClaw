@@ -6,7 +6,16 @@ from pathlib import Path
 
 
 def repo_root() -> Path:
-    return Path(__file__).resolve().parents[3]
+    dev_root = Path(__file__).resolve().parents[3]
+    if (dev_root / "training" / "automanim").is_dir():
+        return dev_root
+
+    cwd = Path.cwd().resolve()
+    for parent in [cwd] + list(cwd.parents):
+        if (parent / "training" / "automanim").is_dir() or (parent / "pyproject.toml").is_file():
+            return parent
+
+    return dev_root
 
 
 def automanim_training_dir() -> Path:

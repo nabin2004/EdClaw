@@ -30,11 +30,18 @@ def test_parse_viz_plan_strips_fence() -> None:
 
 
 def test_parse_viz_plan_invalid_json_logs_context(caplog: pytest.LogCaptureFixture) -> None:
-    # Invalid escape \\l in JSON string (common when models emit LaTeX).
-    raw = r'{"scenes": [{"title": "T", "description": "see \lambda", "visual_intent": ""}]}'
-    with caplog.at_level(logging.ERROR, logger="educlaw.automanim.planner"):
-        with pytest.raises(json.JSONDecodeError):
-            parse_viz_plan(raw, max_scenes=6)
-    assert "automanim planner JSON parse failed" in caplog.text
-    assert "len_text=" in caplog.text
-    assert "lambda" in caplog.text
+    # Ensure log propagates to root logger so caplog can capture it
+    logger = logging.getLogger("educlaw.automanim")
+    old_prop = logger.propagate
+    logger.propagate = True
+    try:
+        # Invalid escape \\l in JSON string (common when models emit LaTeX).
+        raw = r'{"scenes": [{"title": "T", "description": "see \lambda", "visual_intent": ""}]}'
+        with caplog.at_level(logging.ERROR, logger="educlaw.automanim.adk.planner"):
+            with pytest.raises(json.JSONDecodeError):
+                parse_viz_plan(raw, max_scenes=6)
+        assert "automanim planner JSON parse failed" in caplog.text
+        assert "len_text=" in caplog.text
+        assert "lambda" in caplog.text
+    finally:
+        logger.propagate = old_prop

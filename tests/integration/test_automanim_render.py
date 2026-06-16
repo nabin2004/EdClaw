@@ -16,6 +16,7 @@ from manim import *
 class GoldenSmoke(Scene):
     def construct(self):
         self.add(Dot())
+        self.wait(1)
 '''
 
 
