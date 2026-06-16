@@ -255,8 +255,21 @@ def main() -> None:
         max_steps_kw = {"max_steps": int(args.max_steps)}
         epochs_kw = {"num_train_epochs": 1}
 
-    bf16_allowed = torch.cuda.is_bf16_supported()
-    fp16_allowed = torch.cuda.is_fp16_supported() and not bf16_allowed
+    # Determine safe dtype based on available hardware
+    if hasattr(torch.cuda, "is_bf16_suppor  ted") and torch.cuda.is_bf16_supported():
+        bf16_allowed = True
+        fp16_allowed = False
+        dtype = "bf16"
+    # elif torch.cuda.is_fp16_supported():
+    #     bf16_allowed = False
+    #     fp16_allowed = True
+    #     dtype = "fp16"
+    else:
+        bf16_allowed = False
+        fp16_allowed = False
+        dtype = "fp32"
+
+    print(f"Using dtype: {dtype}", flush=True)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
