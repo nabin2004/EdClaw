@@ -98,6 +98,7 @@ kitten = "educlaw.tts.backends.kitten:factory"
 where = ["src"]
 
 [tool.setuptools.package-data]
+"educlaw.assets" = ["*.txt"]
 "educlaw.gateway" = ["static/*.html"]
 
 [tool.ruff]

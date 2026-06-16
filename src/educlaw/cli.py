@@ -24,11 +24,31 @@ app = typer.Typer(no_args_is_help=True, add_completion=False)
 
 
 def _intro_logo_path() -> Path:
+    try:
+        import importlib.resources
+        ref = importlib.resources.files("educlaw.assets").joinpath("ascii-logo.txt")
+        if isinstance(ref, Path):
+            return ref
+        with importlib.resources.as_file(ref) as p:
+            return Path(p)
+    except Exception:
+        pass
+
+    dev_path = Path(__file__).resolve().parent / "assets" / "ascii-logo.txt"
+    if dev_path.exists():
+        return dev_path
     return Path(__file__).resolve().parents[2] / "assets" / "ascii-logo.txt"
 
 
 def _load_intro_logo() -> str:
-    return _intro_logo_path().read_text(encoding="utf-8").rstrip()
+    try:
+        import importlib.resources
+        return importlib.resources.files("educlaw.assets").joinpath("ascii-logo.txt").read_text(encoding="utf-8").rstrip()
+    except Exception:
+        try:
+            return _intro_logo_path().read_text(encoding="utf-8").rstrip()
+        except Exception:
+            return ""
 
 
 def _play_intro(stream: Any | None = None) -> bool:

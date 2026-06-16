@@ -62,3 +62,14 @@ def test_main_skips_intro_for_help_argument(monkeypatch) -> None:
 
     intro.assert_not_called()
     app_call.assert_called_once()
+
+
+def test_intro_logo_loading() -> None:
+    from educlaw.cli import _load_intro_logo, _intro_logo_path
+    logo = _load_intro_logo()
+    assert logo is not None
+    assert "/$$$$$$$$" in logo
+
+    path = _intro_logo_path()
+    assert path.exists()
+    assert path.name == "ascii-logo.txt"
