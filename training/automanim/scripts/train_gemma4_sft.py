@@ -200,6 +200,17 @@ def main() -> None:
         print("--hub-model-id requested but HF token missing.", file=sys.stderr)
         raise SystemExit(2)
 
+    device_map = args.device_map
+    if device_map == "auto":
+        if torch.cuda.is_available() and torch.cuda.device_count() > 1:
+            local_rank = int(os.environ.get("LOCAL_RANK", 0))
+            device_map = {"": local_rank}
+    elif isinstance(device_map, str) and device_map.startswith("{"):
+        try:
+            device_map = json.loads(device_map)
+        except Exception:
+            pass
+
     load_kwargs = {
         "model_name": args.model_name,
         "dtype": None,
@@ -207,7 +218,7 @@ def main() -> None:
         "load_in_4bit": True,
         "full_finetuning": False,
         "token": hub_token_read,
-        "device_map": args.device_map,
+        "device_map": device_map,
     }
 
     print("Loading model + tokenizer...", flush=True)
