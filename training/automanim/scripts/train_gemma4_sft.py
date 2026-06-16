@@ -183,11 +183,13 @@ def main() -> None:
 
     report_to = args.report_to  # transformers accepts "none" | "wandb" | ...
 
+    # isort: off
+    from unsloth import FastModel
+    from unsloth.chat_templates import train_on_responses_only
     import torch
     from datasets import Dataset
     from trl import SFTConfig, SFTTrainer
-    from unsloth import FastModel
-    from unsloth.chat_templates import train_on_responses_only
+    # isort: on
 
     dataset = Dataset.from_list(rows)
 
@@ -256,7 +258,7 @@ def main() -> None:
         epochs_kw = {"num_train_epochs": 1}
 
     # Determine safe dtype based on available hardware
-    if hasattr(torch.cuda, "is_bf16_suppor  ted") and torch.cuda.is_bf16_supported():
+    if hasattr(torch.cuda, "is_bf16_supported") and torch.cuda.is_bf16_supported():
         bf16_allowed = True
         fp16_allowed = False
         dtype = "bf16"
@@ -299,7 +301,7 @@ def main() -> None:
 
     trainer = SFTTrainer(
         model=model,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         train_dataset=dataset,
         eval_dataset=eval_dataset,
         args=cfg,
