@@ -1,0 +1,36 @@
+{
+  "topic": "Teach me about the gradient descent",
+  "lecture_count": 4,
+  "output_dir": "C:\\Users\\nabin\\Desktop\\allProjects\\EdClaw\\content\\ir\\series\\2026-06-19-teach-me-about-the-gradient-descent",
+  "automanim": true,
+  "tts": true,
+  "shield_ollama": true,
+  "manim_artifacts": [],
+  "lectures": [
+    {
+      "lecture_index": 1,
+      "lecture_title": "Understanding Optimization and Cost Functions",
+      "markdown": "lecture-01-understanding-optimization-and-cost-functions.md",
+      "audio": "audio\\lecture-01.wav"
+    },
+    {
+      "lecture_index": 2,
+      "lecture_title": "The Mathematics of Gradients",
+      "markdown": "lecture-02-the-mathematics-of-gradients.md",
+      "audio_error": "[ONNXRuntimeError] : 2 : INVALID_ARGUMENT : Non-zero status code returned while running Expand node. Name:'/bert/Expand' Status Message: invalid expand shape"
+    },
+    {
+      "lecture_index": 3,
+      "lecture_title": "Gradient Descent Algorithm Explained",
+      "markdown": "lecture-03-gradient-descent-algorithm-explained.md",
+      "audio": "audio\\lecture-03.wav"
+    },
+    {
+      "lecture_index": 4,
+      "lecture_title": "Practical Application and Convergence",
+      "markdown": "lecture-04-practical-application-and-convergence.md",
+      "audio_error": "[ONNXRuntimeError] : 2 : INVALID_ARGUMENT : Non-zero status code returned while running Expand node. Name:'/bert/Expand' Status Message: invalid expand shape"
+    }
+  ],
+  "exit_code": 0
+}

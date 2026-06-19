@@ -38,6 +38,10 @@ dependencies = [
   "copier>=9.1",
   "soundfile",
   "wrapt>=2.1.2",
+  "pip>=26.1.2",
+  "setuptools>=82.0.1",
+  "wheel>=0.47.0",
+  "kittentts>=0.8.1",
 ]
 
 [project.optional-dependencies]

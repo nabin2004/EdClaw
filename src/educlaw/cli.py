@@ -152,44 +152,152 @@ app.add_typer(autocourse_typer, name="autocourse")
 def autocourse_plan(
     prompt: Annotated[
         str | None,
-        typer.Option("--prompt", "-p", help="Prompt to plan the course"),
+        typer.Option("--prompt", "-p", help="Course topic to plan"),
+    ] = None,
+    lectures: Annotated[
+        int,
+        typer.Option("--lectures", "-n", min=2, max=8, help="Number of lectures (2–8)"),
+    ] = 4,
+    out: Annotated[
+        Path | None,
+        typer.Option("--out", "-o", help="Save plan as JSON"),
     ] = None,
 ) -> None:
-    """Plan a full course curriculum interactively or via prompt option."""
+    """Plan a course curriculum (shows outline without writing lectures)."""
+    from educlaw.autocourse.orchestrator import CoursePlanningFailed, plan_course
+    from ollama import AsyncClient
+
     if not prompt:
         prompt = typer.prompt(
-            typer.style("Enter course curriculum prompt", fg=typer.colors.CYAN, bold=True)
+            typer.style("Enter course topic", fg=typer.colors.CYAN, bold=True)
         )
-    
-    typer.echo(f"Planning course curriculum with prompt: '{prompt}'...")
-    # placeholder logic
-    typer.secho(
-        "✓ Course plan generated successfully (placeholder)!",
-        fg=typer.colors.GREEN,
-        bold=True,
+
+    s = load_settings()
+    n = max(2, min(8, lectures))
+    user = (
+        f"Plan a course with exactly {n} lectures (all {n}, not fewer). "
+        f"Audience: general learners. Topic:\n{prompt.strip()}"
     )
+
+    async def _run() -> None:
+        client = AsyncClient(host=s.ollama_url.rstrip("/"))
+        try:
+            plan = await plan_course(client, s, user)
+        except CoursePlanningFailed as e:
+            typer.secho(str(e), fg=typer.colors.RED)
+            raise typer.Exit(code=1) from e
+        finally:
+            aclose = getattr(client, "aclose", None) or getattr(client, "close", None)
+            if callable(aclose):
+                r = aclose()
+                if asyncio.iscoroutine(r):
+                    await r
+
+        lecs = plan.lectures[:n]
+        typer.secho(f"\n{plan.title}", fg=typer.colors.CYAN, bold=True)
+        typer.echo(f"Audience: {plan.audience}")
+        typer.echo(f"Lectures: {len(lecs)}\n")
+        for i, lec in enumerate(lecs, 1):
+            typer.secho(f"  {i}. {lec.title}", fg=typer.colors.GREEN)
+            for obj in (lec.objectives or [])[:2]:
+                typer.echo(f"     • {obj}")
+
+        if out:
+            import json as _json
+
+            out_path = out.expanduser()
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(
+                _json.dumps(
+                    {
+                        "title": plan.title,
+                        "audience": plan.audience,
+                        "lectures": [lec.model_dump() for lec in lecs],
+                    },
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            typer.secho(f"\nSaved plan to {out_path}", fg=typer.colors.GREEN)
+
+    asyncio.run(_run())
 
 
 @autocourse_typer.command("generate")
 def autocourse_generate(
     prompt: Annotated[
         str | None,
-        typer.Option("--prompt", "-p", help="Prompt to generate the course content"),
+        typer.Option("--prompt", "-p", help="Course topic"),
     ] = None,
+    lectures: Annotated[
+        int,
+        typer.Option("--lectures", "-n", min=2, max=8, help="Number of lectures (2–8)"),
+    ] = 4,
+    out: Annotated[
+        Path | None,
+        typer.Option("--out", "-o", help="Output directory"),
+    ] = None,
+    tts: Annotated[
+        bool,
+        typer.Option("--tts/--no-tts", help="TTS audio synthesis per lecture"),
+    ] = True,
+    automanim: Annotated[
+        bool,
+        typer.Option("--automanim/--no-automanim", help="AutoManim video generation"),
+    ] = True,
+    shield: Annotated[
+        bool,
+        typer.Option("--shield/--no-shield", help="Ollama safety shield"),
+    ] = True,
+    continue_on_error: Annotated[
+        bool,
+        typer.Option("--continue-on-error", help="Keep going after lecture failures"),
+    ] = False,
+    generate_site: Annotated[
+        bool,
+        typer.Option("--generate-site", help="Generate Jekyll site when done"),
+    ] = False,
+    automanim_backend: Annotated[
+        str | None,
+        typer.Option("--automanim-backend", help="'local' or 'docker'"),
+    ] = None,
+    tts_max_chars: Annotated[
+        int,
+        typer.Option("--tts-max-chars", help="Max plain-text chars per lecture for TTS"),
+    ] = 12_000,
+    tts_chunk_chars: Annotated[
+        int,
+        typer.Option("--tts-chunk-chars", help="Max chars per TTS call chunk"),
+    ] = 320,
 ) -> None:
-    """Generate a complete course including lectures and materials."""
+    """Generate a full course: plan → lectures → TTS audio → Manim animations.
+
+    Delegates to the same pipeline as scripts/run_full_course_pipeline.py.
+    """
+    from educlaw.autocourse.pipeline import PipelineConfig, run_pipeline
+
     if not prompt:
         prompt = typer.prompt(
-            typer.style("Enter course generation prompt", fg=typer.colors.CYAN, bold=True)
+            typer.style("Enter course topic", fg=typer.colors.CYAN, bold=True)
         )
-    
-    typer.echo(f"Generating full course with prompt: '{prompt}'...")
-    # placeholder logic
-    typer.secho(
-        "✓ Course generated successfully (placeholder)!",
-        fg=typer.colors.GREEN,
-        bold=True,
+
+    cfg = PipelineConfig(
+        topic=prompt,
+        lectures=lectures,
+        out=out,
+        enable_tts=tts,
+        enable_automanim=automanim,
+        enable_shield=shield,
+        automanim_backend=automanim_backend,
+        tts_max_chars=tts_max_chars,
+        tts_chunk_chars=tts_chunk_chars,
+        continue_on_error=continue_on_error,
+        generate_site=generate_site,
     )
+    exit_code, _ = asyncio.run(run_pipeline(cfg))
+    if exit_code != 0:
+        raise typer.Exit(code=exit_code)
 
 
 autolecture_typer = typer.Typer(help="Autolecture specific commands.")
@@ -200,44 +308,144 @@ app.add_typer(autolecture_typer, name="autolecture")
 def autolecture_plan(
     prompt: Annotated[
         str | None,
-        typer.Option("--prompt", "-p", help="Prompt to plan the lecture"),
+        typer.Option("--prompt", "-p", help="Lecture topic"),
+    ] = None,
+    out: Annotated[
+        Path | None,
+        typer.Option("--out", "-o", help="Save outline as JSON"),
     ] = None,
 ) -> None:
-    """Plan a single lecture outline interactively."""
+    """Plan a single lecture outline from a topic (no lecture generated)."""
+    from ollama import AsyncClient
+
     if not prompt:
         prompt = typer.prompt(
-            typer.style("Enter lecture planning prompt", fg=typer.colors.CYAN, bold=True)
+            typer.style("Enter lecture topic", fg=typer.colors.CYAN, bold=True)
         )
-    
-    typer.echo(f"Planning lecture outline with prompt: '{prompt}'...")
-    # placeholder logic
-    typer.secho(
-        "✓ Lecture outline planned successfully (placeholder)!",
-        fg=typer.colors.GREEN,
-        bold=True,
-    )
+
+    s = load_settings()
+
+    async def _run() -> None:
+        import json as _json
+
+        from educlaw.autolecture.schema import LectureOutline
+
+        client = AsyncClient(host=s.ollama_url.rstrip("/"))
+        _PLAN_SYS = (
+            "You are a curriculum designer. Given a topic, design a single lecture outline. "
+            'Respond with JSON only (no markdown fences): {"title": "...", '
+            '"objectives": ["..."], "key_topics": ["..."], "estimated_minutes": 45}'
+        )
+        try:
+            resp = await client.chat(
+                model=s.model_id,
+                messages=[
+                    {"role": "system", "content": _PLAN_SYS},
+                    {"role": "user", "content": f"Design a lecture on: {prompt.strip()}"},
+                ],
+                format="json",
+                options={"temperature": 0.25, "num_predict": 1024},
+            )
+            msg = resp.get("message") or {}
+            raw = (msg.get("content") or "").strip()
+            data = _json.loads(raw)
+            outline = LectureOutline(
+                title=str(data.get("title") or prompt),
+                objectives=data.get("objectives") or [],
+                key_topics=data.get("key_topics") or [],
+                estimated_minutes=data.get("estimated_minutes"),
+            )
+        except Exception as e:  # noqa: BLE001
+            typer.secho(f"Planning failed: {e}", fg=typer.colors.RED)
+            raise typer.Exit(code=1) from e
+        finally:
+            aclose = getattr(client, "aclose", None) or getattr(client, "close", None)
+            if callable(aclose):
+                r = aclose()
+                if asyncio.iscoroutine(r):
+                    await r
+
+        typer.secho(f"\n{outline.title}", fg=typer.colors.CYAN, bold=True)
+        if outline.estimated_minutes:
+            typer.echo(f"Estimated: {outline.estimated_minutes} min")
+        if outline.objectives:
+            typer.echo("\nObjectives:")
+            for obj in outline.objectives:
+                typer.echo(f"  • {obj}")
+        if outline.key_topics:
+            typer.echo("\nKey topics:")
+            for t in outline.key_topics:
+                typer.echo(f"  - {t}")
+
+        if out:
+            out_path = out.expanduser()
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(_json.dumps(outline.model_dump(), indent=2) + "\n", encoding="utf-8")
+            typer.secho(f"\nSaved outline to {out_path}", fg=typer.colors.GREEN)
+
+    asyncio.run(_run())
 
 
 @autolecture_typer.command("generate")
 def autolecture_generate(
     prompt: Annotated[
         str | None,
-        typer.Option("--prompt", "-p", help="Prompt to generate the lecture content"),
+        typer.Option("--prompt", "-p", help="Lecture topic"),
+    ] = None,
+    out: Annotated[
+        Path | None,
+        typer.Option("--out", "-o", help="Output .md path (default: lecture-01-<slug>.md)"),
     ] = None,
 ) -> None:
-    """Generate a single complete lecture in Markdown."""
+    """Generate a single lecture in Markdown from a topic."""
+    import re as _re
+
+    import frontmatter as _fm
+    from ollama import AsyncClient
+
+    from educlaw.autolecture.generator import generate_lecture
+    from educlaw.autolecture.schema import LectureOutline
+
     if not prompt:
         prompt = typer.prompt(
-            typer.style("Enter lecture content prompt", fg=typer.colors.CYAN, bold=True)
+            typer.style("Enter lecture topic", fg=typer.colors.CYAN, bold=True)
         )
-    
-    typer.echo(f"Generating lecture content with prompt: '{prompt}'...")
-    # placeholder logic
-    typer.secho(
-        "✓ Lecture generated successfully (placeholder)!",
-        fg=typer.colors.GREEN,
-        bold=True,
-    )
+
+    s = load_settings()
+    outline = LectureOutline(title=prompt.strip())
+
+    async def _run() -> None:
+        client = AsyncClient(host=s.ollama_url.rstrip("/"))
+        try:
+            typer.echo(f"Generating: {outline.title}")
+            result = await generate_lecture(
+                client,
+                s.model_id,
+                outline,
+                course_title=outline.title,
+                lecture_index=1,
+                lecture_count=1,
+                prior_lecture_titles=[],
+            )
+        except Exception as e:  # noqa: BLE001
+            typer.secho(f"Generation failed: {e}", fg=typer.colors.RED)
+            raise typer.Exit(code=1) from e
+        finally:
+            aclose = getattr(client, "aclose", None) or getattr(client, "close", None)
+            if callable(aclose):
+                r = aclose()
+                if asyncio.iscoroutine(r):
+                    await r
+
+        meta = dict(result.ir_suggestion) if result.ir_suggestion else {}
+        post = _fm.Post(result.markdown, **meta)
+        sl = _re.sub(r"[^a-z0-9]+", "-", outline.title.lower()).strip("-")[:48] or "lecture"
+        out_path = out.expanduser() if out else Path(f"lecture-01-{sl}.md")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(_fm.dumps(post), encoding="utf-8")
+        typer.secho(f"Wrote {out_path}", fg=typer.colors.GREEN)
+
+    asyncio.run(_run())
 
 
 automanim_typer = typer.Typer(help="AutoManim animation and rendering specific commands.")
@@ -246,48 +454,178 @@ app.add_typer(automanim_typer, name="automanim")
 
 @automanim_typer.command("plan")
 def automanim_plan(
+    lecture_file: Annotated[
+        Path | None,
+        typer.Argument(help="Lecture .md file to plan scenes for"),
+    ] = None,
     prompt: Annotated[
         str | None,
-        typer.Option(
-            "--prompt", "-p", help="Prompt to plan the visual animation scenes"
-        ),
+        typer.Option("--prompt", "-p", help="Inline lecture text (alternative to file)"),
+    ] = None,
+    out: Annotated[
+        Path | None,
+        typer.Option("--out", "-o", help="Save scene plan as JSON"),
     ] = None,
 ) -> None:
-    """Plan a Manim animation's visual intent and scene breakdown."""
-    if not prompt:
-        prompt = typer.prompt(
-            typer.style("Enter visual planning prompt", fg=typer.colors.CYAN, bold=True)
+    """Plan Manim animation scenes for a lecture (shows scenes without rendering)."""
+    import json as _json
+
+    import frontmatter as _fm
+    from ollama import AsyncClient
+
+    from educlaw.safety.shield import NoopShield, Shield
+
+    s = load_settings()
+
+    if lecture_file is not None:
+        lf = lecture_file.expanduser().resolve()
+        if not lf.exists():
+            typer.secho(f"File not found: {lf}", fg=typer.colors.RED)
+            raise typer.Exit(code=1)
+        post = _fm.loads(lf.read_text(encoding="utf-8"))
+        markdown = post.content
+        meta: dict = dict(post.metadata) if isinstance(post.metadata, dict) else {}
+    elif prompt:
+        markdown = prompt
+        meta = {}
+    else:
+        typer.secho(
+            "Provide a lecture .md file argument or --prompt with lecture text.",
+            fg=typer.colors.RED,
         )
-    
-    typer.echo(f"Planning Manim scenes with prompt: '{prompt}'...")
-    # placeholder logic
-    typer.secho(
-        "✓ Manim scene plan generated successfully (placeholder)!",
-        fg=typer.colors.GREEN,
-        bold=True,
-    )
+        raise typer.Exit(code=1)
+
+    async def _run() -> None:
+        client = AsyncClient(host=s.ollama_url.rstrip("/"))
+        shield_impl: Shield | NoopShield = (
+            Shield(client, model=s.shield_model) if s.shield_enabled else NoopShield()
+        )
+        scenes_data: list[dict] = []
+        try:
+            async for ev in run_automanim(markdown, meta, s, shield_impl, ollama=client):
+                if ev.kind == "plan":
+                    scenes_data = (ev.extra or {}).get("scenes", [])
+                    typer.secho(
+                        f"\nPlanned {len(scenes_data)} scene(s):", fg=typer.colors.CYAN, bold=True
+                    )
+                    for i, sc in enumerate(scenes_data, 1):
+                        typer.secho(f"  {i}. {sc.get('title', '?')}", fg=typer.colors.GREEN)
+                        if sc.get("description"):
+                            typer.echo(f"     {sc['description']}")
+                    break  # stop before codegen/render
+                elif ev.kind == "error":
+                    typer.secho(f"Error: {ev.message}", fg=typer.colors.YELLOW)
+                    break
+        finally:
+            aclose = getattr(client, "aclose", None) or getattr(client, "close", None)
+            if callable(aclose):
+                r = aclose()
+                if asyncio.iscoroutine(r):
+                    await r
+
+        if out and scenes_data:
+            out_path = out.expanduser()
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(
+                _json.dumps({"scenes": scenes_data}, indent=2) + "\n", encoding="utf-8"
+            )
+            typer.secho(f"Saved scene plan to {out_path}", fg=typer.colors.GREEN)
+
+    asyncio.run(_run())
 
 
 @automanim_typer.command("render")
 def automanim_render(
+    lecture_file: Annotated[
+        Path | None,
+        typer.Argument(help="Lecture .md file to render"),
+    ] = None,
     prompt: Annotated[
         str | None,
-        typer.Option("--prompt", "-p", help="Prompt to render Manim video"),
+        typer.Option("--prompt", "-p", help="Inline lecture text (alternative to file)"),
     ] = None,
+    out_dir: Annotated[
+        Path | None,
+        typer.Option("--out-dir", "-o", help="Video output directory (default: videos/)"),
+    ] = None,
+    no_shield: Annotated[
+        bool,
+        typer.Option("--no-shield", help="Skip safety shield"),
+    ] = False,
 ) -> None:
-    """Render a Manim scene video using a prompt."""
-    if not prompt:
-        prompt = typer.prompt(
-            typer.style("Enter rendering prompt", fg=typer.colors.CYAN, bold=True)
+    """Render Manim animations for a single lecture markdown file."""
+    import json as _json
+
+    import frontmatter as _fm
+    from ollama import AsyncClient
+
+    from educlaw.safety.shield import NoopShield, Shield
+
+    s = load_settings()
+
+    if lecture_file is not None:
+        lf = lecture_file.expanduser().resolve()
+        if not lf.exists():
+            typer.secho(f"File not found: {lf}", fg=typer.colors.RED)
+            raise typer.Exit(code=1)
+        post = _fm.loads(lf.read_text(encoding="utf-8"))
+        markdown = post.content
+        meta: dict = dict(post.metadata) if isinstance(post.metadata, dict) else {}
+        lecture_id = str(meta.get("id") or lf.stem)
+    elif prompt:
+        markdown = prompt
+        meta = {}
+        lecture_id = "lecture"
+    else:
+        typer.secho(
+            "Provide a lecture .md file argument or --prompt with lecture text.",
+            fg=typer.colors.RED,
         )
-    
-    typer.echo(f"Rendering Manim scenes with prompt: '{prompt}'...")
-    # placeholder logic
-    typer.secho(
-        "✓ Manim scenes rendered successfully (placeholder)!",
-        fg=typer.colors.GREEN,
-        bold=True,
-    )
+        raise typer.Exit(code=1)
+
+    output_root = (out_dir or Path("videos")).expanduser().resolve()
+    output_root.mkdir(parents=True, exist_ok=True)
+
+    async def _run() -> None:
+        client = AsyncClient(host=s.ollama_url.rstrip("/"))
+        shield_impl: Shield | NoopShield = (
+            Shield(client, model=s.shield_model)
+            if (s.shield_enabled and not no_shield)
+            else NoopShield()
+        )
+        scenes: list[dict] = []
+        try:
+            async for ev in run_automanim(
+                markdown, meta, s, shield_impl, ollama=client, output_root=output_root
+            ):
+                if ev.kind == "scene_done" and ev.artifact and ev.artifact.artifact_path:
+                    scenes.append(
+                        {
+                            "scene_index": ev.scene_index,
+                            "scene_title": ev.scene_title,
+                            "artifact_path": ev.artifact.artifact_path,
+                            "exit_code": ev.artifact.exit_code,
+                        }
+                    )
+                    typer.echo(f"  Rendered: {ev.artifact.artifact_path}")
+                elif ev.kind == "error" and ev.message:
+                    typer.secho(f"  Error: {ev.message}", fg=typer.colors.YELLOW)
+        finally:
+            aclose = getattr(client, "aclose", None) or getattr(client, "close", None)
+            if callable(aclose):
+                r = aclose()
+                if asyncio.iscoroutine(r):
+                    await r
+
+        if scenes:
+            mp = output_root / f"{lecture_id}-manifest.json"
+            mp.write_text(
+                _json.dumps({"lecture_id": lecture_id, "scenes": scenes}, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            typer.secho(f"Wrote manifest to {mp}", fg=typer.colors.GREEN)
+
+    asyncio.run(_run())
 
 
 
@@ -365,34 +703,67 @@ def tts_speak(
     text: Annotated[
         str | None, typer.Option("--text", "-t", help="Text to speak")
     ] = None,
+    out: Annotated[
+        Path, typer.Option("--out", "-o", help="Output WAV path")
+    ] = Path("out.wav"),
 ) -> None:
-    """Interactively speak text via TTS."""
+    """Synthesize text to a WAV file (alias for ``tts say`` with interactive prompt)."""
     if not text:
         text = typer.prompt(
             typer.style("Enter text to speak", fg=typer.colors.CYAN, bold=True)
         )
-    
-    typer.echo(f"Synthesizing and speaking text: '{text}'...")
-    # placeholder logic
-    typer.secho(
-        "✓ Speech synthesized successfully (placeholder)!",
-        fg=typer.colors.GREEN,
-        bold=True,
-    )
+    s = load_settings()
+    if not s.tts_enabled:
+        typer.secho("Set tts_enabled=true in your profile.", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+    try:
+        backend = build_backend(s)
+    except RuntimeError as e:
+        typer.secho(str(e), fg=typer.colors.RED)
+        raise typer.Exit(code=1) from e
+    if backend is None:
+        typer.secho("TTS is disabled.", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+
+    async def _run() -> None:
+        from educlaw.tts.contract import TTSRequest
+
+        req = TTSRequest(text=text, voice=s.tts_voice, speed=s.tts_speed, sample_rate=s.tts_sample_rate)
+        audio = await backend.synthesize(req)
+        out_p = out.expanduser()
+        out_p.parent.mkdir(parents=True, exist_ok=True)
+        out_p.write_bytes(audio.audio_bytes)
+        await backend.close()
+
+    asyncio.run(_run())
+    typer.secho(f"Wrote {out.expanduser()}", fg=typer.colors.GREEN)
 
 
 @tts_typer.command("status")
 def tts_status() -> None:
-    """Check TTS backend active status and configuration options."""
+    """Show TTS backend status and active configuration."""
     s = load_settings()
-    typer.echo(f"TTS Enabled: {s.tts_enabled}")
-    typer.echo(f"Default Voice: {s.tts_voice}")
-    typer.echo(f"Sample Rate: {s.tts_sample_rate}")
-    typer.secho(
-        "✓ TTS system check completed (placeholder)!",
-        fg=typer.colors.GREEN,
-        bold=True,
-    )
+    typer.echo(f"TTS enabled:  {s.tts_enabled}")
+    typer.echo(f"Backend:      {s.tts_backend}")
+    typer.echo(f"Voice:        {s.tts_voice}")
+    typer.echo(f"Speed:        {s.tts_speed}")
+    typer.echo(f"Sample rate:  {s.tts_sample_rate} Hz")
+    if not s.tts_enabled:
+        typer.secho("TTS is disabled in the active profile.", fg=typer.colors.YELLOW)
+        return
+    try:
+        backend = build_backend(s)
+        if backend is None:
+            typer.secho("Backend built but returned None.", fg=typer.colors.YELLOW)
+        else:
+            typer.secho(f"Backend OK: {backend.name}", fg=typer.colors.GREEN)
+
+            async def _close() -> None:
+                await backend.close()
+
+            asyncio.run(_close())
+    except Exception as e:  # noqa: BLE001
+        typer.secho(f"Backend error: {e}", fg=typer.colors.RED)
 
 
 ir_typer = typer.Typer(help="IR maintenance commands.")

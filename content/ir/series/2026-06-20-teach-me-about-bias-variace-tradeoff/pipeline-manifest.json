@@ -1,0 +1,36 @@
+{
+  "topic": "Teach me about bias variace tradeoff",
+  "lecture_count": 4,
+  "output_dir": "C:\\Users\\nabin\\Desktop\\allProjects\\EdClaw\\content\\ir\\series\\2026-06-20-teach-me-about-bias-variace-tradeoff",
+  "automanim": true,
+  "tts": true,
+  "shield_ollama": true,
+  "manim_artifacts": [],
+  "lectures": [
+    {
+      "lecture_index": 1,
+      "lecture_title": "Introduction to Error and Bias",
+      "markdown": "lecture-01-introduction-to-error-and-bias.md",
+      "audio": "audio\\lecture-01.wav"
+    },
+    {
+      "lecture_index": 2,
+      "lecture_title": "Understanding Bias",
+      "markdown": "lecture-02-understanding-bias.md",
+      "audio": "audio\\lecture-02.wav"
+    },
+    {
+      "lecture_index": 3,
+      "lecture_title": "Understanding Variance",
+      "markdown": "lecture-03-understanding-variance.md",
+      "audio": "audio\\lecture-03.wav"
+    },
+    {
+      "lecture_index": 4,
+      "lecture_title": "The Tradeoff and Optimization",
+      "markdown": "lecture-04-the-tradeoff-and-optimization.md",
+      "audio": "audio\\lecture-04.wav"
+    }
+  ],
+  "exit_code": 0
+}
