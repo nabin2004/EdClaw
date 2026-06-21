@@ -6,7 +6,7 @@ For **ManiBench / Manim CE** fine-tuning: step-by-step runbook (every command), 
 
 ## Prerequisites
 
-- **Python 3.11+** (CI uses 3.12; local 3.14+ works with `uv` if available).
+- **Python 3.11+** (CI use  s 3.12; local 3.14+ works with `uv` if available).
 - **Ollama** on the same machine for the default local profile (`http://127.0.0.1:11434`).
 - Optional: **Docker** for `DockerSandbox` and building `educlaw/runner:latest` / `educlaw/manim:latest`.
 - **Git** and a working shell.

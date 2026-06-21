@@ -14,3 +14,5 @@ build/
 training/manibench/out/
 site/
 sites/
+
+content/ir/series/*
