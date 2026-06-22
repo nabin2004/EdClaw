@@ -11,6 +11,7 @@ from educlaw.autolecture.generator import generate_lecture
 from educlaw.automanim.orchestrator import run_automanim
 from educlaw.config.settings import Settings
 from educlaw.safety.shield import NoopShield, Shield
+from educlaw.tts.md_to_srt import estimate_timing, segment_markdown
 
 _MAX_LECTURES = 8
 
@@ -55,6 +56,7 @@ async def plan_course(
     """Call Ollama once and return a validated ``CoursePlan`` (raises ``CoursePlanningFailed``)."""
     raw: str | None = None
     try:
+        _extra = {} if settings.ollama_chat_think is None else {"think": settings.ollama_chat_think}
         out = await client.chat(
             model=settings.model_id,
             messages=[
@@ -63,6 +65,7 @@ async def plan_course(
             ],
             format="json",
             options={"temperature": 0.25, "num_predict": 4096},
+            **_extra,
         )
         msg = out.get("message") or {}
         raw = (msg.get("content") or "").strip()
@@ -158,9 +161,15 @@ async def run_autocourse(
 
         if settings.automanim_enabled and shield is not None:
             try:
+                try:
+                    segs = await segment_markdown(client, settings.model_id, result.markdown)
+                except Exception:
+                    segs = []
+                sub_blocks = estimate_timing(segs) if segs else estimate_timing([result.markdown[:500]])
                 async for am_ev in run_automanim(
                     result.markdown,
-                    dict(result.ir_suggestion),
+                    sub_blocks,
+                    outline.title,
                     settings,
                     shield,
                     ollama=client,

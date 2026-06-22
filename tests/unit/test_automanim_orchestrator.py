@@ -10,6 +10,11 @@ from educlaw.automanim.orchestrator import run_automanim
 from educlaw.automanim.schema import RenderArtifact
 from educlaw.config.settings import Settings
 from educlaw.safety.shield import Shield, Verdict
+from educlaw.tts.md_to_srt import SubtitleBlock
+
+
+def _stub_blocks() -> list[SubtitleBlock]:
+    return [SubtitleBlock(index=1, text="Lecture intro.", tts_text="Lecture intro.", start_ms=0, end_ms=5000)]
 
 
 @pytest.mark.asyncio
@@ -43,7 +48,8 @@ async def test_run_automanim_smoke(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
         e
         async for e in run_automanim(
             "# Lecture\n",
-            {"id": "lec.1", "title": "L1"},
+            _stub_blocks(),
+            "L1",
             settings,
             shield,
             ollama=None,
@@ -103,7 +109,8 @@ async def test_run_automanim_render_subprocess_failure_emits_error(
         e
         async for e in run_automanim(
             "# L\n",
-            {"id": "lec.1", "title": "L1"},
+            _stub_blocks(),
+            "L1",
             settings,
             shield,
             ollama=None,
@@ -139,7 +146,8 @@ async def test_run_automanim_local_aborts_when_manim_missing(
         e
         async for e in run_automanim(
             "# L\n",
-            {"id": "lec.1", "title": "L1"},
+            _stub_blocks(),
+            "L1",
             settings,
             shield,
             ollama=None,

@@ -44,7 +44,9 @@ def static_critic(source: str, *, max_source_bytes: int) -> CriticResult:
     return CriticResult(ok=True, feedback="")
 
 
-async def llm_critic_review(client: AsyncClient, model: str, code: str) -> CriticResult:
+async def llm_critic_review(
+    client: AsyncClient, model: str, code: str, *, think: bool | None = False
+) -> CriticResult:
     """Optional second pass: short model verdict ALLOW / REJECT."""
     snippet = extract_python(code)[:12_000]
     sys = (
@@ -53,6 +55,7 @@ async def llm_critic_review(client: AsyncClient, model: str, code: str) -> Criti
         "or uses obvious non-Manim side effects. "
         "Reply with exactly one line: ALLOW or REJECT: <brief reason>."
     )
+    _extra = {} if think is None else {"think": think}
     out = await client.chat(
         model=model,
         messages=[
@@ -60,6 +63,7 @@ async def llm_critic_review(client: AsyncClient, model: str, code: str) -> Criti
             {"role": "user", "content": snippet},
         ],
         options={"temperature": 0, "num_predict": 128},
+        **_extra,
     )
     msg = ((out.get("message") or {}).get("content") or "").strip()
     upper = msg.upper()

@@ -36,6 +36,7 @@ from educlaw.automanim.orchestrator import run_automanim
 from educlaw.config.settings import load_settings
 from educlaw.safety.shield import Shield
 from educlaw.tts.contract import TTSRequest
+from educlaw.tts.md_to_srt import estimate_timing, segment_markdown
 from educlaw.tts.registry import build_backend
 
 
@@ -255,10 +256,18 @@ async def _run_automanim_collect(
 ) -> tuple[list[Path], list[dict[str, Any]]]:
     post = frontmatter.loads(md_path.read_text(encoding="utf-8"))
     meta = dict(post.metadata) if isinstance(post.metadata, dict) else {}
+    md_content = str(post.content)
+    lecture_title = str(meta.get("title") or md_path.stem)
+    try:
+        segs = await segment_markdown(client, settings.model_id, md_content)
+    except Exception:
+        segs = []
+    sub_blocks = estimate_timing(segs) if segs else estimate_timing([md_content[:500]])
     clips: list[tuple[int, Path, dict[str, Any]]] = []
     async for ev in run_automanim(
-        str(post.content),
-        meta,
+        md_content,
+        sub_blocks,
+        lecture_title,
         settings,
         shield,
         ollama=client,

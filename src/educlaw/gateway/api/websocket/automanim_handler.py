@@ -14,6 +14,7 @@ from educlaw.config.settings import Settings
 from educlaw.gateway.agents.session import AgentSession
 from educlaw.gateway.agents.streaming import Streamer
 from educlaw.safety.shield import NoopShield, Shield
+from educlaw.tts.md_to_srt import estimate_timing, segment_markdown
 
 LOG = logging.getLogger("educlaw.automanim")
 
@@ -57,7 +58,10 @@ async def handle_automanim_ws(
     raw_md = payload.get("markdown")
     markdown = raw_md if isinstance(raw_md, str) else ""
     meta_in = payload.get("metadata")
-    ir_suggestion: dict[str, Any] = dict(meta_in) if isinstance(meta_in, dict) else {}
+    lecture_title: str = (
+        (meta_in.get("title") if isinstance(meta_in, dict) else None)
+        or _default_title(markdown)
+    )
 
     if not markdown.strip():
         await stream.event("assistant.status", {"phase": "start"})
@@ -84,20 +88,14 @@ async def handle_automanim_ws(
         await stream.event("assistant.status", {"phase": "end"})
         return
 
-    if not ir_suggestion.get("id"):
-        ir_suggestion["id"] = "ws-lecture"
-    if "title" not in ir_suggestion:
-        ir_suggestion["title"] = _default_title(markdown)
-
     base_out = Path(settings.automanim_output_dir).expanduser().resolve()
     output_root = base_out / f"ws-{session.session_id}"
     output_root.mkdir(parents=True, exist_ok=True)
 
     LOG.info(
-        "automanim_ws start session=%s lecture_id=%s title=%s output_root=%s shield_enabled=%s",
+        "automanim_ws start session=%s title=%s output_root=%s shield_enabled=%s",
         session.session_id,
-        ir_suggestion.get("id"),
-        ir_suggestion.get("title"),
+        lecture_title,
         output_root,
         settings.shield_enabled,
     )
@@ -110,6 +108,14 @@ async def handle_automanim_ws(
         else NoopShield()
     )
 
+    # Segment markdown into subtitle blocks (no TTS; use estimated timing)
+    try:
+        segments = await segment_markdown(client, settings.model_id, markdown)
+    except Exception as e:  # noqa: BLE001
+        LOG.warning("automanim_ws subtitle_segment_failed session=%s err=%s", session.session_id, e)
+        segments = []
+    subtitle_blocks = estimate_timing(segments) if segments else estimate_timing([markdown[:500]])
+
     await stream.event("assistant.status", {"phase": "start"})
     artifact_paths: list[str] = []
     artifact_urls: list[str] = []
@@ -121,7 +127,8 @@ async def handle_automanim_ws(
         try:
             async for ev in run_automanim(
                 markdown,
-                ir_suggestion,
+                subtitle_blocks,
+                lecture_title,
                 settings,
                 shield,
                 ollama=client,
@@ -158,7 +165,7 @@ async def handle_automanim_ws(
             LOG.exception("automanim_ws session=%s pipeline_exception err=%s", session.session_id, e)
             await stream.event(
                 "automanim.progress",
-                {"kind": "error", "message": str(e), "lecture_id": ir_suggestion.get("id")},
+                {"kind": "error", "message": str(e), "lecture_id": None},
             )
     finally:
         await _maybe_close_ollama(client)
@@ -197,7 +204,7 @@ async def handle_automanim_ws(
         summary_lines.append(f"Output directory: {output_root}")
 
     summary = "\n".join(summary_lines) + "\n"
-    session.add_user_message(f"[automanim] {ir_suggestion.get('title', 'lecture')}")
+    session.add_user_message(f"[automanim] {lecture_title}")
     session.add_assistant_message(summary.strip())
     await stream.token(summary)
 

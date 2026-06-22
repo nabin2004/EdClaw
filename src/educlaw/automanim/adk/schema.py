@@ -11,6 +11,9 @@ class SceneSpec(BaseModel):
     title: str
     description: str = ""
     visual_intent: str = ""
+    subtitle_index: int | None = None  # 1-based index into subtitle blocks
+    duration_sec: float = 5.0          # target scene duration (matches subtitle block)
+    subtitle_text: str = ""            # subtitle text displayed during this scene
 
 
 class VizPlan(BaseModel):

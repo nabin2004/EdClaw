@@ -33,11 +33,17 @@ def build_codegen_user_message(
         "scene_title": scene.title,
         "description": scene.description,
         "visual_intent": scene.visual_intent,
+        "target_duration_sec": round(scene.duration_sec, 1),
+        "subtitle_text": scene.subtitle_text or "",
     }
     spec_json = json.dumps(payload, indent=2)
     base = (
         "Generate Manim CE Python for this scene specification (JSON):\n"
-        f"{spec_json}\n"
+        f"{spec_json}\n\n"
+        "IMPORTANT: The scene must run for exactly target_duration_sec seconds.\n"
+        "Use self.wait() calls so total animation time matches target_duration_sec.\n"
+        "The subtitle_text is what the narrator says — the animation must visually\n"
+        "support that exact content.\n"
         "The Scene class name should be PascalCase and unique (e.g. GeneratedScene1).\n"
         "Use concise animations suitable for preview quality (-ql).\n"
     )

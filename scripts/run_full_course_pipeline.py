@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-End-to-end course generator: plan → per lecture: Markdown → WAV (optional) → Manim (optional).
+End-to-end course generator: plan → Markdown → subtitle-chunked SRT/VTT+WAV → Manim.
 
-Within each lecture the order is strict: write ``lecture-NN-*.md``, then ``audio/lecture-NN.wav``
-(if TTS is on), then AutoManim scenes under ``videos/`` before the next lecture starts.
+Subtitle generation follows industry standards:
+  - 15-20 characters per second reading speed
+  - Max 2 lines, 42 characters per line per block
+  - 3-7 seconds display duration per block
 
 Reads ``profiles/local.toml`` (or ``EDUCLAW_PROFILE_PATH``). Requires Ollama.
 
@@ -12,7 +14,7 @@ Examples:
     "Introduction to linear algebra" --lectures 8
 
   .venv/bin/python scripts/run_full_course_pipeline.py \\
-    "Python basics" --lectures 2 --out content/ir/series/my-run --no-automanim
+    "Python basics" --lectures 2 --out content/courses/my-run --no-automanim
 
   .venv/bin/python scripts/run_full_course_pipeline.py "Topic" --no-tts --no-automanim --no-shield
 """
@@ -36,8 +38,6 @@ async def _run(args: argparse.Namespace) -> int:
         enable_shield=bool(args.shield),
         automanim_output_dir=args.automanim_output_dir,
         automanim_backend=args.automanim_backend,
-        tts_max_chars=args.tts_max_chars,
-        tts_chunk_chars=args.tts_chunk_chars,
         continue_on_error=args.continue_on_error,
         generate_site=args.generate_site,
         site_output_dir=args.site_output_dir,
@@ -65,7 +65,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         "--out",
         type=Path,
         default=None,
-        help="Output directory (default: content/ir/series/YYYY-MM-DD-slug).",
+        help="Output directory (default: content/courses/YYYY-MM-DD-slug).",
     )
     p.add_argument(
         "--automanim",
@@ -98,20 +98,6 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         action=argparse.BooleanOptionalAction,
         default=True,
         help="Run Ollama Shield before AutoManim scenes (default: on). Use --no-shield to skip.",
-    )
-    p.add_argument(
-        "--tts-max-chars",
-        type=int,
-        default=12_000,
-        dest="tts_max_chars",
-        help="Max plain-text characters taken from each lecture before chunking (default 12000).",
-    )
-    p.add_argument(
-        "--tts-chunk-chars",
-        type=int,
-        default=320,
-        dest="tts_chunk_chars",
-        help="Max characters per TTS call (chunked then merged to one WAV; default 320).",
     )
     p.add_argument(
         "--continue-on-error",

@@ -4,6 +4,14 @@ import logging
 import pytest
 
 from educlaw.automanim.planner import parse_viz_plan
+from educlaw.tts.md_to_srt import SubtitleBlock
+
+
+def _blocks(n: int = 0) -> list[SubtitleBlock]:
+    return [
+        SubtitleBlock(index=i + 1, text=f"Block {i+1}", tts_text=f"Block {i+1}", start_ms=i * 5000, end_ms=(i + 1) * 5000)
+        for i in range(n)
+    ]
 
 
 def test_parse_viz_plan_caps_scenes() -> None:
@@ -15,7 +23,7 @@ def test_parse_viz_plan_caps_scenes() -> None:
             ]
         }
     )
-    plan = parse_viz_plan(raw, max_scenes=3)
+    plan = parse_viz_plan(raw, max_scenes=3, subtitle_blocks=_blocks())
     assert len(plan.scenes) == 3
     assert plan.scenes[0].title == "S0"
 
@@ -24,7 +32,7 @@ def test_parse_viz_plan_strips_fence() -> None:
     raw = """```json
 {"scenes": [{"title": "A", "description": "", "visual_intent": ""}]}
 ```"""
-    plan = parse_viz_plan(raw, max_scenes=6)
+    plan = parse_viz_plan(raw, max_scenes=6, subtitle_blocks=_blocks())
     assert len(plan.scenes) == 1
     assert plan.scenes[0].title == "A"
 
@@ -35,13 +43,12 @@ def test_parse_viz_plan_invalid_json_logs_context(caplog: pytest.LogCaptureFixtu
     old_prop = logger.propagate
     logger.propagate = True
     try:
-        # Invalid escape \\l in JSON string (common when models emit LaTeX).
-        raw = r'{"scenes": [{"title": "T", "description": "see \lambda", "visual_intent": ""}]}'
+        # Truncated JSON — cannot be fixed by any backslash substitution.
+        raw = '{"scenes": [{"title": "Missing end bracket"'
         with caplog.at_level(logging.ERROR, logger="educlaw.automanim.adk.planner"):
             with pytest.raises(json.JSONDecodeError):
-                parse_viz_plan(raw, max_scenes=6)
+                parse_viz_plan(raw, max_scenes=6, subtitle_blocks=_blocks())
         assert "automanim planner JSON parse failed" in caplog.text
         assert "len_text=" in caplog.text
-        assert "lambda" in caplog.text
     finally:
         logger.propagate = old_prop

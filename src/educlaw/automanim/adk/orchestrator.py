@@ -1,24 +1,27 @@
-"""AutoManim: plan scenes, codegen Manim CE, critic loop, render to MP4."""
+"""AutoManim: plan scenes from subtitle blocks, codegen Manim CE, critic loop, render to MP4."""
 
 from __future__ import annotations
 
-import json
 import logging
 import re
 from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Any
 
 from ollama import AsyncClient
 
 from educlaw.automanim.adk.adk_runner import run_llm_agent_once
 from educlaw.automanim.adk.codegen import build_codegen_agent, build_codegen_user_message
 from educlaw.automanim.adk.critic import llm_critic_review, static_critic
-from educlaw.automanim.adk.planner import build_planner_agent, parse_viz_plan
+from educlaw.automanim.adk.planner import (
+    build_planner_agent,
+    parse_viz_plan,
+    subtitle_blocks_to_planner_input,
+)
 from educlaw.automanim.adk.render import build_render_backend
 from educlaw.automanim.adk.schema import AutoManimEvent, RenderArtifact
 from educlaw.config.settings import Settings
 from educlaw.safety.shield import NoopShield, Shield, Verdict
+from educlaw.tts.md_to_srt import SubtitleBlock
 from educlaw.viz import manim_available
 
 _AUTOMANIM_LOCAL_MANIM_HINT = (
@@ -39,16 +42,20 @@ def _slug(s: str, max_len: int = 48) -> str:
 
 async def run_automanim(
     lecture_markdown: str,
-    ir_suggestion: dict[str, Any],
+    subtitle_blocks: list[SubtitleBlock],
+    lecture_title: str,
     settings: Settings,
     shield: Shield | NoopShield,
     ollama: AsyncClient | None = None,
     *,
     output_root: Path | None = None,
 ) -> AsyncIterator[AutoManimEvent]:
-    """Stream AutoManim pipeline events for one lecture."""
-    lecture_id = str(ir_suggestion.get("id") or "lecture")
-    lecture_title = str(ir_suggestion.get("title") or lecture_id)
+    """Stream AutoManim pipeline events for one lecture.
+
+    subtitle_blocks: timing-stamped subtitle segments (from md_to_srt).
+    lecture_title:   human-readable title (used as lecture_id slug + display).
+    """
+    lecture_id = re.sub(r"[^a-z0-9]+", "-", lecture_title.lower()).strip("-") or "lecture"
 
     yield AutoManimEvent(
         kind="phase",
@@ -90,23 +97,22 @@ async def run_automanim(
         return
 
     planner = build_planner_agent(settings)
-    user_plan = (
-        "IR metadata (JSON):\n"
-        f"{json.dumps(ir_suggestion, indent=2)[:8000]}\n\n"
-        "Lecture (Markdown):\n"
-        f"{lecture_markdown[:40_000]}"
-    )
+    user_plan = subtitle_blocks_to_planner_input(lecture_markdown, subtitle_blocks)
 
     yield AutoManimEvent(
         kind="phase",
         lecture_id=lecture_id,
         message="Planning scenes with LLM…",
     )
-    LOG.info("automanim lecture=%s phase=planner_llm_start", lecture_id)
+    LOG.info("automanim lecture=%s phase=planner_llm_start blocks=%d", lecture_id, len(subtitle_blocks))
 
     try:
         raw_plan = await run_llm_agent_once(planner, user_text=user_plan)
-        plan = parse_viz_plan(raw_plan, max_scenes=settings.automanim_max_scenes_per_lecture)
+        plan = parse_viz_plan(
+            raw_plan,
+            max_scenes=settings.automanim_max_scenes_per_lecture,
+            subtitle_blocks=subtitle_blocks,
+        )
     except Exception as e:  # noqa: BLE001
         LOG.exception("automanim lecture=%s planner_failed err=%s", lecture_id, e)
         yield AutoManimEvent(

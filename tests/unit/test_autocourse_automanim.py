@@ -74,7 +74,8 @@ async def test_autocourse_passes_noop_shield_when_shield_disabled(
 
     async def fake_run_am(
         _md: str,
-        _meta: dict,
+        _blocks: object,
+        _title: str,
         _settings: object,
         shield: object,
         **_kw: object,

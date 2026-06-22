@@ -1,7 +1,13 @@
-"""Push EdClaw IR lecture content to HuggingFace Hub as a fine-tuning dataset."""
+"""Push EdClaw content to HuggingFace Hub as a fine-tuning dataset.
+
+Two entry points:
+  push_to_hub        – scans IR .md files (and optional Manim scene.py files)
+  push_jsonl_to_hub  – reads a pre-built ShareGPT JSONL file directly
+"""
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -290,3 +296,159 @@ def push_to_hub(
         ds.push_to_hub(repo_id, split="train", token=token, private=private)
 
     return f"https://huggingface.co/datasets/{repo_id}"
+
+
+def push_jsonl_to_hub(
+    jsonl_path: Path,
+    repo_id: str,
+    *,
+    token: str | None = None,
+    private: bool = True,
+    test_size: float = 0.0,
+) -> str:
+    """Push a pre-built ShareGPT JSONL file directly to HuggingFace Hub.
+
+    Args:
+        jsonl_path: Path to the JSONL file (one record per line).
+        repo_id: Target HuggingFace dataset repo, e.g. ``myuser/educlaw-lectures``.
+        token: HuggingFace token (falls back to $HF_TOKEN in the caller).
+        private: Whether to create a private dataset.
+        test_size: Fraction held out as test split (0 = train only).
+
+    Returns the dataset URL.
+    """
+    try:
+        from datasets import Dataset
+    except ImportError as e:
+        raise ImportError(
+            "Install the 'training' extras: pip install 'educlaw[training]'"
+        ) from e
+
+    rows: list[dict] = []
+    for line in jsonl_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            pass
+
+    if not rows:
+        raise ValueError(f"No records found in {jsonl_path}")
+
+    ds = Dataset.from_list(rows)
+
+    if test_size > 0.0:
+        from datasets import DatasetDict as _DatasetDict
+        split_ds: _DatasetDict = ds.train_test_split(test_size=test_size, seed=42)
+        split_ds.push_to_hub(repo_id, token=token, private=private)
+    else:
+        ds.push_to_hub(repo_id, split="train", token=token, private=private)
+
+    return f"https://huggingface.co/datasets/{repo_id}"
+
+
+# ---------------------------------------------------------------------------
+# Manim SFT dataset push
+# ---------------------------------------------------------------------------
+
+def _validate_messages_record(record: dict) -> bool:
+    """Return True if record has valid Gemma4 messages format."""
+    msgs = record.get("messages")
+    if not isinstance(msgs, list) or len(msgs) < 2:
+        return False
+    roles = [m.get("role") for m in msgs]
+    if "user" not in roles or "assistant" not in roles:
+        return False
+    return all(isinstance(m.get("content"), str) and m.get("content") for m in msgs)
+
+
+def load_manim_sft(jsonl_path: Path) -> tuple[list[dict], dict]:
+    """Load and validate a Manim SFT JSONL.
+
+    Returns ``(rows, stats)`` where stats includes counts for reporting.
+    Skips malformed records silently.
+    """
+    rows: list[dict] = []
+    skipped = 0
+    topics: set[str] = set()
+    code_lengths: list[int] = []
+
+    for line in jsonl_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError:
+            skipped += 1
+            continue
+        if not _validate_messages_record(rec):
+            skipped += 1
+            continue
+        rows.append(rec)
+        if rec.get("topic"):
+            topics.add(rec["topic"])
+        # Measure assistant (code) length
+        for msg in rec.get("messages", []):
+            if msg.get("role") == "assistant":
+                code_lengths.append(len(msg["content"]))
+
+    avg_code = int(sum(code_lengths) / len(code_lengths)) if code_lengths else 0
+    stats = {
+        "total": len(rows),
+        "skipped": skipped,
+        "unique_topics": len(topics),
+        "avg_code_chars": avg_code,
+    }
+    return rows, stats
+
+
+def push_manim_sft_to_hub(
+    jsonl_path: Path,
+    repo_id: str,
+    *,
+    token: str | None = None,
+    private: bool = True,
+    test_size: float = 0.0,
+) -> tuple[str, dict]:
+    """Push the Manim SFT JSONL (messages format) to HuggingFace Hub.
+
+    Validates that every record has the Gemma4 ``messages`` format
+    (role/content pairs with at least a user and assistant turn).
+
+    Args:
+        jsonl_path: Path to ``dataset/manim_sft.jsonl``.
+        repo_id: Target HuggingFace dataset repo.
+        token: HuggingFace token (falls back to $HF_TOKEN in the caller).
+        private: Whether to create a private dataset.
+        test_size: Fraction held out as test split (0 = train only).
+
+    Returns ``(dataset_url, stats_dict)``.
+    """
+    try:
+        from datasets import Dataset
+    except ImportError as e:
+        raise ImportError(
+            "Install the 'training' extras: pip install 'educlaw[training]'"
+        ) from e
+
+    rows, stats = load_manim_sft(jsonl_path)
+    if not rows:
+        raise ValueError(
+            f"No valid messages-format records found in {jsonl_path}. "
+            f"Skipped {stats['skipped']} malformed lines."
+        )
+
+    ds = Dataset.from_list(rows)
+
+    if test_size > 0.0:
+        from datasets import DatasetDict as _DatasetDict
+        split_ds: _DatasetDict = ds.train_test_split(test_size=test_size, seed=42)
+        split_ds.push_to_hub(repo_id, token=token, private=private)
+    else:
+        ds.push_to_hub(repo_id, split="train", token=token, private=private)
+
+    url = f"https://huggingface.co/datasets/{repo_id}"
+    return url, stats

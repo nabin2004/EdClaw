@@ -6,6 +6,12 @@ from ollama import AsyncClient
 
 from educlaw.autolecture.schema import LectureOutline, LectureResult
 
+_THINK_RE = re.compile(r"<think>[\s\S]*?</think>", re.IGNORECASE)
+
+
+def _strip_thinking(text: str) -> str:
+    return _THINK_RE.sub("", text).strip()
+
 _LECTURE_SYSTEM = """You are an expert instructor writing one complete lecture in Markdown.
 Structure the lecture with clear headings (##, ###), not a YAML frontmatter block.
 Include, in order:
@@ -35,6 +41,7 @@ async def generate_lecture(
     lecture_index: int,
     lecture_count: int,
     prior_lecture_titles: list[str],
+    think: bool | None = False,
 ) -> LectureResult:
     prior = (
         ", ".join(prior_lecture_titles)
@@ -59,6 +66,7 @@ Key topics to cover:
 {topics}
 """
 
+    _extra = {} if think is None else {"think": think}
     out = await client.chat(
         model=model,
         messages=[
@@ -66,9 +74,10 @@ Key topics to cover:
             {"role": "user", "content": user},
         ],
         options={"temperature": 0.35, "num_predict": 8192},
+        **_extra,
     )
     msg = out.get("message") or {}
-    text = (msg.get("content") or "").strip()
+    text = _strip_thinking((msg.get("content") or "").strip())
     if not text:
         text = "(Model returned an empty lecture.)"
 

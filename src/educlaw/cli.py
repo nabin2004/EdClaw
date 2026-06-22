@@ -23,6 +23,7 @@ from educlaw.config.strict_local import assert_strict_local
 from educlaw.ir.loader import lint, load_all
 from educlaw.safety.shield import Shield
 from educlaw.tts.contract import TTSRequest
+from educlaw.tts.md_to_srt import estimate_timing, segment_markdown
 from educlaw.tts.registry import build_backend, known_backends
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
@@ -262,16 +263,8 @@ def autocourse_generate(
         str | None,
         typer.Option("--automanim-backend", help="'local' or 'docker'"),
     ] = None,
-    tts_max_chars: Annotated[
-        int,
-        typer.Option("--tts-max-chars", help="Max plain-text chars per lecture for TTS"),
-    ] = 12_000,
-    tts_chunk_chars: Annotated[
-        int,
-        typer.Option("--tts-chunk-chars", help="Max chars per TTS call chunk"),
-    ] = 320,
 ) -> None:
-    """Generate a full course: plan → lectures → TTS audio → Manim animations.
+    """Generate a full course: plan → lectures → subtitle-chunked SRT/VTT+WAV → Manim animations.
 
     Delegates to the same pipeline as scripts/run_full_course_pipeline.py.
     """
@@ -290,8 +283,6 @@ def autocourse_generate(
         enable_automanim=automanim,
         enable_shield=shield,
         automanim_backend=automanim_backend,
-        tts_max_chars=tts_max_chars,
-        tts_chunk_chars=tts_chunk_chars,
         continue_on_error=continue_on_error,
         generate_site=generate_site,
     )
@@ -495,6 +486,15 @@ def automanim_plan(
         )
         raise typer.Exit(code=1)
 
+    def _extract_title(md_text: str, fallback_meta: dict) -> str:
+        if fallback_meta.get("title"):
+            return str(fallback_meta["title"])
+        for line in md_text.splitlines():
+            s_line = line.strip()
+            if s_line.startswith("#"):
+                return s_line.lstrip("#").strip() or "Lecture"
+        return "Lecture"
+
     async def _run() -> None:
         client = AsyncClient(host=s.ollama_url.rstrip("/"))
         shield_impl: Shield | NoopShield = (
@@ -502,7 +502,13 @@ def automanim_plan(
         )
         scenes_data: list[dict] = []
         try:
-            async for ev in run_automanim(markdown, meta, s, shield_impl, ollama=client):
+            try:
+                segs = await segment_markdown(client, s.model_id, markdown)
+            except Exception:
+                segs = []
+            subtitle_blocks = estimate_timing(segs) if segs else estimate_timing([markdown[:500]])
+            lecture_title = _extract_title(markdown, meta)
+            async for ev in run_automanim(markdown, subtitle_blocks, lecture_title, s, shield_impl, ollama=client):
                 if ev.kind == "plan":
                     scenes_data = (ev.extra or {}).get("scenes", [])
                     typer.secho(
@@ -595,8 +601,14 @@ def automanim_render(
         )
         scenes: list[dict] = []
         try:
+            try:
+                segs = await segment_markdown(client, s.model_id, markdown)
+            except Exception:
+                segs = []
+            sub_blocks = estimate_timing(segs) if segs else estimate_timing([markdown[:500]])
+            lec_title = str(meta.get("title") or lecture_id)
             async for ev in run_automanim(
-                markdown, meta, s, shield_impl, ollama=client, output_root=output_root
+                markdown, sub_blocks, lec_title, s, shield_impl, ollama=client, output_root=output_root
             ):
                 if ev.kind == "scene_done" and ev.artifact and ev.artifact.artifact_path:
                     scenes.append(
@@ -846,9 +858,17 @@ def automanim_cmd(
                 meta = dict(post.metadata) if isinstance(post.metadata, dict) else {}
                 lecture_id = str(meta.get("id") or md_path.stem)
                 manifest.setdefault(lecture_id, [])
+                md_content = str(post.content)
+                try:
+                    segs = await segment_markdown(client, s.model_id, md_content)
+                except Exception:
+                    segs = []
+                sub_blocks = estimate_timing(segs) if segs else estimate_timing([md_content[:500]])
+                lec_title = str(meta.get("title") or lecture_id)
                 async for ev in run_automanim(
-                    str(post.content),
-                    meta,
+                    md_content,
+                    sub_blocks,
+                    lec_title,
                     s,
                     shield,
                     ollama=client,
@@ -953,6 +973,514 @@ def pull_models() -> None:
     for m in sorted({s.model_id, s.embedding_model, s.shield_model}):
         typer.echo(f"ollama pull {m}")
         subprocess.run(["ollama", "pull", m], check=False)
+
+
+# ---------------------------------------------------------------------------
+# educlaw course — top-level shortcut (positional topic like the shell script)
+# ---------------------------------------------------------------------------
+
+course_typer = typer.Typer(
+    help="Generate a complete course (plan → Markdown → SRT/WAV → Manim).",
+    no_args_is_help=True,
+)
+app.add_typer(course_typer, name="course")
+
+
+@course_typer.command("generate")
+def course_generate(
+    topic: Annotated[
+        str,
+        typer.Argument(help="What to teach, e.g. 'Introduction to Linear Algebra'"),
+    ],
+    lectures: Annotated[
+        int,
+        typer.Option("--lectures", "-n", min=2, max=8, help="Number of lectures (2–8, default 4)"),
+    ] = 4,
+    out: Annotated[
+        Path | None,
+        typer.Option("--out", "-o", help="Output directory (default: content/courses/YYYY-MM-DD-slug)"),
+    ] = None,
+    tts: Annotated[
+        bool,
+        typer.Option("--tts/--no-tts", help="Synthesize per-block TTS audio + SRT/VTT (default: on)"),
+    ] = True,
+    automanim: Annotated[
+        bool,
+        typer.Option("--automanim/--no-automanim", help="Generate Manim video scenes (default: on)"),
+    ] = True,
+    shield: Annotated[
+        bool,
+        typer.Option("--shield/--no-shield", help="Ollama safety shield before Manim (default: on)"),
+    ] = True,
+    automanim_backend: Annotated[
+        str | None,
+        typer.Option("--automanim-backend", help="Manim render backend: 'local' or 'docker'"),
+    ] = None,
+    automanim_output_dir: Annotated[
+        Path | None,
+        typer.Option("--automanim-out", help="Override Manim video output directory"),
+    ] = None,
+    generate_site: Annotated[
+        bool,
+        typer.Option("--site/--no-site", help="Generate Jekyll site after finishing (default: off)"),
+    ] = False,
+    site_output_dir: Annotated[
+        Path | None,
+        typer.Option("--site-out", help="Parent directory for generated site"),
+    ] = None,
+    continue_on_error: Annotated[
+        bool,
+        typer.Option("--continue-on-error", help="Keep going if a lecture phase fails"),
+    ] = True,
+) -> None:
+    """Generate a full course from a single topic string.
+
+    Equivalent to:  ./scripts/run_full_course_pipeline.sh "Topic" --lectures 4
+
+    Examples:
+
+    \\b
+        educlaw course generate "Introduction to Linear Algebra" --lectures 4
+
+        educlaw course generate "Calculus basics" --lectures 2 --no-tts --no-automanim
+
+        educlaw course generate "Python data structures" --lectures 6 \\
+            --automanim-backend docker --site
+    """
+    from educlaw.autocourse.pipeline import PipelineConfig, run_pipeline
+
+    cfg = PipelineConfig(
+        topic=topic,
+        lectures=lectures,
+        out=out,
+        enable_tts=tts,
+        enable_automanim=automanim,
+        enable_shield=shield,
+        automanim_backend=automanim_backend,
+        automanim_output_dir=automanim_output_dir,
+        generate_site=generate_site,
+        site_output_dir=site_output_dir,
+        continue_on_error=continue_on_error,
+    )
+    exit_code, out_dir = asyncio.run(run_pipeline(cfg))
+    typer.secho(f"\nArtifacts: {out_dir}", fg=typer.colors.CYAN)
+    if exit_code != 0:
+        raise typer.Exit(code=exit_code)
+
+
+# ---------------------------------------------------------------------------
+# educlaw dataset — SFT dataset generation via teacher models (OpenRouter / LiteLLM)
+# ---------------------------------------------------------------------------
+
+dataset_typer = typer.Typer(
+    help="Generate SFT/distillation datasets using teacher models (OpenRouter, LiteLLM).",
+    no_args_is_help=True,
+)
+app.add_typer(dataset_typer, name="dataset")
+
+
+@dataset_typer.command("generate")
+def dataset_generate(
+    backend: Annotated[
+        str,
+        typer.Option(
+            "--backend", "-b",
+            help=(
+                "Generation backend: 'local' uses the local Ollama pipeline (no API key needed); "
+                "'api' calls an OpenRouter/LiteLLM-compatible API."
+            ),
+        ),
+    ] = "local",
+    runs: Annotated[
+        int,
+        typer.Option("--runs", "-r", help="Number of topics to generate (default 100)"),
+    ] = 100,
+    model: Annotated[
+        str,
+        typer.Option(
+            "--model", "-m",
+            help=(
+                "[api backend] Teacher model slug. "
+                "Examples: anthropic/claude-sonnet-4-5, openai/gpt-4o, google/gemini-2.5-pro. "
+                "For a local LiteLLM proxy: ollama/gemma3:27b"
+            ),
+        ),
+    ] = "anthropic/claude-sonnet-4-5",
+    api_key: Annotated[
+        str | None,
+        typer.Option("--api-key", envvar="OPENROUTER_API_KEY", help="[api backend] API key ($OPENROUTER_API_KEY)"),
+    ] = None,
+    base_url: Annotated[
+        str,
+        typer.Option(
+            "--base-url",
+            help=(
+                "[api backend] OpenAI-compatible API base URL (default: OpenRouter). "
+                "Use 'http://localhost:4000' for a local LiteLLM proxy."
+            ),
+        ),
+    ] = "https://openrouter.ai/api/v1",
+    out: Annotated[
+        Path,
+        typer.Option("--out", "-o", help="JSONL output file (default: dataset/sft.jsonl)"),
+    ] = Path("dataset/sft.jsonl"),
+    topics: Annotated[
+        str | None,
+        typer.Option("--topics", help="Comma-separated topics (default: built-in pool of 50+ topics)"),
+    ] = None,
+    topics_file: Annotated[
+        Path | None,
+        typer.Option("--topics-file", help="Text file with one topic per line"),
+    ] = None,
+    lectures: Annotated[
+        int,
+        typer.Option("--lectures", "-n", min=1, max=8, help="Lectures per topic (default 3)"),
+    ] = 3,
+    workers: Annotated[
+        int,
+        typer.Option("--workers", "-w", help="Parallel workers (default: 1 for local, 4 for api)"),
+    ] = 0,
+    manim: Annotated[
+        bool,
+        typer.Option("--manim/--no-manim", help="[api backend] Also generate Manim codegen pairs (default: off)"),
+    ] = False,
+    tts: Annotated[
+        bool,
+        typer.Option("--tts/--no-tts", help="[local backend] Enable TTS synthesis to get audio_script pairs (default: off)"),
+    ] = False,
+    resume: Annotated[
+        bool,
+        typer.Option("--resume", help="Skip topics already in the output file"),
+    ] = False,
+    push_hf: Annotated[
+        str | None,
+        typer.Option(
+            "--push-hf",
+            help=(
+                "After generation, push the JSONL to HuggingFace as this repo id. "
+                "E.g. 'nabin2004/educlaw-lectures'. Requires $HF_TOKEN or --hf-token."
+            ),
+        ),
+    ] = None,
+    hf_token: Annotated[
+        str | None,
+        typer.Option("--hf-token", envvar="HF_TOKEN", help="HuggingFace token for dataset push"),
+    ] = None,
+    hf_private: Annotated[
+        bool,
+        typer.Option("--hf-private/--hf-public", help="Make the HuggingFace dataset private (default: private)"),
+    ] = True,
+    hf_test_size: Annotated[
+        float,
+        typer.Option("--hf-test-size", help="Fraction held out as test split for HF push (0 = train only)"),
+    ] = 0.0,
+) -> None:
+    """Generate an SFT dataset using either the local Ollama pipeline or a remote API.
+
+    Creates ShareGPT-format JSONL with conversation pairs per lecture.
+
+    \\b
+    --- Local Ollama (default, no API key needed) ---
+        educlaw dataset generate --runs 50 --lectures 4
+
+        educlaw dataset generate --runs 100 --tts --lectures 3
+
+    --- OpenRouter (teacher distillation) ---
+        export OPENROUTER_API_KEY=sk-or-...
+        educlaw dataset generate --backend api --runs 50 --model anthropic/claude-sonnet-4-5
+
+    --- Local LiteLLM proxy (OpenAI-compatible, any model) ---
+        litellm --model ollama/gemma3:27b --port 4000
+        educlaw dataset generate --backend api --base-url http://localhost:4000 \\
+            --model ollama/gemma3:27b --api-key dummy --runs 20
+
+    --- Push to HuggingFace after generation ---
+        export HF_TOKEN=hf_...
+        educlaw dataset generate --runs 50 --push-hf nabin2004/educlaw-lectures
+
+    --- Resume an interrupted run ---
+        educlaw dataset generate --runs 500 --resume --out dataset/sft.jsonl
+    """
+    import os
+
+    # Normalise backend
+    backend = backend.lower().strip()
+    if backend not in ("local", "api", "openrouter"):
+        typer.secho(
+            f"Unknown backend '{backend}'. Choose 'local' or 'api'.",
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(code=1)
+    use_api = backend in ("api", "openrouter")
+
+    # Build topic list
+    topic_list: list[str] | None = None
+    if topics_file:
+        tp = topics_file.expanduser()
+        if not tp.is_file():
+            typer.secho(f"Topics file not found: {tp}", fg=typer.colors.RED)
+            raise typer.Exit(code=1)
+        topic_list = [
+            ln.strip() for ln in tp.read_text(encoding="utf-8").splitlines()
+            if ln.strip() and not ln.startswith("#")
+        ]
+    elif topics:
+        topic_list = [t.strip() for t in topics.split(",") if t.strip()]
+
+    out_resolved = out.expanduser().resolve()
+
+    if use_api:
+        from educlaw.dataset.openrouter import generate_dataset
+
+        resolved_key = api_key or os.environ.get("OPENROUTER_API_KEY") or os.environ.get("LITELLM_API_KEY") or ""
+        if not resolved_key:
+            typer.secho(
+                "No API key found. Set $OPENROUTER_API_KEY or pass --api-key.",
+                fg=typer.colors.RED,
+            )
+            raise typer.Exit(code=1)
+
+        n_workers = workers if workers > 0 else 4
+        typer.secho(
+            f"Dataset generation [api]: {runs} runs, {lectures} lecture(s) each, "
+            f"{n_workers} worker(s), model={model}",
+            fg=typer.colors.CYAN,
+        )
+        typer.secho(f"Output: {out_resolved}", fg=typer.colors.CYAN)
+
+        ok = asyncio.run(
+            generate_dataset(
+                api_key=resolved_key,
+                model=model,
+                out_path=out_resolved,
+                runs=runs,
+                topics=topic_list,
+                lectures_per_topic=lectures,
+                workers=n_workers,
+                include_manim=manim,
+                base_url=base_url,
+                resume=resume,
+            )
+        )
+    else:
+        from educlaw.dataset.local import generate_dataset_local
+
+        n_workers = workers if workers > 0 else 1
+        typer.secho(
+            f"Dataset generation [local/ollama]: {runs} runs, {lectures} lecture(s) each, "
+            f"{n_workers} worker(s), tts={tts}",
+            fg=typer.colors.CYAN,
+        )
+        typer.secho(f"Output: {out_resolved}", fg=typer.colors.CYAN)
+
+        ok = asyncio.run(
+            generate_dataset_local(
+                out_path=out_resolved,
+                runs=runs,
+                topics=topic_list,
+                lectures_per_topic=lectures,
+                workers=n_workers,
+                resume=resume,
+                enable_tts=tts,
+                enable_automanim=False,
+                enable_shield=True,
+            )
+        )
+
+    typer.secho(
+        f"\nDone: {ok}/{runs} topics generated → {out_resolved}",
+        fg=typer.colors.GREEN,
+    )
+
+    # Optional HuggingFace push
+    if push_hf:
+        from educlaw.train.hf_push import push_jsonl_to_hub
+
+        resolved_hf_token = hf_token or os.environ.get("HF_TOKEN")
+        if not resolved_hf_token:
+            typer.secho(
+                "No HF token. Set $HF_TOKEN or pass --hf-token. Skipping push.",
+                fg=typer.colors.YELLOW,
+            )
+        elif not out_resolved.is_file():
+            typer.secho(f"Output file not found: {out_resolved} — skipping push.", fg=typer.colors.YELLOW)
+        else:
+            typer.secho(f"Pushing {out_resolved} → {push_hf} …", fg=typer.colors.CYAN)
+            try:
+                url = push_jsonl_to_hub(
+                    out_resolved,
+                    push_hf,
+                    token=resolved_hf_token,
+                    private=hf_private,
+                    test_size=hf_test_size,
+                )
+                typer.secho(f"Dataset pushed: {url}", fg=typer.colors.GREEN)
+            except Exception as exc:
+                typer.secho(f"HF push failed: {exc}", fg=typer.colors.RED)
+                raise typer.Exit(code=1) from exc
+
+
+@dataset_typer.command("push-sft")
+def dataset_push_sft(
+    repo_id: Annotated[
+        str,
+        typer.Argument(help="HuggingFace dataset repo, e.g. nabin2004/educlaw-lectures"),
+    ],
+    jsonl: Annotated[
+        Path,
+        typer.Option("--jsonl", "-f", help="JSONL file to push (default: dataset/sft.jsonl)"),
+    ] = Path("dataset/sft.jsonl"),
+    token: Annotated[
+        str | None,
+        typer.Option("--token", "-t", envvar="HF_TOKEN", help="HuggingFace token ($HF_TOKEN)"),
+    ] = None,
+    private: Annotated[
+        bool,
+        typer.Option("--private/--public", help="Make the dataset private (default: private)"),
+    ] = True,
+    test_size: Annotated[
+        float,
+        typer.Option("--test-size", help="Fraction held out as test split (0 = train only)"),
+    ] = 0.0,
+) -> None:
+    """Push a pre-built SFT JSONL file to HuggingFace Hub.
+
+    Use this after ``educlaw dataset generate`` to upload the result.
+
+    \\b
+    Example:
+        export HF_TOKEN=hf_...
+        educlaw dataset push-sft nabin2004/educlaw-lectures --jsonl dataset/sft.jsonl
+        educlaw dataset push-sft nabin2004/educlaw-lectures --public --test-size 0.1
+    """
+    import os
+
+    from educlaw.train.hf_push import push_jsonl_to_hub
+
+    resolved_token = token or os.environ.get("HF_TOKEN")
+    if not resolved_token:
+        typer.secho(
+            "No HF token. Set $HF_TOKEN or pass --token. "
+            "Get yours at https://huggingface.co/settings/tokens",
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(code=1)
+
+    jsonl_path = jsonl.expanduser().resolve()
+    if not jsonl_path.is_file():
+        typer.secho(f"JSONL file not found: {jsonl_path}", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+
+    try:
+        import json as _json
+        n = sum(1 for ln in jsonl_path.read_text(encoding="utf-8").splitlines() if ln.strip())
+    except Exception:
+        n = 0
+    typer.secho(f"Pushing {n} records from {jsonl_path} → {repo_id} …", fg=typer.colors.CYAN)
+
+    try:
+        url = push_jsonl_to_hub(
+            jsonl_path,
+            repo_id,
+            token=resolved_token,
+            private=private,
+            test_size=test_size,
+        )
+    except ImportError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
+    except ValueError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
+    except Exception as exc:
+        typer.secho(f"Push failed: {exc}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
+
+    visibility = "private" if private else "public"
+    typer.secho(f"Dataset pushed ({visibility}): {url}", fg=typer.colors.GREEN)
+
+
+@dataset_typer.command("push-manim-sft")
+def dataset_push_manim_sft(
+    repo_id: Annotated[
+        str,
+        typer.Argument(help="HuggingFace dataset repo, e.g. nabin2004/educlaw-manim-sft"),
+    ],
+    jsonl: Annotated[
+        Path,
+        typer.Option("--jsonl", "-f", help="Manim SFT JSONL file (default: dataset/manim_sft.jsonl)"),
+    ] = Path("dataset/manim_sft.jsonl"),
+    token: Annotated[
+        str | None,
+        typer.Option("--token", "-t", envvar="HF_TOKEN", help="HuggingFace token ($HF_TOKEN)"),
+    ] = None,
+    private: Annotated[
+        bool,
+        typer.Option("--private/--public", help="Make the dataset private (default: private)"),
+    ] = True,
+    test_size: Annotated[
+        float,
+        typer.Option("--test-size", help="Fraction held out as test split (0 = train only)"),
+    ] = 0.0,
+) -> None:
+    """Push the Manim SFT JSONL (messages format) to HuggingFace Hub.
+
+    Validates that every record has the Gemma4 messages format
+    (role/content pairs) and prints dataset stats before uploading.
+
+    \\b
+    Example:
+        export HF_TOKEN=hf_...
+        educlaw dataset push-manim-sft nabin2004/educlaw-manim-sft
+        educlaw dataset push-manim-sft nabin2004/educlaw-manim-sft --jsonl dataset/manim_sft.jsonl --public
+    """
+    import os
+
+    from educlaw.train.hf_push import push_manim_sft_to_hub
+
+    resolved_token = token or os.environ.get("HF_TOKEN")
+    if not resolved_token:
+        typer.secho(
+            "No HF token. Set $HF_TOKEN or pass --token. "
+            "Get yours at https://huggingface.co/settings/tokens",
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(code=1)
+
+    jsonl_path = jsonl.expanduser().resolve()
+    if not jsonl_path.is_file():
+        typer.secho(f"JSONL file not found: {jsonl_path}", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+
+    typer.secho(f"Validating {jsonl_path} ...", fg=typer.colors.CYAN)
+
+    try:
+        url, stats = push_manim_sft_to_hub(
+            jsonl_path,
+            repo_id,
+            token=resolved_token,
+            private=private,
+            test_size=test_size,
+        )
+    except ImportError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
+    except ValueError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
+    except Exception as exc:
+        typer.secho(f"Push failed: {exc}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
+
+    visibility = "private" if private else "public"
+    typer.secho(
+        f"\nDataset pushed ({visibility}): {url}\n"
+        f"  Records   : {stats['total']} training examples\n"
+        f"  Topics    : {stats['unique_topics']} unique\n"
+        f"  Avg code  : {stats['avg_code_chars']} chars/scene\n"
+        f"  Skipped   : {stats['skipped']} malformed lines",
+        fg=typer.colors.GREEN,
+    )
 
 
 def main() -> None:
