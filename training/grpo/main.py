@@ -1,19 +1,4 @@
 #!/usr/bin/env python
-# /// script
-# requires-python = ">=3.11,<3.13"
-# dependencies = [
-#   "unsloth @ git+https://github.com/unslothai/unsloth",
-#   "unsloth-zoo @ git+https://github.com/unslothai/unsloth-zoo",
-#   "trl>=0.28.0",
-#   "transformers>=5.5.0",
-#   "tokenizers>=0.22.0,<=0.23.0",
-#   "datasets>=3.1",
-#   "accelerate>=1.1",
-#   "bitsandbytes",
-#   "huggingface-hub>=0.27",
-#   "torch",
-# ]
-# ///
 """GRPO on Gemma-4-E2B via Unsloth: stacked SFT LoRA + trainable GRPO adapter."""
 
 from __future__ import annotations
@@ -36,7 +21,7 @@ def check_cuda_or_exit() -> None:
     if not torch.cuda.is_available():
         print(
             "CUDA is required for Gemma-4 GRPO. Run on an NVIDIA GPU server:\n"
-            "  cd training/grpo && uv run main.py --smoke",
+            "  cd training/grpo && uv sync && uv run python main.py --smoke",
             file=sys.stderr,
         )
         raise SystemExit(1)

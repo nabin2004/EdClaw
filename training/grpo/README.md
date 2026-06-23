@@ -5,7 +5,7 @@ Loads the SFT adapter (`nabin2004/EduClaw-Gemma4-it`) via **Unsloth** `FastVisio
 ## Prerequisites
 
 - **Python 3.11 or 3.12** (not 3.13 — Unsloth/transformers 5.x are not reliable on 3.13 yet), **NVIDIA CUDA**
-- **`uv`** (recommended) — script uses PEP 723 for an isolated env with **Unsloth (git)**, **transformers ≥ 5.5**, **trl ≥ 0.28**
+- **`uv`** (recommended) — `training/grpo/pyproject.toml` pins **Unsloth (git)**, **transformers 5.5**, **trl ≥ 0.28** (overrides unsloth-zoo’s trl≤0.24 pin)
 - **`HF_TOKEN`** — gated SFT adapter on the Hub
 
 Do **not** rely on the repo root `.venv` alone; it pins transformers 4.x for `educlaw serve` / vLLM.
@@ -15,7 +15,8 @@ If your shell shows Python 3.13, create a 3.12 venv first:
 ```bash
 uv python install 3.12
 cd training/grpo
-uv run --python 3.12 main.py --smoke
+uv sync --python 3.12
+uv run --python 3.12 python main.py --smoke
 ```
 
 ## Quick start (GPU server)
@@ -24,19 +25,23 @@ uv run --python 3.12 main.py --smoke
 cd training/grpo
 export HF_TOKEN=...   # or: huggingface-cli login
 
+# First time (or after dep changes)
+uv sync --python 3.12
+
 # One-step smoke test
-uv run main.py --smoke
+uv run python main.py --smoke
 
 # Full training
-uv run main.py --output-dir ./grpo_manim_modular
+uv run python main.py --output-dir ./grpo_manim_modular
 ```
 
 Windows (PowerShell):
 
 ```powershell
 cd training\grpo
+uv sync --python 3.12
 $env:HF_TOKEN = "..."
-uv run main.py --smoke
+uv run python main.py --smoke
 ```
 
 ## Flags
@@ -64,31 +69,33 @@ Dataset: [nabin2004/ManiBench](https://huggingface.co/datasets/nabin2004/ManiBen
 Lower VRAM use on smaller GPUs:
 
 ```bash
-uv run main.py --smoke --max-steps 5
-uv run main.py --max-completion-length 512 --load-in-4bit
+uv run python main.py --smoke --max-steps 5
+uv run python main.py --max-completion-length 512 --load-in-4bit
 ```
 
 Edit `make_training_args()` in `main.py` for `num_generations` or batch size.
 
 ## Troubleshooting
 
+### `trl` / `unsloth-zoo` dependency conflict
+
+`unsloth-zoo` declares `trl<=0.24` but Gemma 4 GRPO needs `trl>=0.28`. [pyproject.toml](pyproject.toml) uses `[tool.uv] override-dependencies` (same idea as the Unsloth notebook’s `pip install --no-deps`). Run from `training/grpo`:
+
+```bash
+cd training/grpo
+uv sync --python 3.12
+uv run python main.py --smoke
+```
+
 ### `NameError: name 'auto_docstring' is not defined`
 
-PyPI `unsloth` is too old for **transformers 5.x** (Gemma 4). The script now pins Unsloth from git. Clear the cached env and rerun with **Python 3.12**:
+PyPI `unsloth` is too old for **transformers 5.x** (Gemma 4). Use git pins via `uv sync` above (clears stale script envs):
 
 ```bash
 rm -rf ~/.cache/uv/environments-v2/main-*
-uv python install 3.12
 cd training/grpo
-uv run --python 3.12 main.py --smoke
-```
-
-Or upgrade manually inside the uv env:
-
-```bash
-uv pip install --upgrade --force-reinstall --no-cache-dir --no-deps \
-  "unsloth @ git+https://github.com/unslothai/unsloth" \
-  "unsloth-zoo @ git+https://github.com/unslothai/unsloth-zoo"
+uv sync --python 3.12
+uv run --python 3.12 python main.py --smoke
 ```
 
 ### Gemma-4 GRPO log-prob shape errors
