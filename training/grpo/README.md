@@ -1,12 +1,12 @@
-# GRPO Manim training (Gemma-4 dual LoRA)
+# GRPO Manim training (Unsloth Gemma-4 stacked LoRA)
 
-Frozen SFT adapter (`nabin2004/EduClaw-Gemma4-it`) plus a trainable `manim` LoRA on `google/gemma-4-E2B-it`, with ManiBench composite rewards.
+Loads the SFT adapter (`nabin2004/EduClaw-Gemma4-it`) via **Unsloth** `FastVisionModel`, stacks a trainable GRPO LoRA on top, and trains with ManiBench composite rewards. Model loading and memory optimizations go through Unsloth; `trl.GRPOTrainer` is still used but patched by Unsloth on import.
 
 ## Prerequisites
 
 - **Python ≥ 3.11**, **NVIDIA CUDA** (Gemma-4-E2B GRPO does not run on CPU)
-- **`uv`** (recommended) — script uses PEP 723 for an isolated env with **transformers ≥ 5.5** (required for Gemma 4)
-- **`HF_TOKEN`** — gated base model and SFT adapter on the Hub
+- **`uv`** (recommended) — script uses PEP 723 for an isolated env with **Unsloth**, **transformers ≥ 5.5**, **trl ≥ 0.28**
+- **`HF_TOKEN`** — gated SFT adapter on the Hub
 
 Do **not** rely on the repo root `.venv` alone; it pins transformers 4.x for `educlaw serve` / vLLM.
 
@@ -35,9 +35,13 @@ uv run main.py --smoke
 
 | Flag | Purpose |
 |------|---------|
-| `--smoke` | `max_steps=1`, `num_generations=2`, `max_completion_length=256`, batch size 1 |
+| `--smoke` | `max_steps=1`, `num_generations=2`, caps completion length at 256 |
 | `--max-steps N` | Cap optimizer steps (overrides epochs) |
-| `--output-dir` | Where to save the `manim` adapter (default `./grpo_manim_modular`) |
+| `--output-dir` | Where to save the GRPO LoRA (default `./grpo_manim_modular`) |
+| `--sft-lora` | Hub path or local dir for frozen SFT checkpoint (default `nabin2004/EduClaw-Gemma4-it`) |
+| `--max-seq-length` | Unsloth context window (default 4096) |
+| `--max-completion-length` | Cap generated tokens (default: `max_seq_length` − longest prompt) |
+| `--load-in-4bit` | 4-bit load for OOM / 4-bit SFT checkpoints |
 | `--no-render` | Keep executability reward heuristic-only (default) |
 
 ## Rewards
@@ -53,8 +57,19 @@ Lower VRAM use on smaller GPUs:
 
 ```bash
 uv run main.py --smoke --max-steps 5
+uv run main.py --max-completion-length 512 --load-in-4bit
 ```
 
-Edit `make_training_args()` in `main.py` for `max_completion_length`, `num_generations`, or batch size.
+Edit `make_training_args()` in `main.py` for `num_generations` or batch size.
 
-See also [docs/MANIBENCH_RUNBOOK.md](../../docs/MANIBENCH_RUNBOOK.md) and [training/manibench/scripts/train_grpo_pass.py](../manibench/scripts/train_grpo_pass.py).
+## Troubleshooting
+
+If Gemma-4 GRPO fails with log-prob shape errors, upgrade Unsloth from git:
+
+```bash
+uv pip install --upgrade --no-deps \
+  "unsloth @ git+https://github.com/unslothai/unsloth" \
+  "unsloth_zoo @ git+https://github.com/unslothai/unsloth-zoo"
+```
+
+See [Unsloth RL docs](https://unsloth.ai/docs/get-started/reinforcement-learning-rl-guide) and [docs/MANIBENCH_RUNBOOK.md](../../docs/MANIBENCH_RUNBOOK.md).

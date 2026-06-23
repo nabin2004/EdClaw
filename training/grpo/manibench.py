@@ -29,7 +29,10 @@ def _load_problems() -> Dict[str, dict]:
 def build_dataset() -> Dataset:
     problems = _load_problems()
     rows = [
-        {"prompt": p["full_prompt"], "problem_id": pid}
+        {
+            "prompt": [{"role": "user", "content": p["full_prompt"]}],
+            "problem_id": pid,
+        }
         for pid, p in problems.items()
     ]
     return Dataset.from_list(rows)
