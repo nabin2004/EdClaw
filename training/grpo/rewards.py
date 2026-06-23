@@ -2,6 +2,7 @@ import ast
 import os
 import re
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import List
@@ -9,6 +10,11 @@ from typing import List
 from manibench import get_alignment_events, get_coverage_terms, get_vcer_patterns
 
 _CODE_FENCE = re.compile(r"```(?:python)?\s*([\s\S]*?)```", re.IGNORECASE)
+
+HEURISTIC_EXEC_PARTIAL = 0.3
+REWARD_WEIGHTS = {"exec": 0.50, "align": 0.25, "vcer": 0.15, "cover": 0.10}
+DEFAULT_LENGTH_PENALTY_COEF = 0.001
+DEFAULT_COVERAGE_DIVISOR = 20.0
 
 
 def _completion_text(completion: object) -> str:
@@ -58,7 +64,51 @@ def _heuristic_exec_score(code: str) -> float:
     source = _extract_python(code)
     if not _syntax_ok(source) or not _has_manim_scene(source):
         return 0.0
-    return 1.0
+    return HEURISTIC_EXEC_PARTIAL
+
+
+def _coverage_divisor() -> float:
+    raw = os.environ.get("MANIBENCH_COVERAGE_DIVISOR", "")
+    if raw:
+        return float(raw)
+    return DEFAULT_COVERAGE_DIVISOR
+
+
+def _length_penalty_coef() -> float:
+    raw = os.environ.get("MANIBENCH_LENGTH_PENALTY_COEF", "")
+    if raw:
+        return float(raw)
+    return DEFAULT_LENGTH_PENALTY_COEF
+
+
+def _max_completion_length() -> int:
+    raw = os.environ.get("MANIBENCH_MAX_COMPLETION_LENGTH", "")
+    if raw:
+        return int(raw)
+    return 512
+
+
+def _length_penalty(
+    completion_ids: list[list[int]] | None,
+    n: int,
+) -> list[float]:
+    if not completion_ids:
+        return [0.0] * n
+    coef = _length_penalty_coef()
+    max_len = max(_max_completion_length(), 1)
+    penalties = []
+    for ids in completion_ids:
+        if ids is None:
+            penalties.append(0.0)
+        else:
+            penalties.append(coef * (len(ids) / max_len))
+    if len(penalties) < n:
+        penalties.extend([0.0] * (n - len(penalties)))
+    return penalties[:n]
+
+
+def _reward_debug_enabled() -> bool:
+    return os.environ.get("MANIBENCH_GRPO_REWARD_DEBUG", "0") == "1"
 
 
 def executability_reward(completions: List[object], **kwargs) -> List[float]:
@@ -99,7 +149,7 @@ def alignment_reward(completions: List[object], **kwargs) -> List[float]:
     """
     Weighted presence check for ManiBench required_visual_events.
     Score = Σ(weight_i × present_i) / Σ(weight_i)
-    Events without detectable patterns receive 0.5 (neutral).
+    Events without detectable patterns receive 0.0 (no partial credit).
     """
     texts = _normalize_completions(completions)
     problem_ids = kwargs.get("problem_id", [""] * len(texts))
@@ -113,8 +163,8 @@ def alignment_reward(completions: List[object], **kwargs) -> List[float]:
         score = 0.0
         for weight, patterns in events:
             if not patterns:
-                score += weight * 0.5
-            elif any(re.search(p, code) for p in patterns):
+                continue
+            if any(re.search(p, code) for p in patterns):
                 score += weight
         rewards.append(score / total_w)
     return rewards
@@ -133,6 +183,7 @@ def coverage_reward(completions: List[object], **kwargs) -> List[float]:
     """Fraction of per-problem coverage terms found; falls back to category weights."""
     texts = _normalize_completions(completions)
     problem_ids = kwargs.get("problem_id", [""] * len(texts))
+    divisor = _coverage_divisor()
     rewards = []
     for code, pid in zip(texts, problem_ids):
         terms = get_coverage_terms(pid)
@@ -141,7 +192,10 @@ def coverage_reward(completions: List[object], **kwargs) -> List[float]:
             rewards.append(found / len(terms))
         else:
             cat_scores = {
-                cat: min(sum(len(re.findall(p, code, re.IGNORECASE)) for p in pats) / 10.0, 1.0)
+                cat: min(
+                    sum(len(re.findall(p, code, re.IGNORECASE)) for p in pats) / divisor,
+                    1.0,
+                )
                 for cat, pats in _FALLBACK_PATTERNS.items()
             }
             rewards.append(sum(_FALLBACK_WEIGHTS[c] * cat_scores[c] for c in _FALLBACK_WEIGHTS))
@@ -149,9 +203,27 @@ def coverage_reward(completions: List[object], **kwargs) -> List[float]:
 
 
 def combined_reward(completions: List[object], **kwargs) -> List[float]:
-    exec_r  = executability_reward(completions, **kwargs)
-    vcer_r  = vcer_reward(completions, **kwargs)
+    exec_r = executability_reward(completions, **kwargs)
+    vcer_r = vcer_reward(completions, **kwargs)
     align_r = alignment_reward(completions, **kwargs)
     cover_r = coverage_reward(completions, **kwargs)
-    return [0.25*e + 0.25*v + 0.25*a + 0.25*c
-            for e, v, a, c in zip(exec_r, vcer_r, align_r, cover_r)]
+    w = REWARD_WEIGHTS
+    n = len(completions)
+    penalties = _length_penalty(kwargs.get("completion_ids"), n)
+    combined = []
+    for e, v, a, c, pen in zip(exec_r, vcer_r, align_r, cover_r, penalties):
+        score = w["exec"] * e + w["align"] * a + w["vcer"] * v + w["cover"] * c - pen
+        combined.append(max(0.0, min(1.0, score)))
+
+    if _reward_debug_enabled() and combined:
+        print(
+            f"[reward] min={min(combined):.3f} max={max(combined):.3f} "
+            f"mean={sum(combined) / len(combined):.3f} "
+            f"exec={sum(exec_r) / len(exec_r):.3f} "
+            f"align={sum(align_r) / len(align_r):.3f} "
+            f"vcer={sum(vcer_r) / len(vcer_r):.3f} "
+            f"cover={sum(cover_r) / len(cover_r):.3f}",
+            file=sys.stderr,
+            flush=True,
+        )
+    return combined

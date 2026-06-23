@@ -15,6 +15,7 @@ dependencies = [
   "huggingface-hub>=0.34.0",
   "peft>=0.18.0",
   "torch",
+  "pytest>=8.0",
 ]
 
 # unsloth-zoo pins trl<=0.24; Gemma 4 GRPO needs trl>=0.28 (notebook uses pip --no-deps).

@@ -31,8 +31,12 @@ uv sync --python 3.12
 # One-step smoke test
 uv run python main.py --smoke
 
-# Full training
-uv run python main.py --output-dir ./grpo_manim_modular
+# Phase 1 training (heuristic executability, 16GB-friendly)
+uv run python main.py \
+  --output-dir ./grpo_manim_modular_v2 \
+  --num-generations 4 \
+  --max-completion-length 512 \
+  --reward-debug
 ```
 
 Windows (PowerShell):
@@ -44,11 +48,54 @@ $env:HF_TOKEN = "..."
 uv run python main.py --smoke
 ```
 
+## Phased training
+
+### Phase 1 — fast sanity (default)
+
+Heuristic executability (`0.3` partial credit for syntax + `Scene`; full `1.0` only after real render). No `manim` subprocess.
+
+```bash
+uv run python main.py \
+  --output-dir ./grpo_manim_modular_v2 \
+  --num-generations 4 \
+  --max-completion-length 512 \
+  --reward-debug
+```
+
+**Healthy metrics within ~10 steps:**
+
+| Metric | Target |
+|--------|--------|
+| `rewards/combined_reward/std` | > 0.05 (ideally 0.1+) |
+| `frac_reward_zero_std` | < 0.3 |
+| `completions/clipped_ratio` | < 0.5 |
+| `completions/mean_terminated_length` | > 0 |
+| `train_loss` | well above 1e-6 |
+
+Reward mean may drop to 0.2–0.4 initially — that means bad outputs are being penalized.
+
+### Phase 2 — real executability (slow)
+
+Enable `manim` render in the reward. On 16GB, lower `num_generations` if OOM.
+
+```bash
+uv run python main.py \
+  --render \
+  --sft-lora ./grpo_manim_modular_v2 \
+  --num-generations 2 \
+  --max-completion-length 512 \
+  --output-dir ./grpo_manim_modular_render
+```
+
+Or: `MANIBENCH_GRPO_RENDER=1 uv run python main.py ...`
+
+Once `clipped_ratio` stays below ~0.3, you can experiment with `mask_truncated_completions=True` in `main.py` (currently `False` to avoid zero gradient when every completion hits max length).
+
 ## Flags
 
 | Flag | Purpose |
 |------|---------|
-| `--smoke` | `max_steps=1`, `num_generations=2`, caps completion length at 256 |
+| `--smoke` | `max_steps=1`, caps completion length at 256 |
 | `--max-steps N` | Cap optimizer steps (overrides epochs) |
 | `--output-dir` | Where to save the `grpo` adapter (default `./grpo_manim_modular`) |
 | `--base-model` | Override base model (default: from SFT `adapter_config.json`) |
@@ -56,22 +103,40 @@ uv run python main.py --smoke
 | `--max-seq-length` | Unsloth context window (default **2048**) |
 | `--max-prompt-length` | Truncate prompts for GRPO (default **1024**) |
 | `--max-completion-length` | Cap generated tokens (default **512**) |
-| `--num-generations` | GRPO samples per prompt (default **2**) |
+| `--num-generations` | GRPO samples per prompt (default **4**) |
 | `--full-precision` | 16-bit base load (default is **4-bit** for ≤16GB GPUs) |
-| `--no-render` | Keep executability reward heuristic-only (default) |
+| `--no-render` | Heuristic executability only (default) |
+| `--render` | Run `manim -pql` per completion in executability reward |
+| `--grpo-only` | Train GRPO LoRA on base only (skip frozen SFT stack) |
+| `--reward-debug` | Print per-step reward component stats to stderr |
+| `--length-penalty` | Length penalty coefficient (default **0.001**) |
 
 ## Rewards
 
-- **Default:** syntax + Manim `Scene` heuristics for executability (fast).
-- **Full render:** `MANIBENCH_GRPO_RENDER=1 uv run main.py` — runs `manim -pql` per completion (slow).
+Hierarchical weighting: **0.50** executability, **0.25** alignment, **0.15** VCER, **0.10** coverage.
+
+- **Phase 1 (default):** syntax + Manim `Scene` → `0.3` partial; `0.0` on failure.
+- **Phase 2 (`--render`):** full `1.0` only when `manim -pql` succeeds.
+- **Alignment:** no partial credit for undetectable events.
+- **Length penalty:** subtracts `length_penalty × (tokens / max_completion_length)` from combined score.
 
 Dataset: [nabin2004/ManiBench](https://huggingface.co/datasets/nabin2004/ManiBench) (`ManiBench_Pilot_Dataset.json`), cached on first run. Optional local copy: `ManiBench/ManiBench_Pilot_Dataset.json`.
 
+### GRPO hyperparameters (defaults)
+
+| Parameter | Value |
+|-----------|-------|
+| `learning_rate` | `1e-4` |
+| `temperature` | `1.0` |
+| `beta` (KL) | `0.001` |
+| `num_generations` | `4` |
+| `mask_truncated_completions` | `False` |
+
 ## OOM tuning (16GB GPUs, e.g. RTX 5060 Ti)
 
-Defaults are tuned for ~16GB: **4-bit base**, `max_seq_length=2048`, `max_completion_length=512`, `num_generations=2`.
+Defaults are tuned for ~16GB: **4-bit base**, `max_seq_length=2048`, `max_completion_length=512`, `num_generations=4`.
 
-If you still hit OOM during the GRPO log-prob step, lower further:
+If you hit OOM during the GRPO log-prob step:
 
 ```bash
 uv run python main.py \
@@ -82,15 +147,36 @@ uv run python main.py \
   --output-dir ./grpo_manim_modular
 ```
 
+For a simpler first run without stacked SFT+GRPO adapters:
+
+```bash
+uv run python main.py --grpo-only --num-generations 2 --max-completion-length 384
+```
+
 Kill other GPU processes first (`nvidia-smi`). Unsloth writes `unsloth_compiled_cache/` locally (gitignored).
 
-For 24GB+ GPUs you can raise limits or pass `--full-precision`.
+For 24GB+ GPUs you can raise limits, use `--num-generations 6`, or pass `--full-precision`.
+
+## Unit tests (no GPU)
+
+```bash
+cd training/grpo
+uv run pytest test_rewards.py -v
+```
 
 ## Troubleshooting
 
+### Flat rewards (~0.48–0.51) and no learning
+
+Check trainer logs for `completions/clipped_ratio: 1` and `frac_reward_zero_std` near 1.0. Use `--reward-debug`, keep `--max-completion-length 512`, and verify reward std > 0.05 before long runs.
+
 ### `RuntimeError: You already added LoRA adapters to your model!`
 
-Unsloth `get_peft_model()` cannot run on a checkpoint that already has LoRA. `main.py` loads the **base model** first, attaches the frozen SFT adapter via PEFT, then adds a separate `grpo` adapter. Pull latest `main.py` if you still load `--sft-lora` directly into `get_peft_model()`.
+Unsloth `get_peft_model()` cannot run on a checkpoint that already has LoRA. `main.py` loads the **base model** first, attaches the frozen SFT adapter via PEFT, then adds a separate `grpo` adapter. Use `--grpo-only` to skip the SFT stack.
+
+### Processor warning: `Kwargs passed to processor.__call__`
+
+Harmless Unsloth/TRL + transformers 5.x warning during generation. Ensure `uv sync --python 3.12` (pins `transformers>=5.5.2`).
 
 ### `trl` / `unsloth-zoo` dependency conflict
 

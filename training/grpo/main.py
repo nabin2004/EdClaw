@@ -8,14 +8,16 @@ import os
 import sys
 
 from manibench import build_dataset
-from rewards import combined_reward
+from rewards import DEFAULT_LENGTH_PENALTY_COEF, combined_reward
 
 SFT_LORA_PATH = "nabin2004/EduClaw-Gemma4-it"
 DEFAULT_BASE_MODEL = "google/gemma-4-E2B-it"
 DEFAULT_OUTPUT = "./grpo_manim_modular"
 DEFAULT_MAX_SEQ_LENGTH = 2048
 DEFAULT_MAX_COMPLETION_LENGTH = 512
-DEFAULT_NUM_GENERATIONS = 2
+DEFAULT_NUM_GENERATIONS = 4
+DEFAULT_LEARNING_RATE = 1e-4
+DEFAULT_BETA = 0.001
 GRPO_ADAPTER = "grpo"
 
 
@@ -61,17 +63,34 @@ def check_cuda_or_exit() -> None:
         raise SystemExit(1)
 
 
+def _grpo_lora_config():
+    from peft import LoraConfig, TaskType
+
+    return LoraConfig(
+        r=16,
+        lora_alpha=32,
+        target_modules=["q_proj", "v_proj"],
+        lora_dropout=0.05,
+        bias="none",
+        task_type=TaskType.CAUSAL_LM,
+    )
+
+
 def load_model(
     sft_lora_path: str,
     *,
     base_model: str | None = None,
     max_seq_length: int = DEFAULT_MAX_SEQ_LENGTH,
     load_in_4bit: bool = True,
+    grpo_only: bool = False,
 ):
-    from peft import LoraConfig, PeftModel, TaskType
+    from peft import PeftModel
     from unsloth import FastVisionModel
 
-    base = base_model or _base_model_for_adapter(sft_lora_path, DEFAULT_BASE_MODEL)
+    if grpo_only:
+        base = base_model or DEFAULT_BASE_MODEL
+    else:
+        base = base_model or _base_model_for_adapter(sft_lora_path, DEFAULT_BASE_MODEL)
     token = _hub_token()
 
     model, tokenizer = FastVisionModel.from_pretrained(
@@ -84,27 +103,24 @@ def load_model(
     if getattr(tokenizer, "pad_token", None) is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    # Frozen SFT adapter — Unsloth cannot call get_peft_model() on a model that
-    # already has LoRA (load base first, then stack adapters via PEFT).
-    model = PeftModel.from_pretrained(
-        model,
-        sft_lora_path,
-        adapter_name="sft",
-        token=token,
-    )
-    for name, param in model.named_parameters():
-        if "sft" in name:
-            param.requires_grad = False
+    grpo_config = _grpo_lora_config()
 
-    grpo_config = LoraConfig(
-        r=16,
-        lora_alpha=32,
-        target_modules=["q_proj", "v_proj"],
-        lora_dropout=0.05,
-        bias="none",
-        task_type=TaskType.CAUSAL_LM,
-    )
-    model.add_adapter(GRPO_ADAPTER, grpo_config)
+    if grpo_only:
+        model = PeftModel(model, grpo_config, adapter_name=GRPO_ADAPTER)
+    else:
+        # Frozen SFT adapter — Unsloth cannot call get_peft_model() on a model that
+        # already has LoRA (load base first, then stack adapters via PEFT).
+        model = PeftModel.from_pretrained(
+            model,
+            sft_lora_path,
+            adapter_name="sft",
+            token=token,
+        )
+        for name, param in model.named_parameters():
+            if "sft" in name:
+                param.requires_grad = False
+        model.add_adapter(GRPO_ADAPTER, grpo_config)
+
     model.set_adapter(GRPO_ADAPTER)
     model.train()
     return model, tokenizer
@@ -182,7 +198,7 @@ def make_training_args(
         output_dir=output_dir,
         optim="paged_adamw_8bit",
         loss_type="bnpo",
-        mask_truncated_completions=True,
+        mask_truncated_completions=False,
         use_vllm=False,
         report_to="none",
         bf16=True,
@@ -191,8 +207,9 @@ def make_training_args(
         num_generations=num_generations,
         per_device_train_batch_size=num_generations,
         gradient_accumulation_steps=1,
-        temperature=0.8,
+        temperature=1.0,
         top_p=0.9,
+        beta=DEFAULT_BETA,
         warmup_ratio=0.1,
         weight_decay=0.001,
         lr_scheduler_type="linear",
@@ -202,7 +219,7 @@ def make_training_args(
         return GRPOConfig(
             **common,
             max_steps=1,
-            learning_rate=5e-5,
+            learning_rate=DEFAULT_LEARNING_RATE,
             logging_steps=1,
             save_strategy="no",
         )
@@ -210,7 +227,7 @@ def make_training_args(
     kwargs: dict = dict(
         **common,
         num_train_epochs=3,
-        learning_rate=5e-5,
+        learning_rate=DEFAULT_LEARNING_RATE,
         logging_steps=10,
         save_strategy="steps",
         save_steps=100,
@@ -254,7 +271,7 @@ def parse_args() -> argparse.Namespace:
         "--num-generations",
         type=int,
         default=DEFAULT_NUM_GENERATIONS,
-        help="GRPO samples per prompt (default 2; lower saves VRAM)",
+        help="GRPO samples per prompt (default 4; lower saves VRAM)",
     )
     ap.add_argument(
         "--full-precision",
@@ -272,6 +289,27 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Disable manim subprocess in executability reward (default: heuristic only)",
     )
+    ap.add_argument(
+        "--render",
+        action="store_true",
+        help="Enable manim subprocess in executability reward (slow; Phase 2 training)",
+    )
+    ap.add_argument(
+        "--grpo-only",
+        action="store_true",
+        help="Train GRPO LoRA on base model only (skip frozen SFT adapter stack)",
+    )
+    ap.add_argument(
+        "--reward-debug",
+        action="store_true",
+        help="Print per-step reward component stats to stderr",
+    )
+    ap.add_argument(
+        "--length-penalty",
+        type=float,
+        default=DEFAULT_LENGTH_PENALTY_COEF,
+        help=f"Length penalty coefficient (default {DEFAULT_LENGTH_PENALTY_COEF})",
+    )
     return ap.parse_args()
 
 
@@ -280,10 +318,17 @@ def main() -> None:
 
     os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
-    if args.no_render:
+    if args.render:
+        os.environ["MANIBENCH_GRPO_RENDER"] = "1"
+    elif args.no_render:
         os.environ["MANIBENCH_GRPO_RENDER"] = "0"
     elif "MANIBENCH_GRPO_RENDER" not in os.environ:
         os.environ["MANIBENCH_GRPO_RENDER"] = "0"
+
+    if args.reward_debug:
+        os.environ["MANIBENCH_GRPO_REWARD_DEBUG"] = "1"
+
+    os.environ["MANIBENCH_LENGTH_PENALTY_COEF"] = str(args.length_penalty)
 
     check_cuda_or_exit()
 
@@ -296,6 +341,7 @@ def main() -> None:
         base_model=args.base_model,
         max_seq_length=args.max_seq_length,
         load_in_4bit=not args.full_precision,
+        grpo_only=args.grpo_only,
     )
 
     dataset = truncate_dataset_prompts(
@@ -311,11 +357,16 @@ def main() -> None:
         max_seq_length=args.max_seq_length,
         cap=completion_cap,
     )
+    os.environ["MANIBENCH_MAX_COMPLETION_LENGTH"] = str(max_completion_length)
+
     print(
         f"VRAM-friendly settings: load_in_4bit={not args.full_precision}, "
+        f"grpo_only={args.grpo_only}, "
         f"max_prompt_length={args.max_prompt_length}, "
         f"max_completion_length={max_completion_length}, "
-        f"num_generations={args.num_generations}",
+        f"num_generations={args.num_generations}, "
+        f"length_penalty={args.length_penalty}, "
+        f"render={os.environ.get('MANIBENCH_GRPO_RENDER', '0')}",
         flush=True,
     )
 
