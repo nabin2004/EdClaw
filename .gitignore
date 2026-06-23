@@ -19,4 +19,5 @@ content/ir/series/*
 content/*
 src/educlaw/dataset/*
 
-gemma4_(e2b)_reinforcement_learning_sudoku_game.py
+unsloth_compiled_cache/
+training/grpo/.venv/

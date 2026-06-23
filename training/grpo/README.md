@@ -53,9 +53,11 @@ uv run python main.py --smoke
 | `--output-dir` | Where to save the `grpo` adapter (default `./grpo_manim_modular`) |
 | `--base-model` | Override base model (default: from SFT `adapter_config.json`) |
 | `--sft-lora` | Hub path or local dir for frozen SFT checkpoint (default `nabin2004/EduClaw-Gemma4-it`) |
-| `--max-seq-length` | Unsloth context window (default 4096) |
-| `--max-completion-length` | Cap generated tokens (default: `max_seq_length` − longest prompt) |
-| `--load-in-4bit` | 4-bit load for OOM / 4-bit SFT checkpoints |
+| `--max-seq-length` | Unsloth context window (default **2048**) |
+| `--max-prompt-length` | Truncate prompts for GRPO (default **1024**) |
+| `--max-completion-length` | Cap generated tokens (default **512**) |
+| `--num-generations` | GRPO samples per prompt (default **2**) |
+| `--full-precision` | 16-bit base load (default is **4-bit** for ≤16GB GPUs) |
 | `--no-render` | Keep executability reward heuristic-only (default) |
 
 ## Rewards
@@ -65,16 +67,24 @@ uv run python main.py --smoke
 
 Dataset: [nabin2004/ManiBench](https://huggingface.co/datasets/nabin2004/ManiBench) (`ManiBench_Pilot_Dataset.json`), cached on first run. Optional local copy: `ManiBench/ManiBench_Pilot_Dataset.json`.
 
-## OOM tuning
+## OOM tuning (16GB GPUs, e.g. RTX 5060 Ti)
 
-Lower VRAM use on smaller GPUs:
+Defaults are tuned for ~16GB: **4-bit base**, `max_seq_length=2048`, `max_completion_length=512`, `num_generations=2`.
+
+If you still hit OOM during the GRPO log-prob step, lower further:
 
 ```bash
-uv run python main.py --smoke --max-steps 5
-uv run python main.py --max-completion-length 512 --load-in-4bit
+uv run python main.py \
+  --max-seq-length 1536 \
+  --max-prompt-length 768 \
+  --max-completion-length 384 \
+  --num-generations 2 \
+  --output-dir ./grpo_manim_modular
 ```
 
-Edit `make_training_args()` in `main.py` for `num_generations` or batch size.
+Kill other GPU processes first (`nvidia-smi`). Unsloth writes `unsloth_compiled_cache/` locally (gitignored).
+
+For 24GB+ GPUs you can raise limits or pass `--full-precision`.
 
 ## Troubleshooting
 

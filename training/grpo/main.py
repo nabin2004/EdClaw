@@ -13,7 +13,9 @@ from rewards import combined_reward
 SFT_LORA_PATH = "nabin2004/EduClaw-Gemma4-it"
 DEFAULT_BASE_MODEL = "google/gemma-4-E2B-it"
 DEFAULT_OUTPUT = "./grpo_manim_modular"
-DEFAULT_MAX_SEQ_LENGTH = 4096
+DEFAULT_MAX_SEQ_LENGTH = 2048
+DEFAULT_MAX_COMPLETION_LENGTH = 512
+DEFAULT_NUM_GENERATIONS = 2
 GRPO_ADAPTER = "grpo"
 
 
@@ -64,7 +66,7 @@ def load_model(
     *,
     base_model: str | None = None,
     max_seq_length: int = DEFAULT_MAX_SEQ_LENGTH,
-    load_in_4bit: bool = False,
+    load_in_4bit: bool = True,
 ):
     from peft import LoraConfig, PeftModel, TaskType
     from unsloth import FastVisionModel
@@ -97,15 +99,7 @@ def load_model(
     grpo_config = LoraConfig(
         r=16,
         lora_alpha=32,
-        target_modules=[
-            "q_proj",
-            "k_proj",
-            "v_proj",
-            "o_proj",
-            "gate_proj",
-            "up_proj",
-            "down_proj",
-        ],
+        target_modules=["q_proj", "v_proj"],
         lora_dropout=0.05,
         bias="none",
         task_type=TaskType.CAUSAL_LM,
@@ -154,6 +148,8 @@ def make_training_args(
     output_dir: str,
     *,
     max_completion_length: int,
+    max_prompt_length: int,
+    num_generations: int,
     smoke: bool = False,
     max_steps: int | None = None,
 ):
@@ -161,14 +157,16 @@ def make_training_args(
 
     common = dict(
         output_dir=output_dir,
-        optim="adamw_8bit",
+        optim="paged_adamw_8bit",
         loss_type="bnpo",
         mask_truncated_completions=True,
         use_vllm=False,
         report_to="none",
         bf16=True,
         gradient_checkpointing=True,
+        max_prompt_length=max_prompt_length,
         max_completion_length=max_completion_length,
+        num_generations=num_generations,
         temperature=0.8,
         top_p=0.9,
         warmup_ratio=0.1,
@@ -185,19 +183,17 @@ def make_training_args(
             learning_rate=5e-5,
             logging_steps=1,
             save_strategy="no",
-            num_generations=2,
         )
 
     kwargs: dict = dict(
         **common,
         per_device_train_batch_size=1,
-        gradient_accumulation_steps=2,
+        gradient_accumulation_steps=1,
         num_train_epochs=3,
         learning_rate=5e-5,
         logging_steps=10,
         save_strategy="steps",
         save_steps=100,
-        num_generations=4,
     )
     if max_steps is not None:
         kwargs["max_steps"] = max_steps
@@ -220,18 +216,30 @@ def parse_args() -> argparse.Namespace:
         "--max-seq-length",
         type=int,
         default=DEFAULT_MAX_SEQ_LENGTH,
-        help="Model context window for Unsloth load (default 4096)",
+        help="Model context window for Unsloth load (default 2048; lower if OOM)",
+    )
+    ap.add_argument(
+        "--max-prompt-length",
+        type=int,
+        default=1024,
+        help="Truncate prompts for GRPO (default 1024)",
     )
     ap.add_argument(
         "--max-completion-length",
         type=int,
-        default=None,
-        help="Cap completion tokens (default: max_seq_length - longest prompt)",
+        default=DEFAULT_MAX_COMPLETION_LENGTH,
+        help="Cap completion tokens (default 512)",
     )
     ap.add_argument(
-        "--load-in-4bit",
+        "--num-generations",
+        type=int,
+        default=DEFAULT_NUM_GENERATIONS,
+        help="GRPO samples per prompt (default 2; lower saves VRAM)",
+    )
+    ap.add_argument(
+        "--full-precision",
         action="store_true",
-        help="Load SFT checkpoint in 4-bit (OOM fallback; match 4-bit SFT)",
+        help="Load base in 16-bit instead of 4-bit (needs >16GB VRAM)",
     )
     ap.add_argument(
         "--smoke",
@@ -250,6 +258,8 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
+    os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
     if args.no_render:
         os.environ["MANIBENCH_GRPO_RENDER"] = "0"
     elif "MANIBENCH_GRPO_RENDER" not in os.environ:
@@ -266,7 +276,7 @@ def main() -> None:
         args.sft_lora,
         base_model=args.base_model,
         max_seq_length=args.max_seq_length,
-        load_in_4bit=args.load_in_4bit,
+        load_in_4bit=not args.full_precision,
     )
 
     completion_cap = 256 if args.smoke else args.max_completion_length
@@ -276,11 +286,19 @@ def main() -> None:
         max_seq_length=args.max_seq_length,
         cap=completion_cap,
     )
-    print(f"max_completion_length={max_completion_length}", flush=True)
+    print(
+        f"VRAM-friendly settings: load_in_4bit={not args.full_precision}, "
+        f"max_prompt_length={args.max_prompt_length}, "
+        f"max_completion_length={max_completion_length}, "
+        f"num_generations={args.num_generations}",
+        flush=True,
+    )
 
     training_args = make_training_args(
         args.output_dir,
         max_completion_length=max_completion_length,
+        max_prompt_length=args.max_prompt_length,
+        num_generations=args.num_generations,
         smoke=args.smoke,
         max_steps=args.max_steps,
     )
