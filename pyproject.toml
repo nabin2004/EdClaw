@@ -42,6 +42,8 @@ dependencies = [
   "setuptools>=82.0.1",
   "wheel>=0.47.0",
   "kittentts>=0.8.1",
+  "peft>=0.19.1",
+  "trl>=0.23.0",
 ]
 
 [project.optional-dependencies]

@@ -4,7 +4,7 @@
 
 ```bash
 pip install -e ".[dev]"
-ollama pull gemma3:4b        # main LLM
+ollama pull gemma4       # main LLM
 ollama pull nomic-embed-text # embeddings (optional)
 ```
 
