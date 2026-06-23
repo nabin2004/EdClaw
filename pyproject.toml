@@ -44,6 +44,7 @@ dependencies = [
   "kittentts>=0.8.1",
   "peft>=0.19.1",
   "trl>=0.23.0",
+  "vllm>=0.8.3",
 ]
 
 [project.optional-dependencies]

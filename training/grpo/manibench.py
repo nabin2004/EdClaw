@@ -1,20 +1,36 @@
 import json
 import re
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 from datasets import Dataset
 
-MANIBENCH_JSON = Path(__file__).parent / "ManiBench" / "ManiBench_Pilot_Dataset.json"
+LOCAL_JSON = Path(__file__).parent / "ManiBench" / "ManiBench_Pilot_Dataset.json"
+HF_REPO = "nabin2004/ManiBench"
+HF_FILENAME = "ManiBench_Pilot_Dataset.json"
 
-with open(MANIBENCH_JSON, encoding="utf-8") as _f:
-    PROBLEMS: Dict[str, dict] = {p["id"]: p for p in json.load(_f)["problems"]}
+
+@lru_cache(maxsize=1)
+def _load_problems() -> Dict[str, dict]:
+    if LOCAL_JSON.is_file():
+        path = LOCAL_JSON
+    else:
+        from huggingface_hub import hf_hub_download
+
+        path = Path(
+            hf_hub_download(HF_REPO, HF_FILENAME, repo_type="dataset"),
+        )
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    return {p["id"]: p for p in data["problems"]}
 
 
 def build_dataset() -> Dataset:
+    problems = _load_problems()
     rows = [
         {"prompt": p["full_prompt"], "problem_id": pid}
-        for pid, p in PROBLEMS.items()
+        for pid, p in problems.items()
     ]
     return Dataset.from_list(rows)
 
@@ -47,8 +63,11 @@ _BASE_VCER_PATTERNS: List[str] = [
 
 def get_vcer_patterns(problem_id: str) -> List[str]:
     """Base ManimGL→CE conflict patterns extended with problem-specific ones."""
+    problems = _load_problems()
     patterns = list(_BASE_VCER_PATTERNS)
-    incompats = PROBLEMS.get(problem_id, {}).get("version_conflict_notes", {}).get("known_incompatibilities", [])
+    incompats = problems.get(problem_id, {}).get("version_conflict_notes", {}).get(
+        "known_incompatibilities", [],
+    )
     for entry in incompats:
         token = re.split(r"[\s().→/]", entry.split("→")[0].strip())[0].strip()
         if len(token) > 2:
@@ -70,7 +89,8 @@ def _event_detection_patterns(event: dict) -> List[str]:
 
 def get_alignment_events(problem_id: str) -> List[Tuple[float, List[str]]]:
     """Returns [(weight, [detection_patterns]), ...] per required visual event."""
-    events = PROBLEMS.get(problem_id, {}).get("required_visual_events", [])
+    problems = _load_problems()
+    events = problems.get(problem_id, {}).get("required_visual_events", [])
     return [(e["weight"], _event_detection_patterns(e)) for e in events]
 
 
@@ -81,8 +101,9 @@ _CODE_TERMS = re.compile(r'\b([A-Z][a-zA-Z0-9]{3,}|[a-z]{3,}_[a-z_]+)\b')
 
 def get_coverage_terms(problem_id: str) -> List[str]:
     """Code-like tokens extracted from per-problem coverage_requirements."""
+    problems = _load_problems()
     terms: List[str] = []
-    for req in PROBLEMS.get(problem_id, {}).get("coverage_requirements", []):
+    for req in problems.get(problem_id, {}).get("coverage_requirements", []):
         paren = re.findall(r'\(([A-Za-z][A-Za-z0-9_]{2,})\)', req)
         terms.extend(paren if paren else _CODE_TERMS.findall(req))
     return list(dict.fromkeys(terms))
