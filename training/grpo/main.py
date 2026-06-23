@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.11,<3.13"
 # dependencies = [
-#   "unsloth",
-#   "unsloth_zoo",
+#   "unsloth @ git+https://github.com/unslothai/unsloth",
+#   "unsloth-zoo @ git+https://github.com/unslothai/unsloth-zoo",
 #   "trl>=0.28.0",
 #   "transformers>=5.5.0",
 #   "tokenizers>=0.22.0,<=0.23.0",
