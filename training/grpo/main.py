@@ -8,8 +8,8 @@ from trl import GRPOConfig, GRPOTrainer
 from manibench import build_dataset
 from rewards import combined_reward
 
-BASE_MODEL    = "nabin2004/coming-soon-model"
-SFT_LORA_PATH = "path/to/your/sft_lora"
+BASE_MODEL    = "unsloth/gemma-4-E2B-it"
+SFT_LORA_PATH = "nabin2004/EduClaw-Gemma4-it"
 OUTPUT_DIR    = "./grpo_manim_modular"
 
 
