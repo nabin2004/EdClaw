@@ -110,16 +110,39 @@ def load_model(
     return model, tokenizer
 
 
-def max_prompt_token_length(dataset, tokenizer) -> int:
-    lengths = []
+def _prompt_token_len(tokenizer, prompt: list) -> int:
+    ids = tokenizer.apply_chat_template(
+        prompt,
+        add_generation_prompt=True,
+        tokenize=True,
+    )
+    return len(ids)
+
+
+def truncate_dataset_prompts(dataset, tokenizer, max_prompt_length: int):
+    from datasets import Dataset
+
+    from manibench import format_user_prompt
+
+    rows = []
     for row in dataset:
-        prompt = row["prompt"]
-        ids = tokenizer.apply_chat_template(
-            prompt,
-            add_generation_prompt=True,
-            tokenize=True,
-        )
-        lengths.append(len(ids))
+        text = row["prompt"][0]["content"][0]["text"]
+        prompt = format_user_prompt(text)
+        while _prompt_token_len(tokenizer, prompt) > max_prompt_length and len(text) > 64:
+            text = text[: int(len(text) * 0.9)]
+            prompt = format_user_prompt(text)
+        if _prompt_token_len(tokenizer, prompt) > max_prompt_length:
+            print(
+                f"Warning: prompt still {_prompt_token_len(tokenizer, prompt)} tokens "
+                f"(limit {max_prompt_length}); problem_id={row.get('problem_id')}",
+                file=sys.stderr,
+            )
+        rows.append({**row, "prompt": prompt})
+    return Dataset.from_list(rows)
+
+
+def max_prompt_token_length(dataset, tokenizer) -> int:
+    lengths = [_prompt_token_len(tokenizer, row["prompt"]) for row in dataset]
     return max(lengths) if lengths else 0
 
 
@@ -148,13 +171,13 @@ def make_training_args(
     output_dir: str,
     *,
     max_completion_length: int,
-    max_prompt_length: int,
     num_generations: int,
     smoke: bool = False,
     max_steps: int | None = None,
 ):
     from trl import GRPOConfig
 
+    # Unsloth/TRL: batch size * grad_accum must be divisible by num_generations.
     common = dict(
         output_dir=output_dir,
         optim="paged_adamw_8bit",
@@ -164,9 +187,10 @@ def make_training_args(
         report_to="none",
         bf16=True,
         gradient_checkpointing=True,
-        max_prompt_length=max_prompt_length,
         max_completion_length=max_completion_length,
         num_generations=num_generations,
+        per_device_train_batch_size=num_generations,
+        gradient_accumulation_steps=1,
         temperature=0.8,
         top_p=0.9,
         warmup_ratio=0.1,
@@ -177,8 +201,6 @@ def make_training_args(
     if smoke:
         return GRPOConfig(
             **common,
-            per_device_train_batch_size=1,
-            gradient_accumulation_steps=1,
             max_steps=1,
             learning_rate=5e-5,
             logging_steps=1,
@@ -187,8 +209,6 @@ def make_training_args(
 
     kwargs: dict = dict(
         **common,
-        per_device_train_batch_size=1,
-        gradient_accumulation_steps=1,
         num_train_epochs=3,
         learning_rate=5e-5,
         logging_steps=10,
@@ -222,7 +242,7 @@ def parse_args() -> argparse.Namespace:
         "--max-prompt-length",
         type=int,
         default=1024,
-        help="Truncate prompts for GRPO (default 1024)",
+        help="Truncate prompts in the dataset (TRL 0.29+ has no max_prompt_length)",
     )
     ap.add_argument(
         "--max-completion-length",
@@ -271,12 +291,17 @@ def main() -> None:
     import unsloth  # noqa: F401
     from trl import GRPOTrainer
 
-    dataset = build_dataset()
     model, tokenizer = load_model(
         args.sft_lora,
         base_model=args.base_model,
         max_seq_length=args.max_seq_length,
         load_in_4bit=not args.full_precision,
+    )
+
+    dataset = truncate_dataset_prompts(
+        build_dataset(),
+        tokenizer,
+        args.max_prompt_length,
     )
 
     completion_cap = 256 if args.smoke else args.max_completion_length
@@ -297,7 +322,6 @@ def main() -> None:
     training_args = make_training_args(
         args.output_dir,
         max_completion_length=max_completion_length,
-        max_prompt_length=args.max_prompt_length,
         num_generations=args.num_generations,
         smoke=args.smoke,
         max_steps=args.max_steps,

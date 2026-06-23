@@ -26,7 +26,7 @@ def _load_problems() -> Dict[str, dict]:
     return {p["id"]: p for p in data["problems"]}
 
 
-def _user_prompt(text: str) -> list[dict]:
+def format_user_prompt(text: str) -> list[dict]:
     """Gemma-4 processor chat message (text-only ManiBench prompts)."""
     return [{"role": "user", "content": [{"type": "text", "text": text}]}]
 
@@ -35,7 +35,7 @@ def build_dataset() -> Dataset:
     problems = _load_problems()
     rows = [
         {
-            "prompt": _user_prompt(p["full_prompt"]),
+            "prompt": format_user_prompt(p["full_prompt"]),
             "problem_id": pid,
         }
         for pid, p in problems.items()
