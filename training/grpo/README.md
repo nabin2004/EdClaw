@@ -113,6 +113,15 @@ uv sync --python 3.12
 uv run --python 3.12 python main.py --smoke
 ```
 
+### Gemma-4 `shared-KV` / two forward passes error
+
+If you see `cannot run two forward passes before a single backward` with gradient checkpointing, upgrade deps (needs **transformers ≥ 5.5.2**):
+
+```bash
+cd training/grpo
+uv sync --python 3.12
+```
+
 ### Gemma-4 GRPO log-prob shape errors
 
 Same git upgrade as above (needs recent `unsloth-zoo` compiler fixes).

@@ -7,7 +7,7 @@ dependencies = [
   "unsloth @ git+https://github.com/unslothai/unsloth",
   "unsloth-zoo @ git+https://github.com/unslothai/unsloth-zoo",
   "trl>=0.28.0",
-  "transformers==5.5.0",
+  "transformers>=5.5.2",
   "tokenizers>=0.22.0,<=0.23.0",
   "datasets>=3.4.1,<4.4.0",
   "accelerate>=1.1",
@@ -21,4 +21,5 @@ dependencies = [
 [tool.uv]
 override-dependencies = [
   "trl>=0.28.0",
+  "transformers>=5.5.2",
 ]
