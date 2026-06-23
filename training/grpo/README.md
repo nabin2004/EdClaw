@@ -1,6 +1,6 @@
 # GRPO Manim training (Unsloth Gemma-4 stacked LoRA)
 
-Loads the SFT adapter (`nabin2004/EduClaw-Gemma4-it`) via **Unsloth** `FastVisionModel`, stacks a trainable GRPO LoRA on top, and trains with ManiBench composite rewards. Model loading and memory optimizations go through Unsloth; `trl.GRPOTrainer` is still used but patched by Unsloth on import.
+Loads the SFT adapter via **Unsloth** `FastVisionModel` on the Gemma-4 base, stacks a frozen `sft` LoRA plus trainable `grpo` LoRA (PEFT `add_adapter`), and trains with ManiBench composite rewards. Model loading and memory optimizations go through Unsloth; `trl.GRPOTrainer` is still used but patched by Unsloth on import.
 
 ## Prerequisites
 
@@ -50,7 +50,8 @@ uv run python main.py --smoke
 |------|---------|
 | `--smoke` | `max_steps=1`, `num_generations=2`, caps completion length at 256 |
 | `--max-steps N` | Cap optimizer steps (overrides epochs) |
-| `--output-dir` | Where to save the GRPO LoRA (default `./grpo_manim_modular`) |
+| `--output-dir` | Where to save the `grpo` adapter (default `./grpo_manim_modular`) |
+| `--base-model` | Override base model (default: from SFT `adapter_config.json`) |
 | `--sft-lora` | Hub path or local dir for frozen SFT checkpoint (default `nabin2004/EduClaw-Gemma4-it`) |
 | `--max-seq-length` | Unsloth context window (default 4096) |
 | `--max-completion-length` | Cap generated tokens (default: `max_seq_length` − longest prompt) |
@@ -76,6 +77,10 @@ uv run python main.py --max-completion-length 512 --load-in-4bit
 Edit `make_training_args()` in `main.py` for `num_generations` or batch size.
 
 ## Troubleshooting
+
+### `RuntimeError: You already added LoRA adapters to your model!`
+
+Unsloth `get_peft_model()` cannot run on a checkpoint that already has LoRA. `main.py` loads the **base model** first, attaches the frozen SFT adapter via PEFT, then adds a separate `grpo` adapter. Pull latest `main.py` if you still load `--sft-lora` directly into `get_peft_model()`.
 
 ### `trl` / `unsloth-zoo` dependency conflict
 

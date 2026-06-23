@@ -11,8 +11,40 @@ from manibench import build_dataset
 from rewards import combined_reward
 
 SFT_LORA_PATH = "nabin2004/EduClaw-Gemma4-it"
+DEFAULT_BASE_MODEL = "google/gemma-4-E2B-it"
 DEFAULT_OUTPUT = "./grpo_manim_modular"
 DEFAULT_MAX_SEQ_LENGTH = 4096
+GRPO_ADAPTER = "grpo"
+
+
+def _hub_token() -> str | None:
+    raw = os.environ.get("HF_TOKEN", "")
+    return raw.strip() or None
+
+
+def _base_model_for_adapter(adapter_path: str, fallback: str) -> str:
+    import json
+    from pathlib import Path
+
+    local = Path(adapter_path)
+    if local.is_dir():
+        cfg_path = local / "adapter_config.json"
+        if cfg_path.is_file():
+            with cfg_path.open(encoding="utf-8") as f:
+                return json.load(f).get("base_model_name_or_path", fallback)
+        return fallback
+
+    from huggingface_hub import hf_hub_download
+
+    cfg_path = Path(
+        hf_hub_download(
+            adapter_path,
+            "adapter_config.json",
+            token=_hub_token(),
+        ),
+    )
+    with cfg_path.open(encoding="utf-8") as f:
+        return json.load(f).get("base_model_name_or_path", fallback)
 
 
 def check_cuda_or_exit() -> None:
@@ -27,31 +59,42 @@ def check_cuda_or_exit() -> None:
         raise SystemExit(1)
 
 
-def _hub_token() -> str | None:
-    raw = os.environ.get("HF_TOKEN", "")
-    return raw.strip() or None
-
-
 def load_model(
     sft_lora_path: str,
     *,
+    base_model: str | None = None,
     max_seq_length: int = DEFAULT_MAX_SEQ_LENGTH,
     load_in_4bit: bool = False,
 ):
+    from peft import LoraConfig, PeftModel, TaskType
     from unsloth import FastVisionModel
 
+    base = base_model or _base_model_for_adapter(sft_lora_path, DEFAULT_BASE_MODEL)
+    token = _hub_token()
+
     model, tokenizer = FastVisionModel.from_pretrained(
-        model_name=sft_lora_path,
+        model_name=base,
         max_seq_length=max_seq_length,
         load_in_4bit=load_in_4bit,
         fast_inference=False,
-        token=_hub_token(),
+        token=token,
     )
     if getattr(tokenizer, "pad_token", None) is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    model = FastVisionModel.get_peft_model(
+    # Frozen SFT adapter — Unsloth cannot call get_peft_model() on a model that
+    # already has LoRA (load base first, then stack adapters via PEFT).
+    model = PeftModel.from_pretrained(
         model,
+        sft_lora_path,
+        adapter_name="sft",
+        token=token,
+    )
+    for name, param in model.named_parameters():
+        if "sft" in name:
+            param.requires_grad = False
+
+    grpo_config = LoraConfig(
         r=16,
         lora_alpha=32,
         target_modules=[
@@ -64,9 +107,12 @@ def load_model(
             "down_proj",
         ],
         lora_dropout=0.05,
-        use_gradient_checkpointing="unsloth",
-        random_state=3407,
+        bias="none",
+        task_type=TaskType.CAUSAL_LM,
     )
+    model.add_adapter(GRPO_ADAPTER, grpo_config)
+    model.set_adapter(GRPO_ADAPTER)
+    model.train()
     return model, tokenizer
 
 
@@ -164,6 +210,11 @@ def parse_args() -> argparse.Namespace:
         description="GRPO Manim training (Unsloth Gemma-4 stacked LoRA)",
     )
     ap.add_argument("--sft-lora", default=SFT_LORA_PATH)
+    ap.add_argument(
+        "--base-model",
+        default=None,
+        help="Override base model (default: read from SFT adapter_config.json)",
+    )
     ap.add_argument("--output-dir", default=DEFAULT_OUTPUT)
     ap.add_argument(
         "--max-seq-length",
@@ -213,6 +264,7 @@ def main() -> None:
     dataset = build_dataset()
     model, tokenizer = load_model(
         args.sft_lora,
+        base_model=args.base_model,
         max_seq_length=args.max_seq_length,
         load_in_4bit=args.load_in_4bit,
     )
@@ -242,7 +294,7 @@ def main() -> None:
     )
 
     trainer.train()
-    model.save_pretrained(args.output_dir)
+    model.save_pretrained(args.output_dir, adapter_name=GRPO_ADAPTER)
     tokenizer.save_pretrained(args.output_dir)
     print(f"GRPO LoRA saved to {args.output_dir}")
 
